@@ -1,0 +1,342 @@
+package com.example.lets_go_slavgorod.core
+
+import com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity
+import com.example.lets_go_slavgorod.data.model.FavoriteTime
+import com.example.lets_go_slavgorod.data.model.BusRoute
+import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
+import com.example.lets_go_slavgorod.domain.util.ValidationUtils
+import timber.log.Timber
+
+/**
+ * Расширения и утилитарные функции для проекта
+ * 
+ * Содержит вспомогательные функции для:
+ * - Логирования (упрощенный доступ к Timber)
+ * - Преобразования данных (Entity -> Model)
+ * - Создания объектов (фабричные методы)
+ * - Поиска и фильтрации данных
+ * 
+ * Все функции включают обработку ошибок и валидацию входных данных.
+ * 
+ * v3.0 Changes (Октябрь 2025):
+ * - Оптимизированы импорты и зависимости
+ * - Улучшена производительность функций
+ * - Обновлены комментарии и документация
+ */
+
+/**
+ * Логирование ошибок с тегом
+ * 
+ * Упрощенный способ логирования ошибок с возможностью указания тега
+ * для лучшей категоризации в логах.
+ * 
+ * @param tag тег для категоризации логов
+ * @param message сообщение об ошибке
+ * @param throwable исключение (опционально)
+ */
+fun loge(tag: String, message: String, throwable: Throwable? = null) {
+    if (throwable != null) {
+        Timber.tag(tag).e(throwable, message)
+    } else {
+        Timber.tag(tag).e(message)
+    }
+}
+
+/**
+ * Логирование ошибок без тега
+ * 
+ * Упрощенный способ логирования ошибок для общего использования.
+ * Timber автоматически обрабатывает null значения throwable.
+ * 
+ * @param message сообщение об ошибке
+ * @param throwable исключение (опционально)
+ */
+fun loge(message: String, throwable: Throwable? = null) {
+    Timber.e(throwable, message)
+}
+
+/**
+ * Логирование отладочной информации
+ * 
+ * Упрощенный способ логирования отладочных сообщений.
+ * 
+ * @param message отладочное сообщение
+ */
+fun logd(message: String) {
+    Timber.d(message)
+}
+
+
+/**
+ * Преобразует Entity из базы данных в доменную модель FavoriteTime
+ * 
+ * Конвертирует Room Entity в доменную модель для использования в бизнес-логике
+ * и UI. Автоматически обогащает данные информацией о маршруте из репозитория,
+ * если она отсутствует в Entity.
+ * 
+ * Процесс преобразования:
+ * 1. Валидация обязательных полей (id, routeId)
+ * 2. Попытка получить детали маршрута из репозитория (если предоставлен)
+ * 3. Fallback на данные из Entity или значения по умолчанию
+ * 4. Валидация и нормализация всех полей
+ * 
+ * @param routeRepository репозиторий маршрутов для получения деталей (опционально)
+ * @return доменная модель FavoriteTime
+ * @throws IllegalArgumentException если id или routeId пустые
+ */
+fun FavoriteTimeEntity.toFavoriteTime(routeRepository: Any? = null): FavoriteTime {
+    // Валидация входных данных
+    if (this.id.isBlank()) {
+        loge("FavoriteTimeEntity имеет пустой ID")
+        throw IllegalArgumentException("FavoriteTimeEntity ID cannot be blank")
+    }
+    
+    if (this.routeId.isBlank()) {
+        loge("FavoriteTimeEntity имеет пустой routeId для ID: ${this.id}")
+        throw IllegalArgumentException("FavoriteTimeEntity routeId cannot be blank")
+    }
+    
+    // Используем сохраненные в Entity данные о маршруте
+    var routeNumber = this.routeNumber
+    var routeName = this.routeName
+    
+    // Если данные в Entity пустые, пытаемся получить их из репозитория
+    if (routeNumber.isBlank() && routeRepository != null) {
+        try {
+            val repository = routeRepository as? BusRouteRepository
+            if (repository != null) {
+                val routes = repository.getAllRoutes()
+                val route = routes.find { it.id == this.routeId }
+                route?.let {
+                    routeNumber = it.routeNumber
+                    routeName = it.name
+                } ?: run {
+                }
+            } else {
+            }
+        } catch (e: Exception) {
+            loge("Ошибка получения информации о маршруте для routeId: ${this.routeId}", e)
+        }
+    }
+    
+    // Fallback: если routeNumber все еще пустой, используем routeId
+    if (routeNumber.isBlank()) {
+        routeNumber = this.routeId.takeIf { it.isNotBlank() } ?: "Неизвестный"
+    }
+    
+    if (routeName.isBlank()) {
+        routeName = "Маршрут ${this.routeId}"
+    }
+    
+    // Валидация времени добавления
+    val addedDate = if (this.addedDate <= 0L) {
+        System.currentTimeMillis()
+    } else {
+        this.addedDate
+    }
+    
+    return FavoriteTime(
+        id = this.id,
+        routeId = this.routeId,
+        routeNumber = routeNumber,
+        routeName = routeName,
+        stopName = this.stopName.takeIf { it.isNotBlank() } ?: Constants.FALLBACK_UNKNOWN_STOP,
+        departureTime = this.departureTime.takeIf { it.isNotBlank() } ?: "00:00",
+        dayOfWeek = this.dayOfWeek.takeIf { it in 1..7 } ?: 1,
+        departurePoint = this.departurePoint.takeIf { it.isNotBlank() } ?: Constants.FALLBACK_UNKNOWN_POINT,
+        addedDate = addedDate,
+        isActive = this.isActive
+    )
+}
+
+/**
+ * Оптимизированное batch преобразование списка Entity в FavoriteTime
+ * 
+ * Решает проблему N+1 запросов путем загрузки всех маршрутов один раз
+ * и использования Map для быстрого поиска O(1).
+ * 
+ * Преимущества:
+ * - Один запрос к repository вместо N запросов
+ * - O(1) поиск маршрута по ID через HashMap
+ * - Значительное улучшение производительности для больших списков
+ * 
+ * @param routeRepository репозиторий маршрутов для batch загрузки
+ * @return список FavoriteTime с обогащенными данными
+ */
+fun List<FavoriteTimeEntity>.toFavoriteTimesBatch(routeRepository: BusRouteRepository?): List<FavoriteTime> {
+    if (this.isEmpty()) return emptyList()
+    
+    // Batch loading: загружаем все маршруты один раз
+    val routesMap: Map<String, BusRoute> = routeRepository?.getAllRoutes()
+        ?.associateBy { it.id }
+        ?: emptyMap()
+    
+    // Преобразуем каждую entity с использованием предзагруженной Map
+    return this.map { entity ->
+        val route = routesMap[entity.routeId]
+        
+        FavoriteTime(
+            id = entity.id,
+            routeId = entity.routeId,
+            routeNumber = route?.routeNumber ?: entity.routeNumber.takeIf { it.isNotBlank() } ?: entity.routeId,
+            routeName = route?.name ?: entity.routeName.takeIf { it.isNotBlank() } ?: "${Constants.FALLBACK_ROUTE_PREFIX} ${entity.routeId}",
+            stopName = entity.stopName.takeIf { it.isNotBlank() } ?: Constants.FALLBACK_UNKNOWN_STOP,
+            departureTime = entity.departureTime.takeIf { it.isNotBlank() } ?: "00:00",
+            dayOfWeek = entity.dayOfWeek.takeIf { it in 1..7 } ?: 1,
+            departurePoint = entity.departurePoint.takeIf { it.isNotBlank() } ?: Constants.FALLBACK_UNKNOWN_POINT,
+            addedDate = if (entity.addedDate <= 0L) System.currentTimeMillis() else entity.addedDate,
+            isActive = entity.isActive
+        )
+    }
+}
+
+/**
+ * Extension для проверки что список не null и не пустой
+ * 
+ * Упрощает частую проверку `list != null && list.isNotEmpty()`
+ * Примечание: inline убран - он эффективен только для функций с lambda параметрами
+ */
+fun <T> List<T>?.isNotNullOrEmpty(): Boolean = this != null && this.isNotEmpty()
+
+/**
+ * Фабричная функция для создания объекта BusRoute с валидацией
+ * 
+ * Создает новый объект маршрута автобуса с автоматической валидацией
+ * всех входных параметров. Обрабатывает невалидные значения и возвращает
+ * null в случае критических ошибок.
+ * 
+ * Особенности:
+ * - Автоматическая валидация и trim всех строковых полей
+ * - Проверка формата цвета с fallback на значение по умолчанию
+ * - Преобразование пустых строк в null для опциональных полей
+ * - Детальное логирование ошибок валидации
+ * 
+ * @param id уникальный идентификатор маршрута
+ * @param routeNumber номер маршрута для отображения
+ * @param name название маршрута
+ * @param description описание маршрута с остановками
+ * @param travelTime примерное время в пути (опционально)
+ * @param pricePrimary основная стоимость проезда (опционально)
+ * @param paymentMethods способы оплаты (опционально)
+ * @param color цвет маршрута в формате #AARRGGBB
+ * @return объект BusRoute или null если валидация не прошла
+ */
+fun createBusRoute(
+    id: String,
+    routeNumber: String,
+    name: String,
+    description: String = "",
+    travelTime: String = "",
+    pricePrimary: String = "",
+    paymentMethods: String = "",
+    color: String = "#FF5722"
+): BusRoute? {
+    // Валидация входных параметров
+    if (id.isBlank()) {
+        loge("createBusRoute: ID не может быть пустым")
+        return null
+    }
+    
+    if (routeNumber.isBlank()) {
+        loge("createBusRoute: routeNumber не может быть пустым для ID: $id")
+        return null
+    }
+    
+    if (name.isBlank()) {
+        loge("createBusRoute: name не может быть пустым для ID: $id")
+        return null
+    }
+    
+    // Валидация цвета
+    val validatedColor = if (ValidationUtils.isValidColor(color)) {
+        color
+    } else {
+        loge("createBusRoute: Неверный формат цвета '$color' для ID: $id, используется по умолчанию")
+        "#FF5722"
+    }
+    
+    try {
+        return BusRoute(
+            id = id.trim(),
+            routeNumber = routeNumber.trim(),
+            name = name.trim(),
+            description = description.trim(),
+            travelTime = travelTime.trim().takeIf { it.isNotBlank() },
+            pricePrimary = pricePrimary.trim().takeIf { it.isNotBlank() },
+            paymentMethods = paymentMethods.trim().takeIf { it.isNotBlank() },
+            color = validatedColor
+        )
+    } catch (e: Exception) {
+        loge("createBusRoute: Ошибка создания BusRoute для ID: $id", e)
+        return null
+    }
+}
+
+/**
+ * Расширение для поиска маршрутов по текстовому запросу
+ * 
+ * Выполняет нечеткий поиск по списку маршрутов с учетом различных полей.
+ * Результаты автоматически сортируются по релевантности.
+ * 
+ * Поиск осуществляется по полям:
+ * - Номер маршрута (routeNumber)
+ * - Название маршрута (name)
+ * - Описание маршрута (description)
+ * - Детали направления (directionDetails)
+ * 
+ * Приоритет результатов:
+ * 1. Точное совпадение номера маршрута
+ * 2. Номер маршрута начинается с запроса
+ * 3. Название начинается с запроса
+ * 4. Остальные совпадения
+ * 
+ * @param query поисковый запрос (без учета регистра)
+ * @return отсортированный по релевантности список найденных маршрутов
+ * 
+ * @sample
+ * ```kotlin
+ * val routes = listOf(
+ *     BusRoute(id = "1", routeNumber = "1", name = "Автобус №1"),
+ *     BusRoute(id = "102", routeNumber = "102", name = "Автобус №102")
+ * )
+ * routes.search("1") // Вернет оба маршрута, сначала "1", потом "102"
+ * ```
+ */
+fun List<BusRoute>.search(query: String): List<BusRoute> {
+    if (query.isBlank()) return this
+    
+    // Валидация входных данных
+    if (this.isEmpty()) {
+        return emptyList()
+    }
+    
+    val lowercaseQuery = query.lowercase().trim()
+    
+    try {
+        return this.filter { route ->
+            // Проверяем, что маршрут валиден
+            if (!route.isValid()) {
+                return@filter false
+            }
+            
+            // Поиск по различным полям
+            val matchesName = route.name.lowercase().contains(lowercaseQuery)
+            val matchesNumber = route.routeNumber.lowercase().contains(lowercaseQuery)
+            val matchesDescription = route.description.lowercase().contains(lowercaseQuery)
+            val matchesStop = route.directionDetails?.lowercase()?.contains(lowercaseQuery) == true
+            
+            matchesName || matchesNumber || matchesDescription || matchesStop
+        }.sortedWith(compareBy<BusRoute> { route ->
+            // Приоритет: точное совпадение номера > совпадение в начале > остальное
+            when {
+                route.routeNumber.lowercase() == lowercaseQuery -> 0
+                route.routeNumber.lowercase().startsWith(lowercaseQuery) -> 1
+                route.name.lowercase().startsWith(lowercaseQuery) -> 2
+                else -> 3
+            }
+        })
+    } catch (e: Exception) {
+        loge("search: Ошибка во время поиска по запросу: '$query'", e)
+        return emptyList()
+    }
+}

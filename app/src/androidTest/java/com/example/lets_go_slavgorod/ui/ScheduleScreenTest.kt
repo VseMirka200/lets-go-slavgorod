@@ -1,0 +1,282 @@
+package com.example.lets_go_slavgorod.ui
+
+import android.app.Application
+import androidx.compose.ui.test.*
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.lets_go_slavgorod.data.model.BusRoute
+import com.example.lets_go_slavgorod.data.model.BusSchedule
+import com.example.lets_go_slavgorod.ui.components.schedule.ScheduleList
+import com.example.lets_go_slavgorod.ui.model.ScheduleUiState
+import com.example.lets_go_slavgorod.ui.model.DeparturePointSchedules
+import com.example.lets_go_slavgorod.ui.theme.lets_go_slavgorodTheme
+import com.example.lets_go_slavgorod.ui.viewmodel.FavoritesViewModel
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+
+/**
+ * UI-тесты для ScheduleScreen и компонентов расписания
+ * 
+ * Тестируют:
+ * - Отображение расписаний
+ * - Фильтрацию (Избранные, Следующий)
+ * - Взаимодействие с карточками
+ * - Сворачивание секций (маршрут №1)
+ * 
+ * @author VseMirka200
+ * @version 1.0
+ * @since 3.0
+ */
+@RunWith(AndroidJUnit4::class)
+class ScheduleScreenTest {
+    
+    @get:Rule
+    val composeTestRule = createComposeRule()
+    
+    private lateinit var viewModel: FavoritesViewModel
+    
+    @Before
+    fun setup() {
+        val context = ApplicationProvider.getApplicationContext<Application>()
+        viewModel = FavoritesViewModel(context)
+    }
+    
+    private val testRoute = BusRoute(
+        id = "102",
+        routeNumber = "102",
+        name = "Автобус №102",
+        description = "Рынок (Славгород) — Ст. Зори (Яровое)",
+        travelTime = "~40 минут",
+        pricePrimary = "38₽ город / 55₽ межгород",
+        paymentMethods = "Нал. / Безнал.",
+        color = "#FF5722"
+    )
+    
+    private val testSchedules = listOf(
+        BusSchedule(
+            id = "102_1",
+            routeId = "102",
+            stopName = "Рынок (Славгород)",
+            departureTime = "08:30",
+            dayOfWeek = 2, // Понедельник
+            departurePoint = "Рынок (Славгород)"
+        ),
+        BusSchedule(
+            id = "102_2",
+            routeId = "102",
+            stopName = "Рынок (Славгород)",
+            departureTime = "10:00",
+            dayOfWeek = 2, // Понедельник
+            departurePoint = "Рынок (Славгород)"
+        ),
+        BusSchedule(
+            id = "102_3",
+            routeId = "102",
+            stopName = "Ст. Зори (Яровое)",
+            departureTime = "14:30",
+            dayOfWeek = 2, // Понедельник
+            departurePoint = "Ст. Зори (Яровое)"
+        )
+    )
+    
+    @Test
+    fun scheduleList_displaysRouteInformation() {
+        // Создаём ScheduleUiState с тестовыми данными
+        val scheduleState = ScheduleUiState(
+            route = testRoute,
+            departurePoints = listOf(
+                DeparturePointSchedules(
+                    name = "Рынок (Славгород)",
+                    schedules = testSchedules.take(2),
+                    nextUpcomingId = null
+                ),
+                DeparturePointSchedules(
+                    name = "Ст. Зори (Яровое)",
+                    schedules = testSchedules.drop(2),
+                    nextUpcomingId = null
+                )
+            )
+        )
+        
+        composeTestRule.setContent {
+            lets_go_slavgorodTheme {
+                ScheduleList(
+                    scheduleState = scheduleState,
+                    viewModel = viewModel,
+                    onBackClick = {},
+                    onNotificationClick = {}
+                )
+            }
+        }
+        
+        // Проверяем отображение названия маршрута
+        composeTestRule
+            .onNodeWithText("Автобус №102")
+            .assertIsDisplayed()
+    }
+    
+    @Test
+    fun scheduleList_displaysFilterButtons() {
+        val scheduleState = ScheduleUiState(
+            route = testRoute,
+            departurePoints = listOf(
+                DeparturePointSchedules(
+                    name = "Рынок (Славгород)",
+                    schedules = testSchedules
+                )
+            )
+        )
+        
+        composeTestRule.setContent {
+            lets_go_slavgorodTheme {
+                ScheduleList(
+                    scheduleState = scheduleState,
+                    viewModel = viewModel,
+                    onBackClick = {},
+                    onNotificationClick = {}
+                )
+            }
+        }
+        
+        // Проверяем наличие кнопок фильтров
+        composeTestRule
+            .onNodeWithText("Избранные")
+            .assertIsDisplayed()
+        
+        composeTestRule
+            .onNodeWithText("Следующий")
+            .assertIsDisplayed()
+    }
+    
+    @Test
+    fun scheduleList_filterButtonsAreClickable() {
+        val scheduleState = ScheduleUiState(
+            route = testRoute,
+            departurePoints = listOf(
+                DeparturePointSchedules(
+                    name = "Рынок (Славгород)",
+                    schedules = testSchedules
+                )
+            )
+        )
+        
+        composeTestRule.setContent {
+            lets_go_slavgorodTheme {
+                ScheduleList(
+                    scheduleState = scheduleState,
+                    viewModel = viewModel,
+                    onBackClick = {},
+                    onNotificationClick = {}
+                )
+            }
+        }
+        
+        // Проверяем, что фильтр "Избранные" можно нажать
+        composeTestRule
+            .onNodeWithText("Избранные")
+            .assertHasClickAction()
+            .performClick()
+        
+        // Проверяем, что фильтр "Следующий" можно нажать
+        composeTestRule
+            .onNodeWithText("Следующий")
+            .assertHasClickAction()
+            .performClick()
+    }
+    
+    @Test
+    fun scheduleList_displaysScheduleTimes() {
+        val scheduleState = ScheduleUiState(
+            route = testRoute,
+            departurePoints = listOf(
+                DeparturePointSchedules(
+                    name = "Рынок (Славгород)",
+                    schedules = testSchedules.take(2)
+                )
+            )
+        )
+        
+        composeTestRule.setContent {
+            lets_go_slavgorodTheme {
+                ScheduleList(
+                    scheduleState = scheduleState,
+                    viewModel = viewModel,
+                    onBackClick = {},
+                    onNotificationClick = {}
+                )
+            }
+        }
+        
+        // Проверяем отображение времени отправления
+        composeTestRule
+            .onNodeWithText("08:30")
+            .assertIsDisplayed()
+        
+        composeTestRule
+            .onNodeWithText("10:00")
+            .assertIsDisplayed()
+    }
+    
+    @Test
+    fun scheduleList_displaysBackButton() {
+        val scheduleState = ScheduleUiState(
+            route = testRoute,
+            departurePoints = listOf(
+                DeparturePointSchedules(
+                    name = "Рынок (Славгород)",
+                    schedules = testSchedules
+                )
+            )
+        )
+        
+        composeTestRule.setContent {
+            lets_go_slavgorodTheme {
+                ScheduleList(
+                    scheduleState = scheduleState,
+                    viewModel = viewModel,
+                    onBackClick = {},
+                    onNotificationClick = {}
+                )
+            }
+        }
+        
+        // Проверяем наличие кнопки "Назад"
+        composeTestRule
+            .onNodeWithContentDescription("Назад")
+            .assertIsDisplayed()
+            .assertHasClickAction()
+    }
+    
+    @Test
+    fun scheduleList_displaysNotificationButton() {
+        val scheduleState = ScheduleUiState(
+            route = testRoute,
+            departurePoints = listOf(
+                DeparturePointSchedules(
+                    name = "Рынок (Славгород)",
+                    schedules = testSchedules
+                )
+            )
+        )
+        
+        composeTestRule.setContent {
+            lets_go_slavgorodTheme {
+                ScheduleList(
+                    scheduleState = scheduleState,
+                    viewModel = viewModel,
+                    onBackClick = {},
+                    onNotificationClick = {}
+                )
+            }
+        }
+        
+        // Проверяем наличие кнопки уведомлений
+        composeTestRule
+            .onNodeWithContentDescription("Настройки уведомлений")
+            .assertIsDisplayed()
+            .assertHasClickAction()
+    }
+}

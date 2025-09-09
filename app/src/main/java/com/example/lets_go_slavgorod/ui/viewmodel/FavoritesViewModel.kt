@@ -1,0 +1,219 @@
+﻿package com.example.lets_go_slavgorod.ui.viewmodel
+
+import android.app.Application
+import androidx.compose.runtime.Stable
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.lets_go_slavgorod.data.local.AppDatabase
+import com.example.lets_go_slavgorod.data.local.dao.FavoriteTimeDao
+import com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity
+import com.example.lets_go_slavgorod.data.model.BusSchedule
+import com.example.lets_go_slavgorod.data.model.FavoriteTime
+import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
+import com.example.lets_go_slavgorod.domain.notification.AlarmScheduler
+import com.example.lets_go_slavgorod.core.Constants
+import com.example.lets_go_slavgorod.core.toFavoriteTime
+import com.example.lets_go_slavgorod.core.toFavoriteTimesBatch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import timber.log.Timber
+
+/**
+ * Состояние UI для избранного
+ */
+@Stable
+data class FavoritesUiState(
+    val isAddingFavorite: Boolean = false,
+    val isRemovingFavorite: Boolean = false,
+    val error: String? = null
+)
+
+/**
+ * ViewModel для управления избранными временами
+ * 
+ * Специализированный ViewModel с единственной ответственностью:
+ * управление списком избранных времен отправления.
+ * 
+ * Функции:
+ * - Добавление времени в избранное
+ * - Удаление избранного времени
+ * - Обновление активности
+ * - Планирование/отмена уведомлений
+ * 
+ * Преимущества:
+ * - Четкая ответственность (SRP)
+ * - Легко тестировать
+ * - Переиспользуемый
+ * - Низкая связанность
+ * 
+ * @param application контекст приложения
+ * 
+ * v3.0 Changes (Октябрь 2025):
+ * - Оптимизированы импорты и зависимости
+ * - Улучшена производительность работы с избранным
+ * - Обновлены комментарии и документация
+ */
+class FavoritesViewModel(application: Application) : AndroidViewModel(application) {
+    
+    private val appContext = application.applicationContext
+    
+    // Ленивая инициализация базы данных для предотвращения блокировки главного потока
+    private val favoriteTimeDao: FavoriteTimeDao by lazy {
+        try {
+            AppDatabase.getDatabase(appContext).favoriteTimeDao()
+        } catch (e: Exception) {
+            Timber.e(e, "Ошибка инициализации базы данных")
+            throw e
+        }
+    }
+    
+    // Ленивая инициализация репозитория для предотвращения блокировки главного потока
+    private val routeRepository: BusRouteRepository by lazy {
+        try {
+            BusRouteRepository(appContext)
+        } catch (e: Exception) {
+            Timber.e(e, "Ошибка инициализации репозитория")
+            throw e
+        }
+    }
+    
+    // UI состояние
+    private val _uiState = MutableStateFlow(FavoritesUiState())
+    val uiState: StateFlow<FavoritesUiState> = _uiState.asStateFlow()
+    
+    // Список избранных времен - инициализируется лениво при первом collect
+    val favoriteTimes: StateFlow<List<FavoriteTime>> by lazy {
+        favoriteTimeDao.getAllFavoriteTimes()
+            .map { entities ->
+                entities.toFavoriteTimesBatch(routeRepository)
+            }
+            .catch { exception ->
+                Timber.e(exception, "Ошибка получения избранных времен")
+                emit(emptyList())
+            }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(Constants.STATE_FLOW_TIMEOUT_MS),
+                initialValue = emptyList()
+            )
+    }
+    
+    /**
+     * Добавляет время отправления в избранное
+     */
+    fun addFavoriteTime(schedule: BusSchedule) {
+        viewModelScope.launch {
+            try {
+                
+                _uiState.update { it.copy(isAddingFavorite = true, error = null) }
+                
+                // Валидация
+                val sanitizedSchedule = schedule.sanitized()
+                if (!sanitizedSchedule.isValid()) {
+                    Timber.e("Неверные данные расписания после очистки")
+                    _uiState.update {
+                        it.copy(isAddingFavorite = false, error = "Некорректные данные")
+                    }
+                    return@launch
+                }
+                
+                // Получаем информацию о маршруте
+                val route = routeRepository.getRouteById(sanitizedSchedule.routeId)
+                val currentTime = System.currentTimeMillis()
+                
+                
+                // Создаем entity
+                val favoriteTimeEntity = FavoriteTimeEntity(
+                    id = sanitizedSchedule.id,
+                    routeId = sanitizedSchedule.routeId,
+                    routeNumber = route?.routeNumber ?: "N/A",
+                    routeName = route?.name ?: "Маршрут",
+                    stopName = sanitizedSchedule.stopName,
+                    departureTime = sanitizedSchedule.departureTime,
+                    dayOfWeek = sanitizedSchedule.dayOfWeek,
+                    departurePoint = sanitizedSchedule.departurePoint,
+                    addedDate = currentTime,
+                    isActive = true
+                )
+                
+                
+                // Сохраняем в БД
+                favoriteTimeDao.addFavoriteTime(favoriteTimeEntity)
+                
+                // Планируем уведомление
+                val favoriteTime = favoriteTimeEntity.toFavoriteTime(routeRepository)
+                AlarmScheduler.checkAndUpdateNotifications(getApplication(), favoriteTime)
+                
+                
+                _uiState.update { it.copy(isAddingFavorite = false, error = null) }
+            } catch (e: Exception) {
+                Timber.e(e, "Ошибка добавления избранного времени")
+                _uiState.update {
+                    it.copy(isAddingFavorite = false, error = e.message)
+                }
+            }
+        }
+    }
+    
+    /**
+     * Удаляет время из избранного
+     */
+    fun removeFavoriteTime(scheduleId: String) {
+        viewModelScope.launch {
+            try {
+                _uiState.update { it.copy(isRemovingFavorite = true, error = null) }
+                
+                favoriteTimeDao.removeFavoriteTime(scheduleId)
+                AlarmScheduler.cancelAlarm(getApplication(), scheduleId)
+                
+                _uiState.update { it.copy(isRemovingFavorite = false, error = null) }
+            } catch (e: Exception) {
+                Timber.e(e, "Ошибка удаления избранного времени")
+                _uiState.update {
+                    it.copy(isRemovingFavorite = false, error = e.message)
+                }
+            }
+        }
+    }
+    
+    /**
+     * Обновляет активность избранного времени
+     */
+    fun updateFavoriteActiveState(favoriteTime: FavoriteTime, newActiveState: Boolean) {
+        viewModelScope.launch {
+            val entityInDb = favoriteTimeDao.getFavoriteTimeById(favoriteTime.id).firstOrNull()
+                ?: run {
+                    return@launch
+                }
+            
+            if (!newActiveState) {
+                // Деактивация - удаляем
+                favoriteTimeDao.removeFavoriteTime(favoriteTime.id)
+                try {
+                    AlarmScheduler.cancelAlarm(getApplication(), favoriteTime.id)
+                } catch (e: Exception) {
+                    Timber.e(e, "Ошибка отмены будильника")
+                }
+            } else {
+                // Активация - обновляем
+                if (!entityInDb.isActive) {
+                    favoriteTimeDao.updateFavoriteTime(entityInDb.copy(isActive = true))
+                    val updatedFavorite = favoriteTime.copy(isActive = true)
+                    try {
+                        AlarmScheduler.checkAndUpdateNotifications(getApplication(), updatedFavorite)
+                    } catch (e: Exception) {
+                        Timber.e(e, "Ошибка переноса будильника")
+                    }
+                }
+            }
+        }
+    }
+}

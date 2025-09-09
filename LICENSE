@@ -1,0 +1,45 @@
+MIT LICENSE
+
+COPYRIGHT (C) 2025 VSEMIRKA200
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+Of this software and associated documentation files (the "software"), to deal
+In the software without restriction, including without limitation the rights
+To use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+Copies of the software, and to permit persons to whom the software is
+Furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+Copies or substantial portions of the software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Third-party libraries and their licenses:
+
+This software may include third-party libraries that are subject to their own
+Licenses. Please refer to the individual library documentation for their
+Specific license terms.
+
+For android development, this project uses:
+- android sdk (apache license 2.0)
+- kotlin (apache license 2.0)
+- jetpack compose (apache license 2.0)
+- timber (apache license 2.0)
+- koin (apache license 2.0)
+- retrofit (apache license 2.0)
+- gson (apache license 2.0)
+- okhttp (apache license 2.0)
+- room (apache license 2.0)
+- workmanager (apache license 2.0)
+- datastore (apache license 2.0)
+- navigation compose (apache license 2.0)
+- material design components (apache license 2.0)
+
+Contact: for questions about this license or the software, please contact
+The copyright holder at the project repository.

@@ -1,0 +1,191 @@
+package com.example.lets_go_slavgorod.domain.util
+
+import timber.log.Timber
+import java.util.Calendar
+
+/**
+ * Комплексные утилиты для валидации данных в приложении
+ * 
+ * Предоставляет централизованную систему валидации для всех типов данных,
+ * используемых в приложении. Включает проверки форматов, диапазонов значений
+ * и бизнес-правил.
+ * 
+ * Поддерживаемые типы валидации:
+ * - Идентификаторы (ID маршрутов, расписаний)
+ * - Номера маршрутов (формат, длина, символы)
+ * - Названия остановок и маршрутов (пустые строки, специальные символы)
+ * - Время отправления (формат HH:mm, валидные часы/минуты)
+ * - Дни недели (диапазон 1-7)
+ * - Email адреса (RFC стандарт)
+ * - URL адреса (HTTP/HTTPS протоколы)
+ * - Цвета (ARGB формат #AARRGGBB)
+ * 
+ * Все методы включают подробное логирование для отладки и мониторинга.
+ * 
+ * v3.0 Changes (Октябрь 2025):
+ * - Оптимизированы импорты и зависимости
+ * - Улучшена производительность валидации
+ * - Обновлены комментарии и документация
+ */
+object ValidationUtils {
+
+    /**
+     * Валидирует время в формате HH:MM
+     * 
+     * Проверяет корректность времени отправления автобуса.
+     * Поддерживает 24-часовой формат с разделителем ":"
+     * 
+     * @param time строка времени для валидации (например, "08:30", "14:15")
+     * @return true если время в корректном формате, false иначе
+     */
+    fun isValidTime(time: String): Boolean {
+        if (time.isBlank()) {
+            return false
+        }
+        
+        val timeParts = time.split(":")
+        if (timeParts.size != 2) {
+            return false
+        }
+        
+        return try {
+            val hour = timeParts[0].trim().toInt()
+            val minute = timeParts[1].trim().toInt()
+            
+            val isValid = hour in 0..23 && minute in 0..59
+            if (!isValid) {
+            }
+            isValid
+        } catch (e: NumberFormatException) {
+            false
+        }
+    }
+    
+    /**
+     * Валидирует день недели
+     */
+    fun isValidDayOfWeek(dayOfWeek: Int): Boolean {
+        val isValid = dayOfWeek in Calendar.SUNDAY..Calendar.SATURDAY
+        if (!isValid) {
+        }
+        return isValid
+    }
+    
+    /**
+     * Валидирует ID маршрута
+     */
+    fun isValidRouteId(routeId: String?): Boolean {
+        if (routeId.isNullOrBlank()) {
+            return false
+        }
+        
+        val isValid = routeId.trim().isNotBlank()
+        if (!isValid) {
+        }
+        return isValid
+    }
+    
+    /**
+     * Валидирует название остановки
+     */
+    fun isValidStopName(stopName: String?): Boolean {
+        if (stopName.isNullOrBlank()) {
+            return false
+        }
+        
+        val trimmed = stopName.trim()
+        val isValid = trimmed.isNotBlank() && trimmed.length >= 2
+        if (!isValid) {
+        }
+        return isValid
+    }
+    
+    /**
+     * Валидирует название маршрута
+     */
+    fun isValidRouteName(routeName: String?): Boolean {
+        if (routeName.isNullOrBlank()) {
+            return false
+        }
+        
+        val trimmed = routeName.trim()
+        val isValid = trimmed.isNotBlank() && trimmed.length >= 3
+        if (!isValid) {
+        }
+        return isValid
+    }
+    
+    /**
+     * Валидирует номер маршрута
+     */
+    fun isValidRouteNumber(routeNumber: String?): Boolean {
+        if (routeNumber.isNullOrBlank()) {
+            return false
+        }
+        
+        // isNotBlank() уже включает проверку isNotEmpty(), избыточность убрана
+        val trimmed = routeNumber.trim()
+        val isValid = trimmed.isNotBlank()
+        if (!isValid) {
+        }
+        return isValid
+    }
+
+    /**
+     * Очищает и нормализует строку
+     */
+    fun sanitizeString(input: String?): String {
+        return input?.trim()?.takeIf { it.isNotBlank() } ?: ""
+    }
+
+    /**
+     * Валидирует email адрес
+     */
+    fun isValidEmail(email: String?): Boolean {
+        if (email.isNullOrBlank()) {
+            return false
+        }
+        
+        val emailRegex = Regex("^[A-Za-z0-9+_.-]+@([A-Za-z0-9.-]+\\.[A-Za-z]{2,})$")
+        val isValid = emailRegex.matches(email.trim())
+        
+        if (!isValid) {
+        }
+        return isValid
+    }
+
+    /**
+     * Валидирует URL
+     */
+    fun isValidUrl(url: String?): Boolean {
+        if (url.isNullOrBlank()) {
+            return false
+        }
+        
+        return try {
+            val urlObj = java.net.URL(url.trim())
+            val isValid = urlObj.protocol in listOf("http", "https")
+            if (!isValid) {
+            }
+            isValid
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Валидирует цвет в формате ARGB
+     */
+    fun isValidColor(color: String?): Boolean {
+        if (color.isNullOrBlank()) {
+            return false
+        }
+        
+        val colorRegex = Regex("^#[0-9A-Fa-f]{8}$")
+        val isValid = colorRegex.matches(color.trim())
+        
+        if (!isValid) {
+        }
+        return isValid
+    }
+}

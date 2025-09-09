@@ -1,0 +1,1095 @@
+﻿package com.example.lets_go_slavgorod.ui.components.schedule
+
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.StarBorder
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.example.lets_go_slavgorod.core.Constants
+import com.example.lets_go_slavgorod.data.model.BusRoute
+import com.example.lets_go_slavgorod.data.model.BusSchedule
+import com.example.lets_go_slavgorod.ui.components.FilterItem
+import com.example.lets_go_slavgorod.ui.components.StickyDepartureHeader
+import com.example.lets_go_slavgorod.ui.components.UniversalFilterRow
+import com.example.lets_go_slavgorod.ui.model.ScheduleUiState
+import com.example.lets_go_slavgorod.ui.viewmodel.FavoritesViewModel
+import timber.log.Timber
+import java.text.SimpleDateFormat
+import java.util.Calendar
+
+/**
+ * Основной компонент списка расписаний маршрута
+ * 
+ * Версия: 4.0
+ * Последнее обновление: Октябрь 2025
+ * 
+ * Центральный компонент для отображения расписаний автобусных маршрутов.
+ * Поддерживает различные варианты компоновки, фильтрацию и интерактивное управление.
+ * 
+ * Изменения v4.0:
+ * v3.0 Changes (Октябрь 2025):
+ * - Оптимизированы импорты и зависимости
+ * - Улучшена производительность рендеринга
+ * - Обновлены комментарии и документация
+ * - Улучшена type-safety через data class
+ * - Упрощена сигнатура функции
+ * - Сохранена полная обратная совместимость с UI
+ * 
+ * Изменения v3.1:
+ * - Унифицированы отступы между фильтрами и содержимым (8dp сверху, 8dp снизу)
+ * - Добавлены порядковые номера рейсов в компактных карточках
+ * - Оптимизирована компоновка фильтров на всю ширину экрана
+ * - Используются константы из Constants.kt для всех отступов
+ * 
+ * Варианты отображения:
+ * - **Маршрут №102**: двухколоночная сетка Славгород ↔ Яровое (МСЧ-128) с фильтрацией
+ * - **Маршрут №102Б**: двухколоночная сетка Славгород ↔ Яровое (Ст. Зори) с фильтрацией
+ * - **Маршрут №1**: сворачиваемые секции по выходам (Выход 1, 2, 3)
+ * 
+ * Функциональность:
+ * - Унифицированный заголовок с информацией о маршруте (UnifiedScheduleHeader)
+ * - Фильтрация по избранным временам и следующим рейсам
+ * - Добавление/удаление времен в избранное (звёздочка на карточках)
+ * - Подсветка ближайших рейсов с обратным отсчетом
+ * - Сворачивание/разворачивание секций (для маршрута №1)
+ * - Порядковые номера для быстрой навигации
+ * 
+ * Оптимизации:
+ * - LazyColumn для эффективной прокрутки больших списков
+ * - Sticky headers для заголовков секций (остаются видимыми при прокрутке)
+ * - Уникальные ключи для всех элементов (избегаем перерисовки)
+ * - Remember для кэширования состояний фильтров и секций
+ * 
+ * @param scheduleState состояние UI с данными расписания (route, schedules, nextUpcoming)
+ * @param viewModel ViewModel для управления избранными временами
+ * @param onBackClick callback для кнопки "Назад" в заголовке
+ * @param onNotificationClick callback для кнопки уведомлений в заголовке (может быть null)
+ * @param modifier модификатор для настройки внешнего вида
+ * 
+ * Фильтры:
+ * - **Избранные**: показывает только избранные пользователем времена
+ * - **Следующий**: показывает только ближайшие предстоящие рейсы
+ * - Фильтры взаимоисключающие (активен только один или ни одного)
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ScheduleList(
+    scheduleState: ScheduleUiState,
+    viewModel: FavoritesViewModel,
+    onBackClick: () -> Unit = {},
+    onNotificationClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    // Извлекаем данные из scheduleState для удобства
+    val route = scheduleState.route
+    
+    // Получаем расписания по точкам отправления (до 4 точек)
+    val departurePoint1 = scheduleState.departurePoints.getOrNull(0)
+    val departurePoint2 = scheduleState.departurePoints.getOrNull(1)
+    val departurePoint3 = scheduleState.departurePoints.getOrNull(2)
+    val departurePoint4 = scheduleState.departurePoints.getOrNull(3)
+    
+    val schedulesSlavgorod = departurePoint1?.schedules ?: emptyList()
+    val schedulesYarovoe = departurePoint2?.schedules ?: emptyList()
+    val schedulesVokzal = departurePoint3?.schedules ?: emptyList()
+    val schedulesSovhoz = departurePoint4?.schedules ?: emptyList()
+    
+    val departurePoint1Name = departurePoint1?.name ?: ""
+    val departurePoint2Name = departurePoint2?.name ?: ""
+    val departurePoint3Name = departurePoint3?.name ?: ""
+    val departurePoint4Name = departurePoint4?.name ?: ""
+    
+    val nextUpcomingSlavgorodId = departurePoint1?.nextUpcomingId
+    val nextUpcomingYarovoeId = departurePoint2?.nextUpcomingId
+    val nextUpcomingVokzalId = departurePoint3?.nextUpcomingId
+    val nextUpcomingSovhozId = departurePoint4?.nextUpcomingId
+    // Универсальные фильтры
+    var selectedFilterId by remember { mutableStateOf<String?>(null) }
+    val favoriteTimesList by viewModel.favoriteTimes.collectAsState()
+    
+    // Вычисляем производные состояния из selectedFilterId
+    val showOnlyFavorites = selectedFilterId == "favorites"
+    val showOnlyUpcoming = selectedFilterId == "upcoming"
+    val selectedRoute1Exit = if (selectedFilterId?.startsWith("exit_") == true) selectedFilterId?.removePrefix("exit_") else null
+    val selectedRoute4DeparturePoint = if (selectedFilterId?.startsWith("point4_") == true) selectedFilterId?.removePrefix("point4_") else null
+
+    // Состояние для отслеживания скролла
+    val listState = rememberLazyListState()
+
+    LazyColumn(
+        state = listState,
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp),
+        // Оптимизация производительности
+        userScrollEnabled = true
+    ) {
+        // Заголовок маршрута как первый элемент списка
+        item(key = "route_header") {
+            UnifiedScheduleHeader(
+                route = route,
+                onBackClick = onBackClick,
+                isVisible = true,
+                onNotificationClick = onNotificationClick
+            )
+        }
+        
+        // Универсальные фильтры для всех маршрутов
+        item(key = "filters") {
+            val favCount = favoriteTimesList.count { it.isActive && it.routeId == route.id }
+            
+            UniversalFilterRow(
+                filters = listOf(
+                    FilterItem(
+                        id = "favorites",
+                        label = "Избранные",
+                        icon = if (showOnlyFavorites) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                        count = favCount
+                    ),
+                    FilterItem(
+                        id = "upcoming",
+                        label = "Следующий",
+                        icon = if (showOnlyUpcoming) Icons.Filled.Schedule else Icons.Outlined.Schedule
+                    )
+                ),
+                selectedFilterId = selectedFilterId,
+                onFilterSelected = { selectedFilterId = it },
+                useEqualWeights = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = Constants.PADDING_MEDIUM.dp, 
+                        top = Constants.PADDING_FILTER_TOP.dp, 
+                        end = Constants.PADDING_MEDIUM.dp, 
+                        bottom = Constants.PADDING_FILTER_BOTTOM.dp
+                    )
+            )
+        }
+        
+        // Маршрут №4 (Пригородный) - фильтрация по точкам отправления с приглушением
+        if (route.id == "4") {
+            // Кнопка для открытия модального окна выбора точки отправления
+            item(key = "route_4_filters") {
+                var showBottomSheet by remember { mutableStateOf(false) }
+                
+                // Определяем текущий выбранный пункт
+                val selectedPointName = when {
+                    selectedFilterId == "point4_$departurePoint1Name" -> departurePoint1Name
+                    selectedFilterId == "point4_$departurePoint2Name" -> departurePoint2Name
+                    selectedFilterId == "point4_$departurePoint3Name" -> departurePoint3Name
+                    else -> "Все точки отправления"
+                }
+                
+                // Кнопка для открытия меню
+                OutlinedButton(
+                    onClick = { showBottomSheet = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Constants.PADDING_MEDIUM.dp, vertical = 4.dp)
+                        .height(56.dp),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = "Точка отправления",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = selectedPointName,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                                Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Выбрать точку отправления"
+                        )
+                    }
+                }
+                
+                // Модальное окно с выбором
+                if (showBottomSheet) {
+                    ModalBottomSheet(
+                        onDismissRequest = { showBottomSheet = false },
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp)
+                        ) {
+                            // Заголовок
+                            Text(
+                                text = "Выберите точку отправления",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+                            )
+                            
+                            // Опция "Все"
+                            ListItem(
+                                headlineContent = {
+                                Text(
+                                        text = "Все точки отправления",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                },
+                                leadingContent = {
+                                    RadioButton(
+                                        selected = selectedFilterId == null,
+                                        onClick = null
+                                    )
+                                },
+                                modifier = Modifier.clickable {
+                                    selectedFilterId = null
+                                    showBottomSheet = false
+                                }
+                            )
+                            
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp))
+                            
+                            // Точка 1
+                            if (schedulesSlavgorod.isNotEmpty()) {
+                                ListItem(
+                                    headlineContent = {
+                                        Text(
+                                            text = departurePoint1Name,
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+                                    },
+                                    leadingContent = {
+                                        RadioButton(
+                                            selected = selectedFilterId == "point4_$departurePoint1Name",
+                                            onClick = null
+                                        )
+                                    },
+                                    modifier = Modifier.clickable {
+                                        selectedFilterId = "point4_$departurePoint1Name"
+                                        showBottomSheet = false
+                                    }
+                                )
+                            }
+                            
+                            // Точка 2
+                            if (schedulesYarovoe.isNotEmpty()) {
+                                ListItem(
+                                    headlineContent = {
+                                Text(
+                                            text = departurePoint2Name,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                    },
+                                    leadingContent = {
+                                        RadioButton(
+                                            selected = selectedFilterId == "point4_$departurePoint2Name",
+                                            onClick = null
+                                        )
+                                    },
+                                    modifier = Modifier.clickable {
+                                        selectedFilterId = "point4_$departurePoint2Name"
+                                        showBottomSheet = false
+                                    }
+                                )
+                            }
+                            
+                            // Точка 3
+                            if (schedulesVokzal.isNotEmpty()) {
+                                ListItem(
+                                    headlineContent = {
+                    Text(
+                                            text = departurePoint3Name,
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+                                    },
+                                    leadingContent = {
+                                        RadioButton(
+                                            selected = selectedFilterId == "point4_$departurePoint3Name",
+                                            onClick = null
+                                        )
+                                    },
+                                    modifier = Modifier.clickable {
+                                        selectedFilterId = "point4_$departurePoint3Name"
+                                        showBottomSheet = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Объединяем все расписания маршрута 4 для проверки фильтров
+            val allRoute4Schedules = schedulesSlavgorod + schedulesYarovoe + schedulesVokzal
+            
+            // Проверяем есть ли хоть что-то после применения фильтров
+            val hasFilteredSchedules = when {
+                showOnlyFavorites -> allRoute4Schedules.any { schedule -> 
+                    favoriteTimesList.any { it.id == schedule.id && it.isActive }
+                }
+                showOnlyUpcoming -> allRoute4Schedules.any { schedule ->
+                    schedule.id == nextUpcomingSlavgorodId || 
+                    schedule.id == nextUpcomingYarovoeId || 
+                    schedule.id == nextUpcomingVokzalId
+                }
+                else -> true
+            }
+            
+            // Показываем расписания только если есть что показывать после фильтров
+            if (hasFilteredSchedules) {
+                // Точки 1 и 2 в двухколоночной сетке
+                if (schedulesSlavgorod.isNotEmpty() || schedulesYarovoe.isNotEmpty()) {
+                    item(key = "route_4_grid_1_2") {
+                        // Определяем состояние фильтра для приглушения заголовков и расписаний
+                        val externalFilterState = when (selectedRoute4DeparturePoint) {
+                            departurePoint1Name -> true  // Левая активна, правая приглушена
+                            departurePoint2Name -> false // Правая активна, левая приглушена
+                            else -> null // Обе активны или обе приглушены
+                        }
+                        
+                        // Приглушаем весь блок, если выбрана точка 3
+                        val shouldDimGrid = selectedRoute4DeparturePoint == departurePoint3Name
+                        
+                        TwoColumnScheduleGrid(
+                    leftSchedules = schedulesSlavgorod,
+                    rightSchedules = schedulesYarovoe,
+                            leftTitle = departurePoint1Name,
+                            rightTitle = departurePoint2Name,
+                    nextUpcomingLeftId = nextUpcomingSlavgorodId,
+                    nextUpcomingRightId = nextUpcomingYarovoeId,
+                    viewModel = viewModel,
+                    route = route,
+                    showOnlyFavorites = showOnlyFavorites,
+                    showOnlyUpcoming = showOnlyUpcoming,
+                            enableHeaderClick = false,
+                            externalFilterState = externalFilterState,
+                            modifier = Modifier
+                                .padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 8.dp)
+                                .alpha(if (shouldDimGrid) 0.4f else 1f)
+                        )
+                    }
+                }
+
+                // Точка 3 отдельно
+                if (schedulesVokzal.isNotEmpty()) {
+                    item(key = "route_4_point3") {
+                        // Определяем состояние приглушения для точки 3
+                        val shouldDimPoint3 = selectedRoute4DeparturePoint != null && selectedRoute4DeparturePoint != departurePoint3Name
+                        
+                        TwoColumnScheduleGrid(
+                            leftSchedules = schedulesVokzal,
+                            rightSchedules = emptyList(),
+                            leftTitle = departurePoint3Name,
+                            rightTitle = "",
+                            nextUpcomingLeftId = nextUpcomingVokzalId,
+                            nextUpcomingRightId = null,
+                            viewModel = viewModel,
+                            route = route,
+                            showOnlyFavorites = showOnlyFavorites,
+                            showOnlyUpcoming = showOnlyUpcoming,
+                            enableHeaderClick = false,
+                            externalFilterState = if (shouldDimPoint3) false else null,
+                            modifier = Modifier
+                                .padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 8.dp)
+                                .alpha(if (shouldDimPoint3) 0.4f else 1f)
+                        )
+                    }
+                }
+            } else {
+                // Показываем ОДНО сообщение для всего маршрута 4 если нет данных после фильтрации
+                item(key = "route_4_no_filtered") {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.StarBorder,
+                                contentDescription = if (showOnlyFavorites) "Нет избранных" else "Нет следующих",
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                            )
+                            Text(
+                                text = if (showOnlyFavorites) "Нет избранных времен" else "Нет предстоящих рейсов",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Универсальная логика для маршрутов 102, 102Б - двухколоночная сетка
+        if ((route.id == "102" || route.id == "102B") && schedulesSlavgorod.isNotEmpty() && schedulesYarovoe.isNotEmpty()) {
+            item(key = "route_${route.id}_schedule_grid") {
+                FilterableScheduleGrid(
+                    leftSchedules = schedulesSlavgorod,
+                    rightSchedules = schedulesYarovoe,
+                    leftTitle = departurePoint1Name,
+                    rightTitle = departurePoint2Name,
+                    nextUpcomingLeftId = nextUpcomingSlavgorodId,
+                    nextUpcomingRightId = nextUpcomingYarovoeId,
+                    viewModel = viewModel,
+                    route = route,
+                    showOnlyFavorites = showOnlyFavorites,
+                    showOnlyUpcoming = showOnlyUpcoming,
+                    modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 0.dp, bottom = 8.dp)
+                )
+            }
+        }
+
+        // Маршрут №1 (Вокзал — Совхоз) - фильтрация по выходам
+        if (route.id == "1") {
+            // Для маршрута 1 все расписания попадают в schedulesSlavgorod и schedulesYarovoe
+            // (т.к. "вокзал" и "совхоз" - первые две точки по алфавиту)
+            val allRoute1Schedules = schedulesSlavgorod + schedulesYarovoe
+            val groupedByExit = allRoute1Schedules.groupBy { it.notes ?: "Без выхода" }
+            
+            // Сортируем выходы: "Выход 1", "Выход 2", "Выход 3"
+            val sortedExits = groupedByExit.keys.sortedBy { exitName ->
+                when {
+                    exitName.contains("1") -> 1
+                    exitName.contains("2") -> 2
+                    exitName.contains("3") -> 3
+                    else -> 99
+                }
+            }.toList()
+            
+            // Кнопки фильтрации по выходам
+            item(key = "route_1_filters") {
+                val filters = sortedExits.map { exitName ->
+                    FilterItem(id = "exit_$exitName", label = exitName)
+                }
+                
+                UniversalFilterRow(
+                    filters = filters,
+                    selectedFilterId = selectedFilterId,
+                    onFilterSelected = { selectedFilterId = it },
+                    useEqualWeights = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Constants.PADDING_MEDIUM.dp)
+                )
+            }
+            
+            // Показываем все выходы в две колонки: Вокзал | Совхоз
+            sortedExits.forEach { exitName ->
+                val exitSchedules = groupedByExit[exitName] ?: emptyList()
+                val vokzalSchedules = exitSchedules.filter { it.stopName.contains("вокзал", ignoreCase = true) }
+                val sovhozSchedules = exitSchedules.filter { it.stopName.contains("совхоз", ignoreCase = true) }
+                
+                if ((vokzalSchedules.isNotEmpty() || sovhozSchedules.isNotEmpty()) &&
+                    (selectedRoute1Exit == null || selectedRoute1Exit == exitName)) {
+                    item(key = "route_1_exit_$exitName") {
+                        Column {
+                            // Заголовок выхода - красивый с фоном
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                            ) {
+                                Text(
+                                    text = exitName,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                            }
+                            
+                            TwoColumnScheduleGrid(
+                                leftSchedules = vokzalSchedules,
+                                rightSchedules = sovhozSchedules,
+                                leftTitle = "Вокзал",
+                                rightTitle = "Совхоз",
+                                nextUpcomingLeftId = getNextUpcomingScheduleIdForRoute1(allRoute1Schedules, exitName, "вокзал"),
+                                nextUpcomingRightId = getNextUpcomingScheduleIdForRoute1(allRoute1Schedules, exitName, "совхоз"),
+                        viewModel = viewModel,
+                        route = route,
+                        showOnlyFavorites = showOnlyFavorites,
+                                showOnlyUpcoming = showOnlyUpcoming,
+                                modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Маршрут №3 (Кольцевой) - две секции: Радиозавод и Мясокомбинат
+        if (route.id == "3" && schedulesSlavgorod.isNotEmpty()) {
+            // Фильтры для выбора направления
+            item(key = "route_3_direction_filters") {
+                val selectedRoute3Direction = if (selectedFilterId?.startsWith("dir3_") == true) selectedFilterId?.removePrefix("dir3_") else null
+                
+                val filters = listOf(
+                    FilterItem(id = "dir3_radio", label = "Радиозавод"),
+                    FilterItem(id = "dir3_meat", label = "Мясокомбинат")
+                )
+                
+                UniversalFilterRow(
+                    filters = filters,
+                    selectedFilterId = selectedFilterId,
+                    onFilterSelected = { selectedFilterId = it },
+                    useEqualWeights = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Constants.PADDING_MEDIUM.dp)
+                )
+            }
+            
+            // Группируем расписания по направлениям
+            val selectedRoute3Direction = if (selectedFilterId?.startsWith("dir3_") == true) selectedFilterId?.removePrefix("dir3_") else null
+            
+            val allRadioSchedules = schedulesSlavgorod.filter { it.notes?.contains("Радиозавод") == true }
+            val allMeatSchedules = schedulesSlavgorod.filter { it.notes?.contains("Мясокомбинат") == true }
+            
+            // Разделяем по дням для Радиозавода
+            val radioWeekday = allRadioSchedules.filter { it.notes?.contains("будни") == true }
+            val radioWeekend = allRadioSchedules.filter { it.notes?.contains("суббота") == true || it.notes?.contains("выходные") == true }
+            
+            // Секция Радиозавода
+            if ((radioWeekday.isNotEmpty() || radioWeekend.isNotEmpty()) && 
+                (selectedRoute3Direction == null || selectedRoute3Direction == "radio")) {
+                item(key = "route_3_radio_header") {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "Радиозавод",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+                
+                item(key = "route_3_radio_grid") {
+                    TwoColumnScheduleGrid(
+                        leftSchedules = radioWeekday,
+                        rightSchedules = radioWeekend,
+                        leftTitle = "Будни",
+                        rightTitle = "Выходные",
+                        nextUpcomingLeftId = getNextUpcomingScheduleIdForRoute3(radioWeekday, true),
+                        nextUpcomingRightId = getNextUpcomingScheduleIdForRoute3(radioWeekend, false),
+                        viewModel = viewModel,
+                        route = route,
+                        showOnlyFavorites = showOnlyFavorites,
+                        showOnlyUpcoming = showOnlyUpcoming,
+                        modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 16.dp)
+                    )
+                }
+            }
+            
+            // Разделяем по дням для Мясокомбината
+            val meatWeekday = allMeatSchedules.filter { it.notes?.contains("будни") == true }
+            val meatWeekend = allMeatSchedules.filter { it.notes?.contains("выходные") == true }
+            
+            // Секция Мясокомбината
+            if ((meatWeekday.isNotEmpty() || meatWeekend.isNotEmpty()) && 
+                (selectedRoute3Direction == null || selectedRoute3Direction == "meat")) {
+                item(key = "route_3_meat_header") {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "Мясокомбинат",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+                
+                item(key = "route_3_meat_grid") {
+                    TwoColumnScheduleGrid(
+                        leftSchedules = meatWeekday,
+                        rightSchedules = meatWeekend,
+                        leftTitle = "Будни",
+                        rightTitle = "Выходные",
+                        nextUpcomingLeftId = getNextUpcomingScheduleIdForRoute3(meatWeekday, true),
+                        nextUpcomingRightId = getNextUpcomingScheduleIdForRoute3(meatWeekend, false),
+                        viewModel = viewModel,
+                        route = route,
+                        showOnlyFavorites = showOnlyFavorites,
+                        showOnlyUpcoming = showOnlyUpcoming,
+                        modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+                    )
+                }
+            }
+        }
+
+        // Сообщение об отсутствии расписания (только если действительно нет расписаний)
+        if (shouldShowNoScheduleMessage(route, schedulesSlavgorod, schedulesYarovoe, schedulesVokzal, schedulesSovhoz)) {
+            item {
+                NoScheduleMessage(
+                    departurePoint = "выбранного маршрута",
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Секция расписания с возможностью сворачивания и sticky header
+ * 
+ * Версия: 2.1
+ * Последнее обновление: Октябрь 2025
+ * 
+ * Создает раздел в списке расписаний с заголовком, который "прилипает" к верхней части
+ * экрана при прокрутке (sticky header). Секция может быть свернута/развернута одним кликом.
+ * 
+ * Используется для:
+ * - Секций выходов маршрута №1 ("1 Выход", "2 Выход", "3 Выход")
+ * - Группировки расписаний по точкам отправления (вокзал ↔ совхоз)
+ * 
+ * Функциональность:
+ * - Sticky header с названием секции и кнопкой сворачивания/разворачивания
+ * - Полное расписание в развернутом состоянии (двухколоночная сетка)
+ * - Двухколоночная сетка (вокзал | совхоз) с порядковыми номерами
+ * - При сворачивании расписание полностью скрывается
+ * - Поддержка фильтров "Избранные" и "Следующий"
+ * 
+ * Изменения v2.1:
+ * - Добавлены порядковые номера рейсов в TwoColumnScheduleGrid
+ * - Используются константы из Constants.kt для отступов
+ * 
+ * Изменения v2.0:
+ * - Убрано превью ближайшего рейса в свернутом состоянии
+ * - При сворачивании секция полностью скрывается (без preview)
+ * - Добавлена поддержка фильтров "Избранные" и "Следующий"
+ * 
+ * @param title название секции (например, "1 Выход")
+ * @param isExpanded развернута ли секция
+ * @param onToggleExpand callback для сворачивания/разворачивания
+ * @param viewModel ViewModel для управления избранным
+ * @param route маршрут (для добавления в избранное)
+ * @param departurePointForCheck уникальный ключ секции
+ * @param leftSchedules расписания левой колонки (вокзал)
+ * @param rightSchedules расписания правой колонки (совхоз)
+ * @param leftTitle заголовок левой колонки
+ * @param rightTitle заголовок правой колонки
+ * @param nextUpcomingLeftId ID ближайшего рейса слева
+ * @param nextUpcomingRightId ID ближайшего рейса справа
+ * @param showOnlyFavorites фильтр избранных
+ * @param showOnlyUpcoming фильтр следующего рейса
+ */
+@OptIn(ExperimentalFoundationApi::class)
+private fun LazyListScope.ExpandableScheduleSection(
+    title: String,
+    isExpanded: Boolean,
+    onToggleExpand: () -> Unit,
+    viewModel: FavoritesViewModel,
+    route: BusRoute,
+    departurePointForCheck: String,
+    leftSchedules: List<BusSchedule>,
+    rightSchedules: List<BusSchedule>,
+    leftTitle: String,
+    rightTitle: String,
+    nextUpcomingLeftId: String?,
+    nextUpcomingRightId: String?,
+    showOnlyFavorites: Boolean = false,
+    showOnlyUpcoming: Boolean = false
+) {
+    // Sticky header для заголовка секции
+    stickyHeader(key = "header_$departurePointForCheck") {
+        StickyDepartureHeader(
+            title = title,
+            isExpanded = isExpanded,
+            onToggleExpand = onToggleExpand
+        )
+    }
+    
+    // Содержимое секции (только если развернуто)
+    if (isExpanded) {
+        item(key = "schedule_grid_$departurePointForCheck") {
+            TwoColumnScheduleGrid(
+                leftSchedules = leftSchedules,
+                rightSchedules = rightSchedules,
+                leftTitle = leftTitle,
+                rightTitle = rightTitle,
+                nextUpcomingLeftId = nextUpcomingLeftId,
+                nextUpcomingRightId = nextUpcomingRightId,
+                viewModel = viewModel,
+                route = route,
+                        showOnlyFavorites = showOnlyFavorites,
+                        showOnlyUpcoming = showOnlyUpcoming,
+                        modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)
+            )
+        }
+    }
+}
+
+/**
+ * Сообщение об отсутствии расписания
+ */
+@Composable
+private fun NoScheduleMessage(
+    departurePoint: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Для $departurePoint расписание отсутствует.",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp)
+        )
+    }
+}
+
+/**
+ * Проверяет, нужно ли показать сообщение об отсутствии расписания
+ * Проверяет реально есть ли хоть какие-то расписания для маршрута
+ */
+private fun shouldShowNoScheduleMessage(
+    route: BusRoute,
+    schedulesSlavgorod: List<BusSchedule>,
+    schedulesYarovoe: List<BusSchedule>,
+    schedulesVokzal: List<BusSchedule>,
+    schedulesSovhoz: List<BusSchedule>
+): Boolean {
+    // Показываем сообщение только если НЕТ вообще никаких расписаний
+    val totalSchedules = schedulesSlavgorod.size + schedulesYarovoe.size + 
+                        schedulesVokzal.size + schedulesSovhoz.size
+    return totalSchedules == 0
+}
+
+/**
+ * Определяет ID ближайшего предстоящего рейса для маршрута №1 с учетом выходов и колонки
+ * 
+ * Маршрут №1 имеет несколько выходов (Выход 1, Выход 2, Выход 3), каждый из которых
+ * должен показывать свое актуальное отправление для конкретной колонки (вокзал или совхоз).
+ * Фильтрация происходит только по времени (без учета дней недели), так как может быть
+ * несколько рейсов в один день.
+ * 
+ * @param schedules список всех расписаний маршрута
+ * @param exitName название выхода ("Выход 1", "Выход 2", "Выход 3")
+ * @param columnType тип колонки ("вокзал" или "совхоз")
+ * @return ID ближайшего рейса для указанного выхода и колонки или null если расписаний нет
+ */
+private fun getNextUpcomingScheduleIdForRoute1(schedules: List<BusSchedule>, exitName: String, columnType: String): String? {
+    if (schedules.isEmpty()) return null
+    
+    val currentTime = Calendar.getInstance()
+    val timeFormat = SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+    
+    Timber.d("ScheduleList.getNextUpcomingScheduleIdForRoute1: exitName = $exitName, columnType = $columnType, total schedules = ${schedules.size}")
+    Timber.d("ScheduleList.getNextUpcomingScheduleIdForRoute1: currentTime = ${timeFormat.format(currentTime.time)}")
+    Timber.d("ScheduleList.getNextUpcomingScheduleIdForRoute1: currentDayOfWeek = ${currentTime.get(Calendar.DAY_OF_WEEK)}")
+    
+    // Фильтруем расписания по указанному выходу и колонке
+    val exitSchedules = schedules.filter { schedule ->
+        val notes = schedule.notes ?: ""
+        val departurePoint = schedule.departurePoint ?: ""
+        
+        // Проверяем соответствие выходу и колонке (без фильтрации по дням недели)
+        notes.contains(exitName, ignoreCase = true) && 
+        departurePoint.contains(columnType.lowercase(), ignoreCase = true)
+    }
+    
+    Timber.d("ScheduleList.getNextUpcomingScheduleIdForRoute1: exitSchedules count = ${exitSchedules.size}")
+    
+    // Логируем первые несколько расписаний для отладки
+    exitSchedules.take(3).forEach { schedule ->
+        Timber.d("ScheduleList.getNextUpcomingScheduleIdForRoute1: schedule ${schedule.id} - time: ${schedule.departureTime}, dayOfWeek: ${schedule.dayOfWeek}, notes: ${schedule.notes}, departurePoint: ${schedule.departurePoint}")
+    }
+    
+    if (exitSchedules.isEmpty()) return null
+    
+    // Ищем ближайший рейс сегодня
+    val upcomingToday = exitSchedules.filter { schedule ->
+        try {
+            val departureTime = timeFormat.parse(schedule.departureTime)
+            if (departureTime != null) {
+                // Создаем Calendar для времени отправления на сегодняшний день
+                val scheduleCalendar = Calendar.getInstance().apply {
+                    // Устанавливаем текущую дату
+                    val today = Calendar.getInstance()
+                    set(Calendar.YEAR, today.get(Calendar.YEAR))
+                    set(Calendar.MONTH, today.get(Calendar.MONTH))
+                    set(Calendar.DAY_OF_MONTH, today.get(Calendar.DAY_OF_MONTH))
+                    
+                    // Устанавливаем время из расписания
+                    val tempCalendar = Calendar.getInstance().apply { time = departureTime }
+                    set(Calendar.HOUR_OF_DAY, tempCalendar.get(Calendar.HOUR_OF_DAY))
+                    set(Calendar.MINUTE, tempCalendar.get(Calendar.MINUTE))
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                
+                // Проверяем, что время расписания еще не прошло сегодня
+                val isUpcoming = scheduleCalendar.timeInMillis > currentTime.timeInMillis
+                Timber.d("ScheduleList.getNextUpcomingScheduleIdForRoute1: schedule ${schedule.id} - ${schedule.departureTime} vs ${timeFormat.format(currentTime.time)} = $isUpcoming")
+                isUpcoming
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Ошибка парсинга времени: ${schedule.departureTime}")
+            false
+        }
+    }
+    
+    Timber.d("ScheduleList.getNextUpcomingScheduleIdForRoute1: upcomingToday count = ${upcomingToday.size}")
+    
+    if (upcomingToday.isNotEmpty()) {
+        // Сортируем по времени и возвращаем ближайший
+        val sortedByTime = upcomingToday.sortedBy { schedule ->
+            try {
+                timeFormat.parse(schedule.departureTime)?.time ?: Long.MAX_VALUE
+            } catch (e: Exception) {
+                Long.MAX_VALUE
+            }
+        }
+        Timber.d("ScheduleList.getNextUpcomingScheduleIdForRoute1: returning next today: ${sortedByTime.first().id} (${sortedByTime.first().departureTime})")
+        return sortedByTime.first().id
+    }
+    
+    // Если рейсов сегодня нет, возвращаем первый рейс завтра (отсортированный по времени)
+    val sortedSchedules = exitSchedules.sortedBy { schedule ->
+        try {
+            timeFormat.parse(schedule.departureTime)?.time ?: Long.MAX_VALUE
+        } catch (e: Exception) {
+            Long.MAX_VALUE
+        }
+    }
+    Timber.d("ScheduleList.getNextUpcomingScheduleIdForRoute1: returning next day: ${sortedSchedules.firstOrNull()?.id} (${sortedSchedules.firstOrNull()?.departureTime})")
+    return sortedSchedules.firstOrNull()?.id
+}
+
+/**
+ * Определяет ID ближайшего предстоящего рейса из списка расписаний для маршрута №3
+ * 
+ * Маршрут №3 теперь работает только по времени (без фильтрации по дням недели),
+ * так как может быть несколько рейсов в один день.
+ * 
+ * @param schedules список расписаний
+ * @param isWeekday параметр игнорируется (оставлен для совместимости)
+ * @return ID ближайшего рейса или null если расписаний нет
+ */
+private fun getNextUpcomingScheduleIdForRoute3(schedules: List<BusSchedule>, isWeekday: Boolean): String? {
+    if (schedules.isEmpty()) return null
+    
+    val currentTime = Calendar.getInstance()
+    val timeFormat = SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+    
+    Timber.d("ScheduleList.getNextUpcomingScheduleIdForRoute3: total schedules = ${schedules.size}")
+    Timber.d("ScheduleList.getNextUpcomingScheduleIdForRoute3: currentTime = ${timeFormat.format(currentTime.time)}")
+    
+    // Ищем ближайший рейс сегодня (без фильтрации по дням недели)
+    val upcomingToday = schedules.filter { schedule ->
+        try {
+            val departureTime = timeFormat.parse(schedule.departureTime)
+            if (departureTime != null) {
+                // Создаем Calendar для времени отправления на сегодняшний день
+                val scheduleCalendar = Calendar.getInstance().apply {
+                    // Устанавливаем текущую дату
+                    val today = Calendar.getInstance()
+                    set(Calendar.YEAR, today.get(Calendar.YEAR))
+                    set(Calendar.MONTH, today.get(Calendar.MONTH))
+                    set(Calendar.DAY_OF_MONTH, today.get(Calendar.DAY_OF_MONTH))
+                    
+                    // Устанавливаем время из расписания
+                    val tempCalendar = Calendar.getInstance().apply { time = departureTime }
+                    set(Calendar.HOUR_OF_DAY, tempCalendar.get(Calendar.HOUR_OF_DAY))
+                    set(Calendar.MINUTE, tempCalendar.get(Calendar.MINUTE))
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                
+                // Проверяем, что время расписания еще не прошло сегодня
+                val isUpcoming = scheduleCalendar.timeInMillis > currentTime.timeInMillis
+                Timber.d("ScheduleList.getNextUpcomingScheduleIdForRoute3: schedule ${schedule.id} - ${schedule.departureTime} vs ${timeFormat.format(currentTime.time)} = $isUpcoming")
+                isUpcoming
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Ошибка парсинга времени: ${schedule.departureTime}")
+            false
+        }
+    }
+    
+    Timber.d("ScheduleList.getNextUpcomingScheduleIdForRoute3: upcomingToday count = ${upcomingToday.size}")
+    
+    if (upcomingToday.isNotEmpty()) {
+        // Сортируем по времени и возвращаем ближайший
+        val sortedByTime = upcomingToday.sortedBy { schedule ->
+            try {
+                timeFormat.parse(schedule.departureTime)?.time ?: Long.MAX_VALUE
+            } catch (e: Exception) {
+                Long.MAX_VALUE
+            }
+        }
+        Timber.d("ScheduleList.getNextUpcomingScheduleIdForRoute3: returning next today: ${sortedByTime.first().id} (${sortedByTime.first().departureTime})")
+        return sortedByTime.first().id
+    }
+    
+    // Если рейсов сегодня нет, возвращаем первый рейс завтра (отсортированный по времени)
+    val sortedSchedules = schedules.sortedBy { schedule ->
+        try {
+            timeFormat.parse(schedule.departureTime)?.time ?: Long.MAX_VALUE
+        } catch (e: Exception) {
+            Long.MAX_VALUE
+        }
+    }
+    Timber.d("ScheduleList.getNextUpcomingScheduleIdForRoute3: returning next day: ${sortedSchedules.firstOrNull()?.id} (${sortedSchedules.firstOrNull()?.departureTime})")
+    return sortedSchedules.firstOrNull()?.id
+}
+
+/**
+ * Определяет ID ближайшего предстоящего рейса из списка расписаний
+ */
+private fun getNextUpcomingScheduleId(schedules: List<BusSchedule>): String? {
+    if (schedules.isEmpty()) return null
+    
+    val currentTime = Calendar.getInstance()
+    val timeFormat = SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+    
+    val upcomingToday = schedules.filter { schedule ->
+        try {
+            val departureTime = timeFormat.parse(schedule.departureTime)
+            if (departureTime != null) {
+                val scheduleCalendar = Calendar.getInstance().apply {
+                    time = departureTime
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                scheduleCalendar.after(currentTime)
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Ошибка парсинга времени: ${schedule.departureTime}")
+            false
+        }
+    }
+    
+    if (upcomingToday.isNotEmpty()) {
+        return upcomingToday.first().id
+    }
+    
+    return schedules.firstOrNull()?.id
+}
+
+/**
+ * Определяет ID ближайшего рейса с учетом избранных времен и настроек уведомлений
+ * 
+ * НОВАЯ ЛОГИКА: использует NotificationTimeCalculator для поиска ближайшего
+ * избранного времени с учетом настроек уведомлений.
+ * 
+ * @param schedules список расписаний для поиска
+ * @param routeId ID маршрута для поиска избранных времен
+ * @param viewModel FavoritesViewModel для доступа к избранным временам
+ * @return ID ближайшего рейса или null если нет избранных времен
+ */
+private fun getNextUpcomingScheduleIdWithFavorites(
+    schedules: List<BusSchedule>,
+    routeId: String,
+    viewModel: FavoritesViewModel
+): String? {
+    if (schedules.isEmpty()) return null
+    
+    // Получаем избранные времена для этого маршрута
+    val favoriteTimes = viewModel.favoriteTimes.value.filter { 
+        it.routeId == routeId && it.isActive 
+    }
+    
+    if (favoriteTimes.isEmpty()) {
+        // Если нет избранных времен, используем старую логику
+        return getNextUpcomingScheduleId(schedules)
+    }
+    
+    // Используем NotificationTimeCalculator для поиска ближайшего избранного времени
+    val nextDepartureTime = com.example.lets_go_slavgorod.domain.notification.NotificationTimeCalculator.getNextDepartureTime(
+        favoriteTimes = favoriteTimes,
+        context = null
+    )
+    
+    if (nextDepartureTime == null) {
+        return null
+    }
+    
+    // Находим расписание, которое соответствует времени отправления
+    val timeFormat = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+    val targetTimeString = timeFormat.format(java.util.Date.from(nextDepartureTime.atZone(java.time.ZoneId.systemDefault()).toInstant()))
+    
+    val matchingSchedule = schedules.find { schedule ->
+        schedule.departureTime == targetTimeString
+    }
+    
+    return matchingSchedule?.id
+}
