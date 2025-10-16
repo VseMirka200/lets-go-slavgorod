@@ -1750,12 +1750,18 @@ private fun ScheduleUpdateCard(
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = "Расписание успешно обновлено",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+                        Column {
+                            Text(
+                                text = "Расписание успешно обновлено",
+                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Text(
+                                text = "Приложение перезапустится автоматически...",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            )
+                        }
                         Spacer(Modifier.weight(1f))
                         IconButton(
                             onClick = onClearStatus,

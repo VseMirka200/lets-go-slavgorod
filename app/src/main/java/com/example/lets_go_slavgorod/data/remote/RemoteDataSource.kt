@@ -355,7 +355,7 @@ class RemoteDataSource(private val context: Context) {
     }
     
     /**
-     * Очищает кэш
+     * Очищает кэш маршрутов и расписаний
      */
     fun clearCache() {
         cachedRoutes = null
@@ -370,6 +370,14 @@ class RemoteDataSource(private val context: Context) {
         } catch (e: Exception) {
             Timber.e(e, "Error deleting cache file")
         }
+    }
+    
+    /**
+     * Очищает только кэш расписаний (чтобы они перезагрузились)
+     */
+    fun clearSchedulesCache() {
+        cachedSchedules.clear()
+        Timber.d("Schedules cache cleared")
     }
 }
 

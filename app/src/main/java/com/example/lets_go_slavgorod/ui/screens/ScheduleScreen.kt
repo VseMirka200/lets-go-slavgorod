@@ -28,11 +28,15 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.model.BusSchedule
+import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
 import com.example.lets_go_slavgorod.ui.components.schedule.ScheduleList
 import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
 import com.example.lets_go_slavgorod.utils.ScheduleUtils
 import com.example.lets_go_slavgorod.utils.ConditionalLogging
 import timber.log.Timber
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
@@ -108,6 +112,28 @@ fun ScheduleScreen(
     var nextUpcomingYarovoeId by remember { mutableStateOf<String?>(null) }
     var nextUpcomingVokzalId by remember { mutableStateOf<String?>(null) }
     var nextUpcomingSovhozId by remember { mutableStateOf<String?>(null) }
+    
+    // Получаем контекст для доступа к репозиторию
+    val context = LocalContext.current
+    
+    // Автоматическая проверка обновлений расписания при входе на экран
+    LaunchedEffect(route) {
+        if (route != null) {
+            // Проверяем обновления в фоне
+            withContext(Dispatchers.IO) {
+                try {
+                    val repository = BusRouteRepository(context)
+                    val hasUpdates = repository.checkForDataUpdates()
+                    if (hasUpdates) {
+                        Timber.i("Schedule updates available, refreshing...")
+                        repository.refreshRoutesFromRemote()
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Error checking for schedule updates")
+                }
+            }
+        }
+    }
     
     // Динамическая загрузка и обработка данных расписания
     // LaunchedEffect с зависимостью от route перезапускает загрузку при смене маршрута

@@ -22,6 +22,8 @@ out/
 **/build/
 gradle-app.setting
 !gradle-wrapper.jar
+.kotlin/
+build/
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -113,3 +115,34 @@ obj/
 .cache/
 tmp/
 temp/
+
+# Documentation temp files
+*.md~
+*.txt~
+
+# Gradle wrapper batch file (Windows)
+gradlew.bat
+
+# Build output APKs (раскомментируйте если хотите коммитить APK в релизах)
+app/build/outputs/apk/
+
+# Reports and logs
+build/reports/
+app/build/outputs/logs/
+
+# Temporary schedule data files (используйте materials/schedule/)
+routes_data.json
+routes_data_template.json
+
+# IDE temporary files
+.idea/caches/
+.idea/shelf/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/.name
+.idea/deploymentTargetSelector.xml
+.idea/deviceManager.xml
+.idea/assetWizardSettings.xml
+
+# Git attributes (если не нужен)
+.gitattributes

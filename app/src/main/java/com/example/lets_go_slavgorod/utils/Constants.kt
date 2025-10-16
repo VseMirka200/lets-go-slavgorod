@@ -72,7 +72,15 @@ object Constants {
     const val ALARM_REQUEST_CODE_PREFIX = "fav_alarm_" // Префикс для кодов будильников избранных маршрутов
     
     // Удалённая загрузка данных
-    const val REMOTE_JSON_URL = "https://raw.githubusercontent.com/VseMirka200/lets_go_slavgorod/main/routes_data.json" // URL расписания на GitHub
+    // Настройка GitHub репозитория
+    const val GITHUB_USERNAME = "VseMirka200"                    // Ваш GitHub username
+    const val GITHUB_REPO = "lets-go-slavgorod"                  // Название репозитория
+    const val GITHUB_BRANCH = "main"                             // Ветка для загрузки (main, develop и т.д.)
+    const val GITHUB_FILE_PATH = "materials/schedule/routes_data.json"  // Путь к файлу в репозитории
+    
+    // Автоматически формируемый URL (не изменяйте, измените параметры выше)
+    const val REMOTE_JSON_URL = "https://raw.githubusercontent.com/$GITHUB_USERNAME/$GITHUB_REPO/$GITHUB_BRANCH/$GITHUB_FILE_PATH"
+    
     const val REMOTE_CONNECTION_TIMEOUT = 10_000  // Таймаут подключения (мс)
     const val REMOTE_READ_TIMEOUT = 15_000        // Таймаут чтения (мс)
     

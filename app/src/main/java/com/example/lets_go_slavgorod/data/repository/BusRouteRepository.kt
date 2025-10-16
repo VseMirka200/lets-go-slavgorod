@@ -325,25 +325,7 @@ class BusRouteRepository(private val context: Context? = null) {
         // Валидация входных данных
         require(routeId.isNotBlank()) { "Route ID cannot be blank" }
         
-        // Пытаемся загрузить из JSON
-        val jsonSchedules = if (jsonDataSource != null) {
-            try {
-                jsonDataSource.loadSchedules(routeId)
-            } catch (e: Exception) {
-                Timber.w(e, "Failed to load schedules from JSON for route $routeId, using hardcoded data")
-                null
-            }
-        } else {
-            null
-        }
-        
-        // Если JSON загрузился успешно, используем его
-        if (jsonSchedules != null && jsonSchedules.isNotEmpty()) {
-            Timber.d("Using schedules from JSON for route $routeId: ${jsonSchedules.size} schedules")
-            return jsonSchedules
-        }
-        
-        // Приоритет 1: Пытаемся загрузить из RemoteDataSource
+        // Приоритет 1: Пытаемся загрузить из RemoteDataSource (GitHub)
         val remoteSchedules = if (remoteDataSource != null) {
             try {
                 remoteDataSource.loadSchedules(routeId, forceRefresh = false)
@@ -361,7 +343,25 @@ class BusRouteRepository(private val context: Context? = null) {
             return remoteSchedules
         }
         
-        // Приоритет 2: Fallback на hardcoded данные
+        // Приоритет 2: Пытаемся загрузить из JsonDataSource (assets)
+        val jsonSchedules = if (jsonDataSource != null) {
+            try {
+                jsonDataSource.loadSchedules(routeId)
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to load schedules from JsonDataSource for route $routeId")
+                null
+            }
+        } else {
+            null
+        }
+        
+        // Если JSON загрузился успешно, используем его
+        if (jsonSchedules != null && jsonSchedules.isNotEmpty()) {
+            Timber.d("Using schedules from JsonDataSource for route $routeId: ${jsonSchedules.size} schedules")
+            return jsonSchedules
+        }
+        
+        // Приоритет 3: Fallback на hardcoded данные
         Timber.d("Using hardcoded schedules for route $routeId")
         return ScheduleUtils.generateSchedules(routeId)
     }
@@ -381,10 +381,15 @@ class BusRouteRepository(private val context: Context? = null) {
             }
             
             Timber.i("Starting manual refresh from GitHub...")
+            
+            // ВАЖНО: Очищаем кэш расписаний перед обновлением
+            remoteDataSource.clearSchedulesCache()
+            jsonDataSource?.clearAllScheduleCache()
+            
             val routes = remoteDataSource.loadRoutes(forceRefresh = true)
             
             if (routes.isNotEmpty()) {
-                // Обновляем кэш
+                // Обновляем кэш маршрутов
                 routesCache.clear()
                 routes.forEach { route ->
                     routesCache[route.id] = route

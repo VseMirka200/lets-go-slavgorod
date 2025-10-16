@@ -97,7 +97,13 @@ class DataManagementViewModel(private val context: Context) : ViewModel() {
                     _dataVersion.value = repository.getDataVersion()
                     _dataLastUpdated.value = repository.getDataLastUpdated()
                     
-                    Timber.i("Schedule successfully refreshed from GitHub")
+                    Timber.i("Schedule successfully refreshed from GitHub. Restarting to apply changes...")
+                    
+                    // Перезапускаем приложение для применения изменений
+                    kotlinx.coroutines.delay(1000)
+                    withContext(Dispatchers.Main) {
+                        restartApp()
+                    }
                 } else {
                     _scheduleRefreshError.value = "Не удалось загрузить данные с сервера"
                     Timber.w("Failed to refresh schedule from GitHub")
