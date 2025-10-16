@@ -1,5 +1,5 @@
 {
-  "version": "2",
+  "version": "0.0.2",
   "last_updated": "2025-10-16",
   "routes": [
     {
@@ -8,11 +8,11 @@
       "name": "Автобус №102",
       "description": "Рынок (Славгород) — МСЧ-128 (Яровое)",
       "travelTime": "~40 минут",
-      "pricePrimary": "38₽ город / 55₽ межгород",
+      "pricePrimary": "38 ₽ город / 55 ₽ межгород",
       "paymentMethods": "Наличный / Картой",
       "color": "#FF6200EE",
       "schedules": [
-        {"id": "102_slav_1", "stopName": "Рынок (Славгород)", "departureTime": "06:25", "departurePoint": "Рынок (Славгород)"},
+        {"id": "102_slav_1", "stopName": "Рынок (Славгород)", "departureTime": "06:26", "departurePoint": "Рынок (Славгород)"},
         {"id": "102_slav_2", "stopName": "Рынок (Славгород)", "departureTime": "06:45", "departurePoint": "Рынок (Славгород)"},
         {"id": "102_slav_3", "stopName": "Рынок (Славгород)", "departureTime": "07:00", "departurePoint": "Рынок (Славгород)"},
         {"id": "102_slav_4", "stopName": "Рынок (Славгород)", "departureTime": "07:20", "departurePoint": "Рынок (Славгород)"},
