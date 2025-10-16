@@ -16,17 +16,34 @@ import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
 /**
  * Компонент для отображения расписания в две колонки
  * 
- * Отображает времена отправления из двух разных точек в виде двух колонок,
- * как показано на примере изображения с автобусным расписанием.
+ * Версия: 2.0
+ * Последнее обновление: Октябрь 2025
  * 
- * @param leftSchedules список расписаний для левой колонки (например, отправления из Славгорода)
- * @param rightSchedules список расписаний для правой колонки (например, отправления из Ярового)
+ * Отображает времена отправления из двух разных точек в виде двух колонок
+ * с поддержкой фильтрации и автоматическим выравниванием.
+ * 
+ * Функциональность:
+ * - Двухколоночная сетка с заголовками
+ * - Подсветка ближайших рейсов
+ * - Кнопки избранного (звездочка) для каждого времени
+ * - Поддержка фильтров "Избранные" и "Следующий"
+ * - Автоматическое выравнивание высоты колонок
+ * 
+ * Изменения v2.0:
+ * - Добавлена поддержка фильтра "Следующий"
+ * - Улучшена логика фильтрации
+ * - Добавлены пустые состояния для фильтров
+ * 
+ * @param leftSchedules список расписаний для левой колонки (например, из Вокзала)
+ * @param rightSchedules список расписаний для правой колонки (например, из Совхоза)
  * @param leftTitle заголовок для левой колонки
  * @param rightTitle заголовок для правой колонки
  * @param nextUpcomingLeftId ID ближайшего предстоящего рейса в левой колонке
  * @param nextUpcomingRightId ID ближайшего предстоящего рейса в правой колонке
  * @param viewModel BusViewModel для работы с избранными
  * @param route маршрут для контекста
+ * @param showOnlyFavorites если true, показывать только избранные времена
+ * @param showOnlyUpcoming если true, показывать только следующий рейс
  * @param modifier модификатор для настройки внешнего вида
  */
 @Composable
@@ -40,34 +57,39 @@ fun TwoColumnScheduleGrid(
     viewModel: BusViewModel,
     route: com.example.lets_go_slavgorod.data.model.BusRoute,
     showOnlyFavorites: Boolean = false,
+    showOnlyUpcoming: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val favoriteTimesList by viewModel.favoriteTimes.collectAsState()
     
-    // Фильтруем расписания по избранному если включен фильтр
-    val filteredLeftSchedules = remember(leftSchedules, showOnlyFavorites, favoriteTimesList) {
-        if (showOnlyFavorites) {
-            leftSchedules.filter { schedule ->
+    // Фильтруем расписания по избранному или следующему если включен фильтр
+    val filteredLeftSchedules = remember(leftSchedules, showOnlyFavorites, showOnlyUpcoming, favoriteTimesList, nextUpcomingLeftId) {
+        when {
+            showOnlyFavorites -> leftSchedules.filter { schedule ->
                 favoriteTimesList.any { it.id == schedule.id && it.isActive }
             }
-        } else {
-            leftSchedules
+            showOnlyUpcoming -> leftSchedules.filter { schedule ->
+                schedule.id == nextUpcomingLeftId
+            }
+            else -> leftSchedules
         }
     }
     
-    val filteredRightSchedules = remember(rightSchedules, showOnlyFavorites, favoriteTimesList) {
-        if (showOnlyFavorites) {
-            rightSchedules.filter { schedule ->
+    val filteredRightSchedules = remember(rightSchedules, showOnlyFavorites, showOnlyUpcoming, favoriteTimesList, nextUpcomingRightId) {
+        when {
+            showOnlyFavorites -> rightSchedules.filter { schedule ->
                 favoriteTimesList.any { it.id == schedule.id && it.isActive }
             }
-        } else {
-            rightSchedules
+            showOnlyUpcoming -> rightSchedules.filter { schedule ->
+                schedule.id == nextUpcomingRightId
+            }
+            else -> rightSchedules
         }
     }
     
     if (filteredLeftSchedules.isEmpty() && filteredRightSchedules.isEmpty()) {
-        // Показываем сообщение если нет избранных при активном фильтре
-        if (showOnlyFavorites) {
+        // Показываем сообщение если нет данных при активном фильтре
+        if (showOnlyFavorites || showOnlyUpcoming) {
             Box(
                 modifier = modifier
                     .fillMaxWidth()
@@ -80,12 +102,12 @@ fun TwoColumnScheduleGrid(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.StarBorder,
-                        contentDescription = "Нет избранных",
+                        contentDescription = if (showOnlyFavorites) "Нет избранных" else "Нет следующих",
                         modifier = Modifier.size(48.dp),
                         tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                     )
                     Text(
-                        text = "Нет избранных времен",
+                        text = if (showOnlyFavorites) "Нет избранных времен" else "Нет предстоящих рейсов",
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -161,6 +183,7 @@ fun TwoColumnScheduleGrid(
                                 }
                             },
                             isNextUpcoming = isNextUpcoming,
+                            orderNumber = i + 1,
                             allSchedules = filteredLeftSchedules,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -190,6 +213,7 @@ fun TwoColumnScheduleGrid(
                                 }
                             },
                             isNextUpcoming = isNextUpcoming,
+                            orderNumber = i + 1,
                             allSchedules = filteredRightSchedules,
                             modifier = Modifier.fillMaxWidth()
                         )

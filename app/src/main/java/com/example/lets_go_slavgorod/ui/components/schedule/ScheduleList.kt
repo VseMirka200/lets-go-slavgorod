@@ -4,7 +4,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
@@ -13,10 +12,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.model.BusSchedule
-import com.example.lets_go_slavgorod.ui.components.ScheduleCard
 import com.example.lets_go_slavgorod.ui.components.StickyDepartureHeader
 import com.example.lets_go_slavgorod.ui.components.schedule.TwoColumnScheduleGrid
 import com.example.lets_go_slavgorod.ui.components.schedule.FilterableScheduleGrid
@@ -25,6 +24,11 @@ import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
 
 /**
  * Склонение слова "время" для русского языка
+ * 
+ * Возвращает правильную форму слова "время" в зависимости от числа.
+ * 
+ * @param count количество времен
+ * @return правильная форма: "время", "времени" или "времен"
  */
 private fun getTimesWord(count: Int): String {
     return when {
@@ -37,8 +41,17 @@ private fun getTimesWord(count: Int): String {
 /**
  * Основной компонент списка расписаний маршрута
  * 
+ * Версия: 3.0
+ * Последнее обновление: Октябрь 2025
+ * 
+ * Изменения v3.0:
+ * - Добавлены фильтры "Избранные" и "Следующий"
+ * - Улучшена компоновка фильтров
+ * - Оптимизирована работа с избранными временами
+ * 
  * Отображает расписания в виде прокручиваемого списка с различными вариантами
- * компоновки в зависимости от типа маршрута.
+ * компоновки в зависимости от типа маршрута. Поддерживает фильтрацию по избранным
+ * и следующим рейсам.
  * 
  * Варианты отображения:
  * - Маршрут №102: двухколоночная сетка Славгород ↔ Яровое с фильтрацией
@@ -67,11 +80,15 @@ private fun getTimesWord(count: Int): String {
  * @param nextUpcomingSovhozId ID ближайшего рейса из совхоза
  * @param viewModel ViewModel для управления избранными временами
  * @param onBackClick callback для кнопки "Назад" в заголовке
- * @param onNotificationClick callback для кнопки уведомлений в заголовке
- * @param onScrollOffsetChange callback при изменении позиции прокрутки (не используется)
+ * @param onNotificationClick callback для кнопки уведомлений в заголовке (может быть null)
+ * @param onScrollOffsetChange callback при изменении позиции прокрутки (используется для анимаций)
  * @param modifier модификатор для настройки внешнего вида
+ * 
+ * Фильтры:
+ * - **Избранные**: показывает только избранные пользователем времена
+ * - **Следующий**: показывает только ближайшие предстоящие рейсы
+ * - Фильтры взаимоисключающие (активен только один или ни одного)
  */
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ScheduleList(
     route: BusRoute,
@@ -89,18 +106,14 @@ fun ScheduleList(
     onScrollOffsetChange: (Float) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    var isSlavgorodSectionExpanded by remember { mutableStateOf(true) }
-    var isYarovoeSectionExpanded by remember { mutableStateOf(true) }
-    var isVokzalSectionExpanded by remember { mutableStateOf(true) }
-    var isSovhozSectionExpanded by remember { mutableStateOf(true) }
-    
     // Состояния для секций выходов маршрута №1
     var isExit1Expanded by remember { mutableStateOf(true) }
     var isExit2Expanded by remember { mutableStateOf(true) }
     var isExit3Expanded by remember { mutableStateOf(true) }
     
-    // Фильтр избранных времен
+    // Фильтры
     var showOnlyFavorites by remember { mutableStateOf(false) }
+    var showOnlyUpcoming by remember { mutableStateOf(false) }
     val favoriteTimesList by viewModel.favoriteTimes.collectAsState()
 
     // Состояние для отслеживания скролла
@@ -130,40 +143,68 @@ fun ScheduleList(
             )
         }
         
-        // Фильтр избранных времен
-        item(key = "favorites_filter") {
-            Row(
+        // Фильтры
+        item(key = "filters") {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(start = 16.dp, top = 4.dp, end = 16.dp, bottom = 2.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                FilterChip(
-                    selected = showOnlyFavorites,
-                    onClick = { showOnlyFavorites = !showOnlyFavorites },
-                    label = { 
-                        Text(
-                            text = if (showOnlyFavorites) "Избранные" else "Все времена",
-                            style = MaterialTheme.typography.bodyMedium
-                        ) 
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = if (showOnlyFavorites) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Фильтр "Избранные"
+                    FilterChip(
+                        selected = showOnlyFavorites,
+                        onClick = { 
+                            showOnlyFavorites = !showOnlyFavorites
+                            if (showOnlyFavorites) showOnlyUpcoming = false
+                        },
+                        label = { 
+                            Text(
+                                text = "Избранные",
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.fillMaxWidth()
+                            ) 
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = if (showOnlyFavorites) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                    
+                    // Фильтр "Следующий"
+                    FilterChip(
+                        selected = showOnlyUpcoming,
+                        onClick = { 
+                            showOnlyUpcoming = !showOnlyUpcoming
+                            if (showOnlyUpcoming) showOnlyFavorites = false
+                        },
+                        label = { 
+                            Text(
+                                text = "Следующий",
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.fillMaxWidth()
+                            ) 
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
                 
+                // Счетчик избранных
                 if (showOnlyFavorites) {
-                    Spacer(modifier = Modifier.width(8.dp))
                     val favCount = favoriteTimesList.count { it.isActive && it.routeId == route.id }
                     Text(
                         text = "$favCount ${getTimesWord(favCount)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 4.dp, top = 2.dp)
                     )
                 }
             }
@@ -182,6 +223,7 @@ fun ScheduleList(
                     viewModel = viewModel,
                     route = route,
                     showOnlyFavorites = showOnlyFavorites,
+                    showOnlyUpcoming = showOnlyUpcoming,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
                 )
             }
@@ -200,6 +242,7 @@ fun ScheduleList(
                     viewModel = viewModel,
                     route = route,
                     showOnlyFavorites = showOnlyFavorites,
+                    showOnlyUpcoming = showOnlyUpcoming,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
                 )
             }
@@ -228,13 +271,8 @@ fun ScheduleList(
                 val sovhozSchedules = exitSchedules.filter { it.departurePoint == "совхоз" }
                 
                 if (vokzalSchedules.isNotEmpty() && sovhozSchedules.isNotEmpty()) {
-                    // Используем ключ для состояния секции
-                    val sectionKey = "exit_${exitName.replace(" ", "_")}"
-                    
                     ExpandableScheduleSection(
-                        title = exitName.replaceFirstChar { it.uppercase() }, // "1 выход" -> "1 Выход"
-                        schedules = vokzalSchedules,
-                        nextUpcomingScheduleId = nextUpcomingVokzalId,
+                        title = exitName.replaceFirstChar { it.uppercase() },
                         isExpanded = when(exitName) {
                             "1 выход" -> isExit1Expanded
                             "2 выход" -> isExit2Expanded
@@ -257,7 +295,8 @@ fun ScheduleList(
                         rightTitle = "Из совхоза",
                         nextUpcomingLeftId = nextUpcomingVokzalId,
                         nextUpcomingRightId = nextUpcomingSovhozId,
-                        showOnlyFavorites = showOnlyFavorites
+                        showOnlyFavorites = showOnlyFavorites,
+                        showOnlyUpcoming = showOnlyUpcoming
                     )
                 }
             }
@@ -278,21 +317,27 @@ fun ScheduleList(
 /**
  * Секция расписания с возможностью сворачивания и sticky header
  * 
+ * Версия: 2.0
+ * Последнее обновление: Октябрь 2025
+ * 
  * Создает раздел в списке расписаний с заголовком, который "прилипает" к верхней части
- * экрана при прокрутке (sticky header).
+ * экрана при прокрутке (sticky header). Секция может быть свернута/развернута.
  * 
  * Используется для:
  * - Секций выходов маршрута №1 ("1 Выход", "2 Выход", "3 Выход")
  * 
  * Функциональность:
  * - Sticky header с названием секции и кнопкой сворачивания
- * - Превью ближайшего рейса в свернутом состоянии
  * - Полное расписание в развернутом состоянии
  * - Двухколоночная сетка (вокзал | совхоз)
+ * - При сворачивании расписание полностью скрывается
+ * 
+ * Изменения v2.0:
+ * - Убрано превью ближайшего рейса в свернутом состоянии
+ * - При сворачивании секция полностью скрывается
+ * - Добавлена поддержка фильтров
  * 
  * @param title название секции (например, "1 Выход")
- * @param schedules расписания для отображения
- * @param nextUpcomingScheduleId ID ближайшего рейса
  * @param isExpanded развернута ли секция
  * @param onToggleExpand callback для сворачивания/разворачивания
  * @param viewModel ViewModel для управления избранным
@@ -304,27 +349,26 @@ fun ScheduleList(
  * @param rightTitle заголовок правой колонки
  * @param nextUpcomingLeftId ID ближайшего рейса слева
  * @param nextUpcomingRightId ID ближайшего рейса справа
+ * @param showOnlyFavorites фильтр избранных
+ * @param showOnlyUpcoming фильтр следующего рейса
  */
 @OptIn(ExperimentalFoundationApi::class)
 private fun LazyListScope.ExpandableScheduleSection(
     title: String,
-    schedules: List<BusSchedule>,
-    nextUpcomingScheduleId: String?,
     isExpanded: Boolean,
     onToggleExpand: () -> Unit,
     viewModel: BusViewModel,
     route: BusRoute,
     departurePointForCheck: String,
-    leftSchedules: List<BusSchedule>? = null,
-    rightSchedules: List<BusSchedule>? = null,
-    leftTitle: String? = null,
-    rightTitle: String? = null,
-    nextUpcomingLeftId: String? = null,
-    nextUpcomingRightId: String? = null,
-    showOnlyFavorites: Boolean = false
+    leftSchedules: List<BusSchedule>,
+    rightSchedules: List<BusSchedule>,
+    leftTitle: String,
+    rightTitle: String,
+    nextUpcomingLeftId: String?,
+    nextUpcomingRightId: String?,
+    showOnlyFavorites: Boolean = false,
+    showOnlyUpcoming: Boolean = false
 ) {
-    // Получаем список избранных для фильтрации
-    val favoriteTimesList = viewModel.favoriteTimes.value
     // Sticky header для заголовка секции
     stickyHeader(key = "header_$departurePointForCheck") {
         StickyDepartureHeader(
@@ -334,82 +378,21 @@ private fun LazyListScope.ExpandableScheduleSection(
         )
     }
     
-    // Превью ближайшего рейса в свернутом виде
-    if (!isExpanded && nextUpcomingScheduleId != null) {
-        item(key = "preview_$departurePointForCheck") {
-            val favoriteTimesList by viewModel.favoriteTimes.collectAsState()
-            val nextSchedule = schedules.find { it.id == nextUpcomingScheduleId }
-            if (nextSchedule != null) {
-                ScheduleCard(
-                    schedule = nextSchedule,
-                    isFavorite = favoriteTimesList.any { it.id == nextSchedule.id && it.isActive },
-                    onFavoriteClick = {
-                        val isCurrentlyFavorite = favoriteTimesList.any { it.id == nextSchedule.id && it.isActive }
-                        if (isCurrentlyFavorite) {
-                            viewModel.removeFavoriteTime(nextSchedule.id)
-                        } else {
-                            viewModel.addFavoriteTime(nextSchedule)
-                        }
-                    },
-                    isNextUpcoming = true,
-                    allSchedules = schedules,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                )
-            }
-        }
-    }
-    
     // Содержимое секции (только если развернуто)
-    if (isExpanded && schedules.isNotEmpty()) {
-        if (leftSchedules != null && rightSchedules != null && leftTitle != null && rightTitle != null) {
-            // Двухколоночное отображение
-            item(key = "schedule_grid_$departurePointForCheck") {
-                TwoColumnScheduleGrid(
-                    leftSchedules = leftSchedules,
-                    rightSchedules = rightSchedules,
-                    leftTitle = leftTitle,
-                    rightTitle = rightTitle,
-                    nextUpcomingLeftId = nextUpcomingLeftId,
-                    nextUpcomingRightId = nextUpcomingRightId,
-                    viewModel = viewModel,
-                    route = route,
-                    showOnlyFavorites = showOnlyFavorites,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
-                )
-            }
-        } else {
-            // Обычное отображение списком - используем items вместо forEach
-            items(
-                items = schedules,
-                key = { schedule -> schedule.id }
-            ) { schedule ->
-                val favoriteTimesList by viewModel.favoriteTimes.collectAsState()
-                
-                val isCurrentlyFavorite = remember(favoriteTimesList, schedule.id) {
-                    favoriteTimesList.any { it.id == schedule.id && it.isActive }
-                }
-
-                ScheduleCard(
-                    schedule = schedule,
-                    isFavorite = isCurrentlyFavorite,
-                    onFavoriteClick = {
-                        if (isCurrentlyFavorite) {
-                            viewModel.removeFavoriteTime(schedule.id)
-                        } else {
-                            viewModel.addFavoriteTime(schedule)
-                        }
-                    },
-                    isNextUpcoming = schedule.id == nextUpcomingScheduleId,
-                    allSchedules = schedules,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                )
-            }
-        }
-    } else if (isExpanded && schedules.isEmpty() && shouldShowNoScheduleMessage(route)) {
-        item(key = "no_schedule_$departurePointForCheck") {
-            NoScheduleMessage(
-                departurePoint = departurePointForCheck,
-                modifier = Modifier.padding(16.dp)
+    if (isExpanded) {
+        item(key = "schedule_grid_$departurePointForCheck") {
+            TwoColumnScheduleGrid(
+                leftSchedules = leftSchedules,
+                rightSchedules = rightSchedules,
+                leftTitle = leftTitle,
+                rightTitle = rightTitle,
+                nextUpcomingLeftId = nextUpcomingLeftId,
+                nextUpcomingRightId = nextUpcomingRightId,
+                viewModel = viewModel,
+                route = route,
+                showOnlyFavorites = showOnlyFavorites,
+                showOnlyUpcoming = showOnlyUpcoming,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
             )
         }
     }

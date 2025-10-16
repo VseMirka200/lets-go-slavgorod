@@ -19,19 +19,32 @@ import com.example.lets_go_slavgorod.ui.components.CompactScheduleCard
 import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
 
 /**
- * Компонент для отображения расписания в две колонки с фильтрацией
+ * Компонент для отображения расписания в две колонки с интерактивной фильтрацией
  * 
- * При нажатии на заголовок колонки она подсвечивается, а другая становится полупрозрачной.
- * Это позволяет пользователю фокусироваться на конкретной точке отправления.
+ * Версия: 2.0
+ * Последнее обновление: Октябрь 2025
+ * 
+ * Функциональность:
+ * - Двухколоночное отображение (левая/правая точка отправления)
+ * - Клик на заголовок колонки для фокусировки (подсветка + затемнение другой)
+ * - Поддержка фильтров "Избранные" и "Следующий"
+ * - Автоматическое выравнивание колонок по высоте
+ * 
+ * Изменения v2.0:
+ * - Добавлена поддержка фильтра "Следующий"
+ * - Улучшена логика фильтрации с использованием when
+ * - Добавлены пустые состояния для фильтров
  * 
  * @param leftSchedules список расписаний для левой колонки
  * @param rightSchedules список расписаний для правой колонки
- * @param leftTitle заголовок для левой колонки
- * @param rightTitle заголовок для правой колонки
+ * @param leftTitle заголовок для левой колонки (например, "Из Славгорода")
+ * @param rightTitle заголовок для правой колонки (например, "Из Ярового")
  * @param nextUpcomingLeftId ID ближайшего предстоящего рейса в левой колонке
  * @param nextUpcomingRightId ID ближайшего предстоящего рейса в правой колонке
- * @param viewModel BusViewModel для работы с избранными
- * @param route маршрут для контекста
+ * @param viewModel BusViewModel для работы с избранными временами
+ * @param route маршрут для контекста (используется при добавлении в избранное)
+ * @param showOnlyFavorites если true, показывать только избранные времена
+ * @param showOnlyUpcoming если true, показывать только следующий рейс
  * @param modifier модификатор для настройки внешнего вида
  */
 @Composable
@@ -45,6 +58,7 @@ fun FilterableScheduleGrid(
     viewModel: BusViewModel,
     route: com.example.lets_go_slavgorod.data.model.BusRoute,
     showOnlyFavorites: Boolean = false,
+    showOnlyUpcoming: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val favoriteTimesList by viewModel.favoriteTimes.collectAsState()
@@ -52,30 +66,34 @@ fun FilterableScheduleGrid(
     // Состояние фильтрации: null = показывать все, true = только левая, false = только правая
     var filterState by remember { mutableStateOf<Boolean?>(null) }
     
-    // Фильтруем расписания по избранному если включен фильтр
-    val filteredLeftSchedules = remember(leftSchedules, showOnlyFavorites, favoriteTimesList) {
-        if (showOnlyFavorites) {
-            leftSchedules.filter { schedule ->
+    // Фильтруем расписания по избранному или следующему если включен фильтр
+    val filteredLeftSchedules = remember(leftSchedules, showOnlyFavorites, showOnlyUpcoming, favoriteTimesList, nextUpcomingLeftId) {
+        when {
+            showOnlyFavorites -> leftSchedules.filter { schedule ->
                 favoriteTimesList.any { it.id == schedule.id && it.isActive }
             }
-        } else {
-            leftSchedules
+            showOnlyUpcoming -> leftSchedules.filter { schedule ->
+                schedule.id == nextUpcomingLeftId
+            }
+            else -> leftSchedules
         }
     }
     
-    val filteredRightSchedules = remember(rightSchedules, showOnlyFavorites, favoriteTimesList) {
-        if (showOnlyFavorites) {
-            rightSchedules.filter { schedule ->
+    val filteredRightSchedules = remember(rightSchedules, showOnlyFavorites, showOnlyUpcoming, favoriteTimesList, nextUpcomingRightId) {
+        when {
+            showOnlyFavorites -> rightSchedules.filter { schedule ->
                 favoriteTimesList.any { it.id == schedule.id && it.isActive }
             }
-        } else {
-            rightSchedules
+            showOnlyUpcoming -> rightSchedules.filter { schedule ->
+                schedule.id == nextUpcomingRightId
+            }
+            else -> rightSchedules
         }
     }
     
     if (filteredLeftSchedules.isEmpty() && filteredRightSchedules.isEmpty()) {
-        // Показываем сообщение если нет избранных при активном фильтре
-        if (showOnlyFavorites) {
+        // Показываем сообщение если нет данных при активном фильтре
+        if (showOnlyFavorites || showOnlyUpcoming) {
             Box(
                 modifier = modifier
                     .fillMaxWidth()
@@ -88,12 +106,12 @@ fun FilterableScheduleGrid(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.StarBorder,
-                        contentDescription = "Нет избранных",
+                        contentDescription = if (showOnlyFavorites) "Нет избранных" else "Нет следующих",
                         modifier = Modifier.size(48.dp),
                         tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                     )
                     Text(
-                        text = "Нет избранных времен",
+                        text = if (showOnlyFavorites) "Нет избранных времен" else "Нет предстоящих рейсов",
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -217,6 +235,7 @@ fun FilterableScheduleGrid(
                                 }
                             },
                             isNextUpcoming = isNextUpcoming,
+                            orderNumber = i + 1,
                             allSchedules = filteredLeftSchedules,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -248,6 +267,7 @@ fun FilterableScheduleGrid(
                                 }
                             },
                             isNextUpcoming = isNextUpcoming,
+                            orderNumber = i + 1,
                             allSchedules = filteredRightSchedules,
                             modifier = Modifier.fillMaxWidth()
                         )

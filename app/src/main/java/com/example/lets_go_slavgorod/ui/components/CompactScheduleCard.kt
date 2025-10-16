@@ -18,13 +18,16 @@ import com.example.lets_go_slavgorod.data.model.BusSchedule
 /**
  * Компактная карточка рейса для двухколоночной сетки расписания
  * 
+ * Версия: 2.0
+ * Последнее обновление: Октябрь 2025
+ * 
  * Минималистичная карточка для отображения времени отправления в сетке.
- * Используется в FilterableScheduleGrid для маршрутов 102 и 102Б.
+ * Используется в FilterableScheduleGrid и TwoColumnScheduleGrid.
  * 
  * Структура:
- * - Время отправления крупным шрифтом (28sp) по центру
+ * - Время отправления крупным шрифтом (headlineMedium - 28sp) по центру
  * - Метка "Следующий" для ближайшего рейса
- * - Звёздочка избранного в правом углу по центру вертикали
+ * - Звёздочка избранного справа по центру вертикали
  * 
  * Визуальные состояния:
  * - Обычный рейс: серый фон, средний размер
@@ -34,11 +37,17 @@ import com.example.lets_go_slavgorod.data.model.BusSchedule
  * - Пустая звёздочка (☆): не в избранном
  * - Заполненная звёздочка (★): в избранном
  * 
+ * Изменения v2.0:
+ * - Иконка избранного изменена с сердца на звезду
+ * - Увеличен размер времени отправления (bodyLarge -> headlineMedium)
+ * - Звездочка перемещена в центр по вертикали справа
+ * 
  * @param schedule расписание для отображения
  * @param isFavorite добавлено ли время в избранное
  * @param onFavoriteClick callback при клике на звёздочку
  * @param isNextUpcoming является ли это ближайшим рейсом
- * @param allSchedules не используется (оставлен для совместимости)
+ * @param orderNumber порядковый номер рейса (опционально, для отображения)
+ * @param allSchedules не используется (оставлен для совместимости API)
  * @param modifier модификатор для настройки внешнего вида
  */
 @Composable
@@ -47,6 +56,7 @@ fun CompactScheduleCard(
     isFavorite: Boolean,
     onFavoriteClick: () -> Unit,
     isNextUpcoming: Boolean = false,
+    orderNumber: Int? = null,
     allSchedules: List<BusSchedule> = emptyList(),
     modifier: Modifier = Modifier
 ) {
@@ -69,6 +79,21 @@ fun CompactScheduleCard(
                 .fillMaxWidth()
                 .padding(12.dp)
         ) {
+            // Порядковый номер слева по центру вертикали
+            if (orderNumber != null) {
+                Text(
+                    text = "$orderNumber.",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 14.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = 4.dp)
+                )
+            }
+            
             // Основное содержимое по центру
             Column(
                 modifier = Modifier.fillMaxWidth(),
