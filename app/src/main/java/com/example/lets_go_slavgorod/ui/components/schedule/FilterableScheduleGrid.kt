@@ -128,7 +128,7 @@ fun FilterableScheduleGrid(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp),
+                .padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // Заголовок левой колонки
@@ -150,7 +150,8 @@ fun FilterableScheduleGrid(
                         },
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
                     )
-                    .padding(12.dp)
+                    .padding(12.dp),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = leftTitle,
@@ -161,6 +162,7 @@ fun FilterableScheduleGrid(
                         MaterialTheme.colorScheme.primary 
                     else 
                         MaterialTheme.colorScheme.onSurface,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     modifier = Modifier
                         .alpha(if (filterState == false) 0.4f else 1f)
                 )
@@ -185,7 +187,8 @@ fun FilterableScheduleGrid(
                         },
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
                     )
-                    .padding(12.dp)
+                    .padding(12.dp),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = rightTitle,
@@ -196,6 +199,7 @@ fun FilterableScheduleGrid(
                         MaterialTheme.colorScheme.primary 
                     else 
                         MaterialTheme.colorScheme.onSurface,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     modifier = Modifier
                         .alpha(if (filterState == true) 0.4f else 1f)
                 )
@@ -236,7 +240,6 @@ fun FilterableScheduleGrid(
                             },
                             isNextUpcoming = isNextUpcoming,
                             orderNumber = i + 1,
-                            allSchedules = filteredLeftSchedules,
                             modifier = Modifier.fillMaxWidth()
                         )
                     } else {
@@ -268,7 +271,6 @@ fun FilterableScheduleGrid(
                             },
                             isNextUpcoming = isNextUpcoming,
                             orderNumber = i + 1,
-                            allSchedules = filteredRightSchedules,
                             modifier = Modifier.fillMaxWidth()
                         )
                     } else {

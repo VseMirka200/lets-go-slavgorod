@@ -6,7 +6,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,22 +23,8 @@ import com.example.lets_go_slavgorod.ui.components.schedule.TwoColumnScheduleGri
 import com.example.lets_go_slavgorod.ui.components.schedule.FilterableScheduleGrid
 import com.example.lets_go_slavgorod.ui.components.schedule.UnifiedScheduleHeader
 import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
-
-/**
- * Склонение слова "время" для русского языка
- * 
- * Возвращает правильную форму слова "время" в зависимости от числа.
- * 
- * @param count количество времен
- * @return правильная форма: "время", "времени" или "времен"
- */
-private fun getTimesWord(count: Int): String {
-    return when {
-        count % 10 == 1 && count % 100 != 11 -> "время"
-        count % 10 in 2..4 && (count % 100 < 10 || count % 100 >= 20) -> "времени"
-        else -> "времен"
-    }
-}
+import com.example.lets_go_slavgorod.utils.Constants
+import com.example.lets_go_slavgorod.ui.utils.TextFormattingUtils
 
 /**
  * Основной компонент списка расписаний маршрута
@@ -148,7 +136,12 @@ fun ScheduleList(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, top = 4.dp, end = 16.dp, bottom = 2.dp),
+                    .padding(
+                        start = Constants.PADDING_MEDIUM.dp, 
+                        top = Constants.PADDING_FILTER_TOP.dp, 
+                        end = Constants.PADDING_MEDIUM.dp, 
+                        bottom = Constants.PADDING_FILTER_BOTTOM.dp
+                    ),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Row(
@@ -163,20 +156,26 @@ fun ScheduleList(
                             if (showOnlyFavorites) showOnlyUpcoming = false
                         },
                         label = { 
-                            Text(
-                                text = "Избранные",
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.fillMaxWidth()
-                            ) 
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = if (showOnlyFavorites) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(Constants.FILTER_ICON_SIZE.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Избранные",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                            }
                         },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = if (showOnlyFavorites) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(Constants.FILTER_CHIP_HEIGHT.dp)
                     )
                     
                     // Фильтр "Следующий"
@@ -187,13 +186,26 @@ fun ScheduleList(
                             if (showOnlyUpcoming) showOnlyFavorites = false
                         },
                         label = { 
-                            Text(
-                                text = "Следующий",
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.fillMaxWidth()
-                            ) 
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = if (showOnlyUpcoming) Icons.Filled.Schedule else Icons.Outlined.Schedule,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(Constants.FILTER_ICON_SIZE.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Следующий",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                            }
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(Constants.FILTER_CHIP_HEIGHT.dp)
                     )
                 }
                 
@@ -201,7 +213,12 @@ fun ScheduleList(
                 if (showOnlyFavorites) {
                     val favCount = favoriteTimesList.count { it.isActive && it.routeId == route.id }
                     Text(
-                        text = "$favCount ${getTimesWord(favCount)}",
+                        text = TextFormattingUtils.formatCounter(
+                            favCount,
+                            "время",
+                            "времени",
+                            "времен"
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(start = 4.dp, top = 2.dp)
@@ -224,7 +241,7 @@ fun ScheduleList(
                     route = route,
                     showOnlyFavorites = showOnlyFavorites,
                     showOnlyUpcoming = showOnlyUpcoming,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
+                    modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 0.dp, bottom = 8.dp)
                 )
             }
         }
@@ -243,7 +260,7 @@ fun ScheduleList(
                     route = route,
                     showOnlyFavorites = showOnlyFavorites,
                     showOnlyUpcoming = showOnlyUpcoming,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
+                    modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 0.dp, bottom = 8.dp)
                 )
             }
         }
@@ -392,7 +409,7 @@ private fun LazyListScope.ExpandableScheduleSection(
                 route = route,
                 showOnlyFavorites = showOnlyFavorites,
                 showOnlyUpcoming = showOnlyUpcoming,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
+                modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)
             )
         }
     }

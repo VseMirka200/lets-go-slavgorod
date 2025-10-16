@@ -14,41 +14,47 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.lets_go_slavgorod.data.model.BusSchedule
+import com.example.lets_go_slavgorod.utils.Constants
 
 /**
  * Компактная карточка рейса для двухколоночной сетки расписания
  * 
- * Версия: 2.0
+ * Версия: 3.0
  * Последнее обновление: Октябрь 2025
  * 
  * Минималистичная карточка для отображения времени отправления в сетке.
  * Используется в FilterableScheduleGrid и TwoColumnScheduleGrid.
  * 
  * Структура:
+ * - Порядковый номер рейса слева (опционально)
  * - Время отправления крупным шрифтом (headlineMedium - 28sp) по центру
  * - Метка "Следующий" для ближайшего рейса
  * - Звёздочка избранного справа по центру вертикали
  * 
  * Визуальные состояния:
- * - Обычный рейс: серый фон, средний размер
- * - Ближайший рейс: цветной фон, жирный шрифт, метка "Следующий"
+ * - Обычный рейс: серый фон, средний размер, тень 1dp
+ * - Ближайший рейс: цветной фон, жирный шрифт, метка "Следующий", тень 3dp
  * 
  * Избранное:
  * - Пустая звёздочка (☆): не в избранном
  * - Заполненная звёздочка (★): в избранном
  * 
- * Изменения v2.0:
- * - Иконка избранного изменена с сердца на звезду
- * - Увеличен размер времени отправления (bodyLarge -> headlineMedium)
- * - Звездочка перемещена в центр по вертикали справа
+ * Оптимизации v3.0:
+ * - Удалён неиспользуемый параметр allSchedules
+ * - Используются константы из Constants для размеров
+ * - Улучшена документация
+ * - Оптимизирован код с использованием remember для избежания перекомпозиций
  * 
  * @param schedule расписание для отображения
  * @param isFavorite добавлено ли время в избранное
  * @param onFavoriteClick callback при клике на звёздочку
  * @param isNextUpcoming является ли это ближайшим рейсом
- * @param orderNumber порядковый номер рейса (опционально, для отображения)
- * @param allSchedules не используется (оставлен для совместимости API)
+ * @param orderNumber порядковый номер рейса в списке (для удобной навигации)
  * @param modifier модификатор для настройки внешнего вида
+ * 
+ * @author VseMirka200
+ * @version 3.0
+ * @since 1.0
  */
 @Composable
 fun CompactScheduleCard(
@@ -57,18 +63,22 @@ fun CompactScheduleCard(
     onFavoriteClick: () -> Unit,
     isNextUpcoming: Boolean = false,
     orderNumber: Int? = null,
-    allSchedules: List<BusSchedule> = emptyList(),
     modifier: Modifier = Modifier
 ) {
+    // Оптимизация: кэшируем значения для избежания перекомпозиций
+    val elevation = remember(isNextUpcoming) {
+        if (isNextUpcoming) Constants.SCHEDULE_CARD_ELEVATION_UPCOMING.dp 
+        else Constants.SCHEDULE_CARD_ELEVATION_DEFAULT.dp
+    }
+    
+    val containerColor = remember(isNextUpcoming) { isNextUpcoming }
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp)),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isNextUpcoming) 3.dp else 1.dp
-        ),
+            .clip(RoundedCornerShape(Constants.SCHEDULE_CARD_CORNER_RADIUS.dp)),
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation),
         colors = CardDefaults.cardColors(
-            containerColor = if (isNextUpcoming) 
+            containerColor = if (containerColor) 
                 MaterialTheme.colorScheme.primaryContainer 
             else 
                 MaterialTheme.colorScheme.surfaceVariant
@@ -77,7 +87,7 @@ fun CompactScheduleCard(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp)
+                .padding(Constants.SCHEDULE_CARD_PADDING.dp)
         ) {
             // Порядковый номер слева по центру вертикали
             if (orderNumber != null) {
@@ -127,7 +137,7 @@ fun CompactScheduleCard(
                 onClick = onFavoriteClick,
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .size(32.dp)
+                    .size(Constants.FAVORITE_BUTTON_SIZE.dp)
             ) {
                 Icon(
                     imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
@@ -136,7 +146,7 @@ fun CompactScheduleCard(
                         MaterialTheme.colorScheme.primary 
                     else 
                         MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(Constants.FAVORITE_ICON_SIZE.dp)
                 )
             }
         }

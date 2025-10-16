@@ -407,7 +407,7 @@ private fun FeedbackCard() {
                 Text("Обратная связь")
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(8.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -434,8 +434,6 @@ private fun FeedbackCard() {
                     )
                 }
             }
-            
-            Spacer(Modifier.height(16.dp))
         }
     }
 }

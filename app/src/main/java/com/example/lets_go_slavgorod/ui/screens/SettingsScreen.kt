@@ -78,6 +78,9 @@ import com.example.lets_go_slavgorod.ui.viewmodel.RouteDisplayMode
 import com.example.lets_go_slavgorod.ui.viewmodel.ThemeViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.UpdateMode
 import com.example.lets_go_slavgorod.ui.viewmodel.UpdateSettingsViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.VibrationSettingsViewModel
+import androidx.compose.material3.Switch
+import androidx.compose.material.icons.filled.PhoneAndroid
 import timber.log.Timber
 
 /**
@@ -145,6 +148,10 @@ fun SettingsScreen(
     
     val dataManagementViewModel: DataManagementViewModel = viewModel(
         factory = ContextViewModelFactory.create(context) { DataManagementViewModel(it) }
+    )
+    
+    val vibrationSettingsViewModel: VibrationSettingsViewModel = viewModel(
+        factory = ContextViewModelFactory.create(context) { VibrationSettingsViewModel(it) }
     )
     
     val currentAppTheme by themeViewModel.currentTheme.collectAsState()
@@ -346,6 +353,42 @@ fun SettingsScreen(
                 customDays = quietModeViewModel.customDays.collectAsState().value,
                 onQuietModeSelected = { mode, days ->
                     quietModeViewModel.setQuietMode(mode, days)
+                }
+            )
+            
+            Spacer(Modifier.height(16.dp))
+            
+            // Карточка настройки вибрации
+            VibrationSettingsCard(
+                vibrationEnabled = vibrationSettingsViewModel.vibrationEnabled.collectAsState().value,
+                onVibrationToggle = { enabled ->
+                    vibrationSettingsViewModel.setVibrationEnabled(enabled)
+                }
+            )
+            
+            Spacer(Modifier.height(24.dp))
+
+            // Заголовок секции "Управление данными"
+            Text(
+                text = "Управление данными",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+            
+            ScheduleUpdateCard(
+                isRefreshing = dataManagementViewModel.isRefreshingSchedule.collectAsState().value,
+                refreshError = dataManagementViewModel.scheduleRefreshError.collectAsState().value,
+                refreshSuccess = dataManagementViewModel.scheduleRefreshSuccess.collectAsState().value,
+                dataVersion = dataManagementViewModel.dataVersion.collectAsState().value,
+                dataLastUpdated = dataManagementViewModel.dataLastUpdated.collectAsState().value,
+                onRefresh = {
+                    dataManagementViewModel.refreshScheduleFromGitHub()
+                },
+                onClearStatus = {
+                    dataManagementViewModel.clearScheduleRefreshStatus()
                 }
             )
             
@@ -1585,6 +1628,244 @@ private fun ClearCacheCard(
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
+        }
+    }
+}
+
+/**
+ * Карточка обновления расписания из GitHub
+ * 
+ * Позволяет пользователю вручную обновить расписание автобусов
+ * из удалённого JSON файла на GitHub.
+ * 
+ * @param isRefreshing флаг процесса обновления
+ * @param refreshError сообщение об ошибке обновления
+ * @param refreshSuccess флаг успешного обновления
+ * @param dataVersion текущая версия данных
+ * @param dataLastUpdated дата последнего обновления
+ * @param onRefresh callback для запуска обновления
+ * @param onClearStatus callback для очистки статуса
+ */
+@Composable
+private fun ScheduleUpdateCard(
+    isRefreshing: Boolean,
+    refreshError: String?,
+    refreshSuccess: Boolean,
+    dataVersion: String?,
+    dataLastUpdated: String?,
+    onRefresh: () -> Unit,
+    onClearStatus: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Заголовок и описание
+            Text(
+                text = "Обновление расписания",
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            
+            Text(
+                text = "Загрузить актуальное расписание из GitHub",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            
+            // Информация о версии
+            if (dataVersion != null || dataLastUpdated != null) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        if (dataVersion != null) {
+                            Text(
+                                text = "Версия данных: $dataVersion",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        if (dataLastUpdated != null) {
+                            Text(
+                                text = "Обновлено: $dataLastUpdated",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+            
+            // Кнопка обновления
+            Button(
+                onClick = onRefresh,
+                enabled = !isRefreshing,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (isRefreshing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Обновление...")
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Download,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Обновить расписание")
+                }
+            }
+            
+            // Сообщение об успехе
+            if (refreshSuccess) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "Расписание успешно обновлено",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Spacer(Modifier.weight(1f))
+                        IconButton(
+                            onClick = onClearStatus,
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Закрыть",
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+            }
+            
+            // Сообщение об ошибке
+            if (refreshError != null) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Error,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = refreshError,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Spacer(Modifier.weight(1f))
+                        IconButton(
+                            onClick = onClearStatus,
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Закрыть",
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Карточка настройки вибрации при уведомлениях
+ * 
+ * Позволяет пользователю включать/выключать вибрацию устройства
+ * при получении уведомлений о предстоящем отправлении автобуса.
+ * 
+ * @param vibrationEnabled текущее состояние настройки вибрации
+ * @param onVibrationToggle callback для изменения настройки
+ */
+@Composable
+private fun VibrationSettingsCard(
+    vibrationEnabled: Boolean,
+    onVibrationToggle: (Boolean) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PhoneAndroid,
+                    contentDescription = "Вибрация",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(Modifier.width(16.dp))
+                Column {
+                    Text(
+                        text = "Вибрация при уведомлениях",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = if (vibrationEnabled) "Включена" else "Выключена",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Switch(
+                checked = vibrationEnabled,
+                onCheckedChange = onVibrationToggle
+            )
         }
     }
 }
