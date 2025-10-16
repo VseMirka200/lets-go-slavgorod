@@ -1,8 +1,11 @@
 package com.example.lets_go_slavgorod.ui.components.schedule
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -36,11 +39,59 @@ fun TwoColumnScheduleGrid(
     nextUpcomingRightId: String?,
     viewModel: BusViewModel,
     route: com.example.lets_go_slavgorod.data.model.BusRoute,
+    showOnlyFavorites: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val favoriteTimesList by viewModel.favoriteTimes.collectAsState()
     
-    if (leftSchedules.isEmpty() && rightSchedules.isEmpty()) {
+    // Фильтруем расписания по избранному если включен фильтр
+    val filteredLeftSchedules = remember(leftSchedules, showOnlyFavorites, favoriteTimesList) {
+        if (showOnlyFavorites) {
+            leftSchedules.filter { schedule ->
+                favoriteTimesList.any { it.id == schedule.id && it.isActive }
+            }
+        } else {
+            leftSchedules
+        }
+    }
+    
+    val filteredRightSchedules = remember(rightSchedules, showOnlyFavorites, favoriteTimesList) {
+        if (showOnlyFavorites) {
+            rightSchedules.filter { schedule ->
+                favoriteTimesList.any { it.id == schedule.id && it.isActive }
+            }
+        } else {
+            rightSchedules
+        }
+    }
+    
+    if (filteredLeftSchedules.isEmpty() && filteredRightSchedules.isEmpty()) {
+        // Показываем сообщение если нет избранных при активном фильтре
+        if (showOnlyFavorites) {
+            Box(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.StarBorder,
+                        contentDescription = "Нет избранных",
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                    )
+                    Text(
+                        text = "Нет избранных времен",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
         return
     }
     
@@ -80,7 +131,7 @@ fun TwoColumnScheduleGrid(
         }
         
         // Определяем максимальную длину для выравнивания
-        val maxLength = maxOf(leftSchedules.size, rightSchedules.size)
+        val maxLength = maxOf(filteredLeftSchedules.size, filteredRightSchedules.size)
         
         // Отображаем расписания построчно
         for (i in 0 until maxLength) {
@@ -94,8 +145,8 @@ fun TwoColumnScheduleGrid(
                 Box(
                     modifier = Modifier.weight(1f)
                 ) {
-                    if (i < leftSchedules.size) {
-                        val schedule = leftSchedules[i]
+                    if (i < filteredLeftSchedules.size) {
+                        val schedule = filteredLeftSchedules[i]
                         val isCurrentlyFavorite = favoriteTimesList.any { it.id == schedule.id && it.isActive }
                         val isNextUpcoming = schedule.id == nextUpcomingLeftId
                         
@@ -110,7 +161,7 @@ fun TwoColumnScheduleGrid(
                                 }
                             },
                             isNextUpcoming = isNextUpcoming,
-                            allSchedules = leftSchedules,
+                            allSchedules = filteredLeftSchedules,
                             modifier = Modifier.fillMaxWidth()
                         )
                     } else {
@@ -123,8 +174,8 @@ fun TwoColumnScheduleGrid(
                 Box(
                     modifier = Modifier.weight(1f)
                 ) {
-                    if (i < rightSchedules.size) {
-                        val schedule = rightSchedules[i]
+                    if (i < filteredRightSchedules.size) {
+                        val schedule = filteredRightSchedules[i]
                         val isCurrentlyFavorite = favoriteTimesList.any { it.id == schedule.id && it.isActive }
                         val isNextUpcoming = schedule.id == nextUpcomingRightId
                         
@@ -139,7 +190,7 @@ fun TwoColumnScheduleGrid(
                                 }
                             },
                             isNextUpcoming = isNextUpcoming,
-                            allSchedules = rightSchedules,
+                            allSchedules = filteredRightSchedules,
                             modifier = Modifier.fillMaxWidth()
                         )
                     } else {

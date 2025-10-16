@@ -9,7 +9,7 @@
       "description": "Рынок (Славгород) — Ст. Зори (Яровое)",
       "travelTime": "~40 минут",
       "pricePrimary": "38₽ город / 55₽ межгород",
-      "paymentMethods": "Нал. / Безнал.",
+      "paymentMethods": "Наличный / Картой",
       "color": "#FF6200EE",
       "schedules": [
         {"id": "102_slav_1", "stopName": "Рынок (Славгород)", "departureTime": "06:25", "departurePoint": "Рынок (Славгород)"},
@@ -94,7 +94,7 @@
       "description": "Рынок (Славгород) — Ст. Зори (Яровое)",
       "travelTime": "~40 минут",
       "pricePrimary": "38₽ город / 55₽ межгород",
-      "paymentMethods": "Нал. / Безнал.",
+      "paymentMethods": "Наличный / Картой",
       "color": "#FF4CAF50",
       "schedules": [
         {"id": "102B_slav_1", "stopName": "Рынок (Славгород)", "departureTime": "06:30", "departurePoint": "Рынок (Славгород)"},
@@ -115,7 +115,7 @@
       "description": "Маршрут вокзал — совхоз",
       "travelTime": "~24 минуты",
       "pricePrimary": "38₽ город",
-      "paymentMethods": "Только нал.",
+      "paymentMethods": "Наличный / Картой",
       "color": "#FF1976D2",
       "schedules": [
         {"id": "1_vokzal_1_1", "stopName": "вокзал", "departureTime": "07:00", "departurePoint": "вокзал", "notes": "1 выход"},

@@ -90,7 +90,8 @@ fun AboutScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Назад"
+                            contentDescription = "Назад",
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 },
@@ -117,8 +118,7 @@ fun AboutScreen(
             Text(
                 text = "Информация о приложении",
                 style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = MaterialTheme.typography.titleMedium.fontSize * 1.15f
+                    fontWeight = FontWeight.Bold
                 ),
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -145,8 +145,7 @@ fun AboutScreen(
             Text(
                 text = "Обратная связь",
                 style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = MaterialTheme.typography.titleMedium.fontSize * 1.15f
+                    fontWeight = FontWeight.Bold
                 ),
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -160,8 +159,7 @@ fun AboutScreen(
             Text(
                 text = "Поддержка разработчика",
                 style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = MaterialTheme.typography.titleMedium.fontSize * 1.15f
+                    fontWeight = FontWeight.Bold
                 ),
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 12.dp)

@@ -31,7 +31,7 @@ class BusRouteCardTest {
         description = "Рынок — Ст. Зори",
         travelTime = "~40 минут",
         pricePrimary = "38₽ / 55₽",
-        paymentMethods = "Нал. / Безнал.",
+        paymentMethods = "ННаличный / Картой",
         color = "#FF6200EE"
     )
     

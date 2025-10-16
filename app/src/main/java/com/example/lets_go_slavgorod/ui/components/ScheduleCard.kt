@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -24,31 +24,39 @@ import androidx.compose.ui.unit.sp
 import com.example.lets_go_slavgorod.data.model.BusSchedule
 
 /**
- * Переиспользуемый компонент карточки расписания автобуса
+ * Карточка отдельного рейса в расписании
  * 
- * Отображает информацию о времени отправления автобуса с остановки
- * в виде интерактивной карточки с возможностью добавления в избранное.
+ * Отображает полную информацию о конкретном времени отправления автобуса.
+ * Используется для расширенного отображения рейсов в расписании маршрута.
  * 
- * Компонент включает в себя:
- * - Информацию о маршруте (номер и название)
- * - Время отправления
- * - Название остановки
- * - Обратный отсчет времени до отправления
- * - Кнопку добавления в избранное
- * - Специальное отображение для ближайшего рейса
+ * Функциональность:
+ * - Время отправления в формате HH:mm
+ * - Обратный отсчет до отправления (для ближайшего рейса)
+ * - Кнопка добавления в избранное (звёздочка)
+ * - Примечания (если есть, например "1 выход")
+ * - Подсветка ближайшего рейса
+ * 
+ * Визуальные состояния:
+ * - Обычный рейс: серый фон, обычный текст
+ * - Ближайший рейс: цветной фон, жирный текст, таймер обратного отсчета
+ * 
+ * Избранное:
+ * - Пустая звёздочка: время не в избранном
+ * - Заполненная звёздочка: время в избранном, настроены уведомления
  * 
  * @param schedule расписание для отображения
- * @param isFavorite флаг, добавлено ли время в избранное
- * @param onFavoriteClick callback-функция при клике на кнопку избранного
- * @param routeNumber номер маршрута для отображения (опционально)
- * @param routeName название маршрута для отображения (опционально)
- * @param isNextUpcoming флаг, является ли это расписание ближайшим рейсом
- * @param allSchedules все расписания для расчета времени до отправления
+ * @param isFavorite добавлено ли время в избранное
+ * @param onFavoriteClick callback при клике на звёздочку
+ * @param routeNumber номер маршрута (опционально, для отображения)
+ * @param routeName название маршрута (опционально, для отображения)
+ * @param isNextUpcoming является ли это ближайшим рейсом
+ * @param allSchedules все расписания для расчета обратного отсчета
  * @param hideRouteInfo скрыть информацию о маршруте
  * @param modifier модификатор для настройки внешнего вида
  * 
  * @author VseMirka200
- * @version 1.0
+ * @version 3.0
+ * @since 1.0
  */
 @Composable
 fun ScheduleCard(
@@ -91,8 +99,7 @@ fun ScheduleCard(
                             style = MaterialTheme.typography.titleSmall.copy(
                                 fontWeight = FontWeight.Bold
                             ),
-                            color = if (isNextUpcoming) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
-                            fontSize = 15.sp
+                            color = if (isNextUpcoming) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
                         )
                     }
                 }
@@ -104,8 +111,7 @@ fun ScheduleCard(
                     Text(
                         text = "Отправление в ${schedule.departureTime}",
                         style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = if (isNextUpcoming) FontWeight.Bold else FontWeight.Normal,
-                            fontSize = 18.sp
+                            fontWeight = if (isNextUpcoming) FontWeight.Bold else FontWeight.Normal
                         ),
                         color = if (isNextUpcoming) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                     )
@@ -131,7 +137,7 @@ fun ScheduleCard(
 
             IconButton(onClick = onFavoriteClick) {
                 Icon(
-                    imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                    imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
                     contentDescription = if (isFavorite) "Убрать из избранного" else "Добавить в избранное",
                     tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                 )

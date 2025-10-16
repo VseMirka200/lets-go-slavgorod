@@ -6,6 +6,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,13 +24,52 @@ import com.example.lets_go_slavgorod.ui.components.schedule.UnifiedScheduleHeade
 import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
 
 /**
- * Список расписаний с возможностью сворачивания секций
+ * Склонение слова "время" для русского языка
+ */
+private fun getTimesWord(count: Int): String {
+    return when {
+        count % 10 == 1 && count % 100 != 11 -> "время"
+        count % 10 in 2..4 && (count % 100 < 10 || count % 100 >= 20) -> "времени"
+        else -> "времен"
+    }
+}
+
+/**
+ * Основной компонент списка расписаний маршрута
+ * 
+ * Отображает расписания в виде прокручиваемого списка с различными вариантами
+ * компоновки в зависимости от типа маршрута.
+ * 
+ * Варианты отображения:
+ * - Маршрут №102: двухколоночная сетка Славгород ↔ Яровое с фильтрацией
+ * - Маршрут №102Б: двухколоночная сетка Славгород ↔ Яровое (Зори) с фильтрацией
+ * - Маршрут №1: секции по выходам (1, 2, 3), сворачиваемые
  * 
  * Функциональность:
- * - Отображение расписаний по секциям (отправления из разных точек)
- * - Возможность сворачивания/разворачивания секций
- * - Интеграция с избранными временами
- * - Подсветка ближайшего рейса
+ * - Заголовок с информацией о маршруте (UnifiedScheduleHeader)
+ * - Добавление времен в избранное (звёздочка на карточках)
+ * - Подсветка ближайших рейсов с обратным отсчетом
+ * - Сворачивание/разворачивание секций (для маршрута №1)
+ * 
+ * Оптимизации:
+ * - LazyColumn для эффективной прокрутки
+ * - Sticky headers для заголовков секций
+ * - Уникальные ключи для всех элементов
+ * 
+ * @param route маршрут для отображения расписания
+ * @param schedulesSlavgorod расписания отправлений из Славгорода
+ * @param schedulesYarovoe расписания отправлений из Яровое
+ * @param schedulesVokzal расписания отправлений с вокзала (маршрут №1)
+ * @param schedulesSovhoz расписания отправлений из совхоза (маршрут №1)
+ * @param nextUpcomingSlavgorodId ID ближайшего рейса из Славгорода
+ * @param nextUpcomingYarovoeId ID ближайшего рейса из Яровое
+ * @param nextUpcomingVokzalId ID ближайшего рейса с вокзала
+ * @param nextUpcomingSovhozId ID ближайшего рейса из совхоза
+ * @param viewModel ViewModel для управления избранными временами
+ * @param onBackClick callback для кнопки "Назад" в заголовке
+ * @param onNotificationClick callback для кнопки уведомлений в заголовке
+ * @param onScrollOffsetChange callback при изменении позиции прокрутки (не используется)
+ * @param modifier модификатор для настройки внешнего вида
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -43,6 +85,7 @@ fun ScheduleList(
     nextUpcomingSovhozId: String?,
     viewModel: BusViewModel,
     onBackClick: () -> Unit = {},
+    onNotificationClick: (() -> Unit)? = null,
     onScrollOffsetChange: (Float) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -50,6 +93,15 @@ fun ScheduleList(
     var isYarovoeSectionExpanded by remember { mutableStateOf(true) }
     var isVokzalSectionExpanded by remember { mutableStateOf(true) }
     var isSovhozSectionExpanded by remember { mutableStateOf(true) }
+    
+    // Состояния для секций выходов маршрута №1
+    var isExit1Expanded by remember { mutableStateOf(true) }
+    var isExit2Expanded by remember { mutableStateOf(true) }
+    var isExit3Expanded by remember { mutableStateOf(true) }
+    
+    // Фильтр избранных времен
+    var showOnlyFavorites by remember { mutableStateOf(false) }
+    val favoriteTimesList by viewModel.favoriteTimes.collectAsState()
 
     // Состояние для отслеживания скролла
     val listState = rememberLazyListState()
@@ -73,8 +125,48 @@ fun ScheduleList(
             UnifiedScheduleHeader(
                 route = route,
                 onBackClick = onBackClick,
-                isVisible = true
+                isVisible = true,
+                onNotificationClick = onNotificationClick
             )
+        }
+        
+        // Фильтр избранных времен
+        item(key = "favorites_filter") {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FilterChip(
+                    selected = showOnlyFavorites,
+                    onClick = { showOnlyFavorites = !showOnlyFavorites },
+                    label = { 
+                        Text(
+                            text = if (showOnlyFavorites) "Избранные" else "Все времена",
+                            style = MaterialTheme.typography.bodyMedium
+                        ) 
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = if (showOnlyFavorites) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                )
+                
+                if (showOnlyFavorites) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    val favCount = favoriteTimesList.count { it.isActive && it.routeId == route.id }
+                    Text(
+                        text = "$favCount ${getTimesWord(favCount)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
         
         // Маршрут №102 (Славгород — Яровое) - прямое отображение с фильтрацией
@@ -89,6 +181,7 @@ fun ScheduleList(
                     nextUpcomingRightId = nextUpcomingYarovoeId,
                     viewModel = viewModel,
                     route = route,
+                    showOnlyFavorites = showOnlyFavorites,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
                 )
             }
@@ -106,6 +199,7 @@ fun ScheduleList(
                     nextUpcomingRightId = nextUpcomingYarovoeId,
                     viewModel = viewModel,
                     route = route,
+                    showOnlyFavorites = showOnlyFavorites,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
                 )
             }
@@ -128,7 +222,7 @@ fun ScheduleList(
             }.toList()
             
             // Создаем секцию для каждого выхода
-            sortedExits.forEach { exitName ->
+            sortedExits.forEachIndexed { index, exitName ->
                 val exitSchedules = groupedByExit[exitName] ?: emptyList()
                 val vokzalSchedules = exitSchedules.filter { it.departurePoint == "вокзал" }
                 val sovhozSchedules = exitSchedules.filter { it.departurePoint == "совхоз" }
@@ -142,27 +236,28 @@ fun ScheduleList(
                         schedules = vokzalSchedules,
                         nextUpcomingScheduleId = nextUpcomingVokzalId,
                         isExpanded = when(exitName) {
-                            "1 выход" -> isVokzalSectionExpanded
-                            "2 выход" -> isYarovoeSectionExpanded
-                            "3 выход" -> isSovhozSectionExpanded
+                            "1 выход" -> isExit1Expanded
+                            "2 выход" -> isExit2Expanded
+                            "3 выход" -> isExit3Expanded
                             else -> true
                         },
                         onToggleExpand = {
                             when(exitName) {
-                                "1 выход" -> isVokzalSectionExpanded = !isVokzalSectionExpanded
-                                "2 выход" -> isYarovoeSectionExpanded = !isYarovoeSectionExpanded
-                                "3 выход" -> isSovhozSectionExpanded = !isSovhozSectionExpanded
+                                "1 выход" -> isExit1Expanded = !isExit1Expanded
+                                "2 выход" -> isExit2Expanded = !isExit2Expanded
+                                "3 выход" -> isExit3Expanded = !isExit3Expanded
                             }
                         },
                         viewModel = viewModel,
                         route = route,
-                        departurePointForCheck = "вокзал",
+                        departurePointForCheck = "exit_$index",
                         leftSchedules = vokzalSchedules,
                         rightSchedules = sovhozSchedules,
                         leftTitle = "Из вокзала",
                         rightTitle = "Из совхоза",
                         nextUpcomingLeftId = nextUpcomingVokzalId,
-                        nextUpcomingRightId = nextUpcomingSovhozId
+                        nextUpcomingRightId = nextUpcomingSovhozId,
+                        showOnlyFavorites = showOnlyFavorites
                     )
                 }
             }
@@ -182,6 +277,33 @@ fun ScheduleList(
 
 /**
  * Секция расписания с возможностью сворачивания и sticky header
+ * 
+ * Создает раздел в списке расписаний с заголовком, который "прилипает" к верхней части
+ * экрана при прокрутке (sticky header).
+ * 
+ * Используется для:
+ * - Секций выходов маршрута №1 ("1 Выход", "2 Выход", "3 Выход")
+ * 
+ * Функциональность:
+ * - Sticky header с названием секции и кнопкой сворачивания
+ * - Превью ближайшего рейса в свернутом состоянии
+ * - Полное расписание в развернутом состоянии
+ * - Двухколоночная сетка (вокзал | совхоз)
+ * 
+ * @param title название секции (например, "1 Выход")
+ * @param schedules расписания для отображения
+ * @param nextUpcomingScheduleId ID ближайшего рейса
+ * @param isExpanded развернута ли секция
+ * @param onToggleExpand callback для сворачивания/разворачивания
+ * @param viewModel ViewModel для управления избранным
+ * @param route маршрут (для добавления в избранное)
+ * @param departurePointForCheck уникальный ключ секции
+ * @param leftSchedules расписания левой колонки (вокзал)
+ * @param rightSchedules расписания правой колонки (совхоз)
+ * @param leftTitle заголовок левой колонки
+ * @param rightTitle заголовок правой колонки
+ * @param nextUpcomingLeftId ID ближайшего рейса слева
+ * @param nextUpcomingRightId ID ближайшего рейса справа
  */
 @OptIn(ExperimentalFoundationApi::class)
 private fun LazyListScope.ExpandableScheduleSection(
@@ -198,8 +320,11 @@ private fun LazyListScope.ExpandableScheduleSection(
     leftTitle: String? = null,
     rightTitle: String? = null,
     nextUpcomingLeftId: String? = null,
-    nextUpcomingRightId: String? = null
+    nextUpcomingRightId: String? = null,
+    showOnlyFavorites: Boolean = false
 ) {
+    // Получаем список избранных для фильтрации
+    val favoriteTimesList = viewModel.favoriteTimes.value
     // Sticky header для заголовка секции
     stickyHeader(key = "header_$departurePointForCheck") {
         StickyDepartureHeader(
@@ -248,6 +373,7 @@ private fun LazyListScope.ExpandableScheduleSection(
                     nextUpcomingRightId = nextUpcomingRightId,
                     viewModel = viewModel,
                     route = route,
+                    showOnlyFavorites = showOnlyFavorites,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
                 )
             }

@@ -31,8 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -44,15 +42,11 @@ import androidx.navigation.navArgument
 import com.example.lets_go_slavgorod.data.local.AppDatabase
 import com.example.lets_go_slavgorod.data.model.FavoriteTime
 import com.example.lets_go_slavgorod.notifications.AlarmScheduler
-import com.example.lets_go_slavgorod.ui.animations.NavigationAnimations
 import com.example.lets_go_slavgorod.ui.components.UpdateDialogManager
 import com.example.lets_go_slavgorod.ui.components.DisclaimerDialog
-import com.example.lets_go_slavgorod.ui.navigation.BottomNavigation
 import com.example.lets_go_slavgorod.ui.navigation.Screen
 import com.example.lets_go_slavgorod.data.local.DisclaimerManager
 import com.example.lets_go_slavgorod.ui.screens.AboutScreen
-import com.example.lets_go_slavgorod.ui.screens.FavoriteRouteDetailsScreen
-import com.example.lets_go_slavgorod.ui.screens.FavoriteTimesScreen
 import com.example.lets_go_slavgorod.ui.screens.HomeScreen
 import com.example.lets_go_slavgorod.ui.screens.RouteNotificationSettingsScreen
 import com.example.lets_go_slavgorod.ui.screens.ScheduleScreen
@@ -296,7 +290,13 @@ class MainActivity : ComponentActivity() {
  * Настраивает:
  * - Тему приложения (светлая/темная/системная)
  * - Навигацию между экранами
- * - Нижнюю панель навигации
+ * - Диалоги обновлений и дисклеймера
+ * - Глобальные ViewModels для работы приложения
+ * 
+ * Архитектура навигации:
+ * - Один основной экран с маршрутами (HomeScreen)
+ * - Доступ к настройкам через иконку в шапке
+ * - Настройки уведомлений доступны из расписания каждого маршрута
  * 
  * @param themeViewModel ViewModel для управления темой
  */
@@ -344,10 +344,7 @@ fun BusScheduleApp(themeViewModel: ThemeViewModel) {
 
     lets_go_slavgorodTheme(darkTheme = useDarkTheme) {
         Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            bottomBar = {
-                BottomNavigation(navController = navController)
-            }
+            modifier = Modifier.fillMaxSize()
         ) { innerPadding ->
             AppNavHost(
                 navController = navController,
@@ -402,17 +399,24 @@ fun BusScheduleApp(themeViewModel: ThemeViewModel) {
 /**
  * Навигационный хост приложения
  * 
- * Определяет маршруты между экранами:
- * - Главная: список маршрутов
- * - Избранное: сохраненные маршруты
- * - Настройки: конфигурация приложения
- * - О программе: информация и поддержка
- * - Детали маршрута: расписание конкретного маршрута
+ * Определяет все навигационные маршруты в приложении:
+ * - home: главный экран со списком маршрутов
+ * - schedule/{routeId}: расписание конкретного маршрута
+ * - settings: экран настроек приложения
+ * - about: информация о приложении и разработчике
+ * - route_notifications/{routeId}: настройки уведомлений для маршрута
+ * 
+ * Особенности:
+ * - Единая точка входа - экран маршрутов
+ * - Настройки доступны из шапки главного экрана
+ * - Уведомления настраиваются для каждого маршрута отдельно
+ * - Избранные времена управляются через расписание маршрута
  * 
  * @param navController контроллер навигации
  * @param modifier модификатор для настройки внешнего вида
- * @param busViewModel ViewModel для работы с данными маршрутов
- * @param themeViewModel ViewModel для управления темой
+ * @param busViewModel ViewModel для работы с данными маршрутов и избранного
+ * @param themeViewModel ViewModel для управления темой приложения
+ * @param notificationSettingsViewModel ViewModel для настроек уведомлений
  */
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -438,15 +442,6 @@ fun AppNavHost(
         }
 
         composable(
-            route = Screen.FavoriteTimes.route
-        ) {
-            FavoriteTimesScreen(
-                viewModel = busViewModel,
-                navController = navController
-            )
-        }
-
-        composable(
             route = "schedule/{routeId}",
             arguments = listOf(
                 navArgument("routeId") { type = NavType.StringType }
@@ -459,7 +454,16 @@ fun AppNavHost(
             ScheduleScreen(
                 route = route,
                 onBackClick = { navController.popBackStack() },
-                viewModel = busViewModel
+                viewModel = busViewModel,
+                onNotificationClick = { routeIdForNotifications ->
+                    try {
+                        navController.navigate("route_notifications/$routeIdForNotifications") {
+                            launchSingleTop = true
+                        }
+                    } catch (e: Exception) {
+                        Timber.e(e, "Navigation error to notifications for route: $routeIdForNotifications")
+                    }
+                }
             )
         }
 
@@ -503,20 +507,6 @@ fun AppNavHost(
                     navController.popBackStack()
                 }
             }
-        }
-        
-        composable(
-            route = "favorite_route_details/{routeId}",
-            arguments = listOf(
-                navArgument("routeId") { type = NavType.StringType }
-            ),
-        ) { backStackEntry ->
-            val routeId = backStackEntry.arguments?.getString("routeId") ?: ""
-            FavoriteRouteDetailsScreen(
-                routeId = routeId,
-                viewModel = busViewModel,
-                navController = navController
-            )
         }
 
     }

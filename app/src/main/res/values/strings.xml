@@ -12,17 +12,16 @@
     <!-- ===================================================================================== -->
     <!--                                        МАРШРУТЫ                                       -->
     <!-- ===================================================================================== -->
-    <string name="app_name_actual">Маршруты</string>
+    <string name="app_name_actual">Поехали! Славгород</string>
     <string name="error_loading_routes">Ошибка загрузки маршрутов</string>
 
 
     <!-- ===================================================================================== -->
-    <!--                                       ИЗБРАННОЕ                                       -->
+    <!--                              ИЗБРАННОЕ (используется для уведомлений)                -->
     <!-- ===================================================================================== -->
-    <string name="favorite_times_screen_title">Избранное</string>
-    <string name="empty_state_icon_description_favorites">Иконка пустого списка избранного</string>
-    <string name="no_favorite_times_title_updated">Избранное пока пусто</string>
-    <string name="no_favorite_times_description">Добавляйте расписания автобусов в избранное, чтобы они всегда были под рукой.</string>
+    <!-- Примечание: Функционал избранного интегрирован в расписание маршрутов.
+         Пользователь добавляет время в избранное через звёздочку в расписании,
+         настраивает уведомления через кнопку в шапке расписания маршрута. -->
 
 
     <!-- ===================================================================================== -->
@@ -73,10 +72,9 @@
     <string name="accessibility_notification_button_description">Настройки уведомлений для маршрута %1$s</string>
     <string name="accessibility_search_hint">Поиск маршрутов</string>
     <string name="accessibility_back_button">Назад</string>
-    <string name="accessibility_menu_button">Меню</string>
     <string name="accessibility_settings_button">Настройки</string>
-    <string name="accessibility_favorites_button">Избранное</string>
     <string name="accessibility_about_button">О приложении</string>
+    <string name="accessibility_favorite_star">Избранное</string>
 
     <!-- ===================================================================================== -->
     <!--                                   NOTIFICATIONS                                       -->

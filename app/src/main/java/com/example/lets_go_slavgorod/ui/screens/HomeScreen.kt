@@ -19,9 +19,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -214,22 +216,28 @@ fun EmptyState(searchQuery: String) {
 }
 
 /**
- * Сетка маршрутов с максимальной оптимизацией производительности
+ * Компонент отображения списка маршрутов
  * 
- * Высокопроизводительная сетка с агрессивными оптимизациями:
- * - LazyVerticalGrid с оптимизированным кэшированием
- * - Предварительная загрузка элементов
- * - Минимизация перекомпозиций
- * - Оптимизированная навигация без задержек
+ * Поддерживает два режима отображения:
+ * - GRID: сетка с настраиваемым количеством колонок (1-4)
+ * - LIST: вертикальный список
+ * 
+ * Особенности:
+ * - Адаптивная сетка с оптимизированными отступами
+ * - Клик на карточку -> переход к расписанию маршрута
+ * - Сохранение и восстановление состояния при навигации
+ * - Минимизация перекомпозиций через key и contentType
  * 
  * @param routes список маршрутов для отображения
- * @param navController контроллер навигации для перехода к деталям маршрута
+ * @param navController контроллер навигации для перехода к расписанию
+ * @param modifier модификатор для настройки внешнего вида
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RoutesListState(
     routes: List<BusRoute>,
-    navController: NavController
+    navController: NavController,
+    modifier: Modifier = Modifier
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val displaySettingsViewModel: DisplaySettingsViewModel = viewModel(
@@ -321,16 +329,24 @@ fun RoutesListState(
 /**
  * Главный экран приложения с маршрутами автобусов
  * 
- * Основные функции:
- * - Отображение списка доступных маршрутов
+ * Основной и единственный экран в навигации приложения.
+ * Отображает список всех доступных автобусных маршрутов города.
+ * 
+ * Функциональность:
+ * - Отображение списка доступных маршрутов в режиме сетки или списка
  * - Поиск по маршрутам в реальном времени
- * - Навигация к деталям конкретного маршрута
- * - Обработка состояний загрузки, ошибок и пустого списка
+ * - Навигация к расписанию конкретного маршрута
+ * - Быстрый доступ к настройкам через иконку в шапке
+ * - Обработка состояний: загрузка, ошибка, пустой список
+ * 
+ * Шапка экрана:
+ * - Название приложения "Поехали! Славгород"
+ * - Кнопка настроек справа
  * 
  * Оптимизации:
- * - Использует LazyColumn для эффективного отображения списков
- * - Кэширует состояние для быстрого отклика
- * - Минимизирует перекомпозиции
+ * - LazyVerticalGrid/LazyColumn для эффективного отображения
+ * - Кэширование состояния для быстрого отклика
+ * - Минимизация перекомпозиций через key и contentType
  * 
  * @param navController контроллер навигации для переходов между экранами
  * @param viewModel ViewModel для управления данными маршрутов
@@ -375,11 +391,22 @@ fun HomeScreen(
                     )
                 },
                 actions = {
-                    // Убрана кнопка обновления маршрутов
+                    IconButton(onClick = { 
+                        navController.navigate("settings") {
+                            launchSingleTop = true
+                        }
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Настройки",
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
                 windowInsets = WindowInsets(0)
             )

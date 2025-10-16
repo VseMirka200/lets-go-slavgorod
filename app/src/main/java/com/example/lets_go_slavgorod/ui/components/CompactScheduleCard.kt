@@ -3,8 +3,8 @@ package com.example.lets_go_slavgorod.ui.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,16 +16,29 @@ import androidx.compose.ui.unit.sp
 import com.example.lets_go_slavgorod.data.model.BusSchedule
 
 /**
- * Компактная карточка расписания для отображения в двухколоночной сетке
+ * Компактная карточка рейса для двухколоночной сетки расписания
  * 
- * Отображает только основную информацию: время отправления и кнопку избранного.
- * Оптимизирована для компактного отображения в сетке.
+ * Минималистичная карточка для отображения времени отправления в сетке.
+ * Используется в FilterableScheduleGrid для маршрутов 102 и 102Б.
+ * 
+ * Структура:
+ * - Время отправления крупным шрифтом (28sp) по центру
+ * - Метка "Следующий" для ближайшего рейса
+ * - Звёздочка избранного в правом углу по центру вертикали
+ * 
+ * Визуальные состояния:
+ * - Обычный рейс: серый фон, средний размер
+ * - Ближайший рейс: цветной фон, жирный шрифт, метка "Следующий"
+ * 
+ * Избранное:
+ * - Пустая звёздочка (☆): не в избранном
+ * - Заполненная звёздочка (★): в избранном
  * 
  * @param schedule расписание для отображения
- * @param isFavorite флаг, добавлено ли время в избранное
- * @param onFavoriteClick callback-функция при клике на кнопку избранного
- * @param isNextUpcoming флаг, является ли это расписание ближайшим рейсом
- * @param allSchedules все расписания для расчета времени до отправления
+ * @param isFavorite добавлено ли время в избранное
+ * @param onFavoriteClick callback при клике на звёздочку
+ * @param isNextUpcoming является ли это ближайшим рейсом
+ * @param allSchedules не используется (оставлен для совместимости)
  * @param modifier модификатор для настройки внешнего вида
  */
 @Composable
@@ -51,53 +64,54 @@ fun CompactScheduleCard(
                 MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
-        Column(
+        Box(
             modifier = Modifier
+                .fillMaxWidth()
                 .padding(12.dp)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Время отправления
-            Text(
-                text = schedule.departureTime,
-                style = androidx.compose.ui.text.TextStyle(
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.Default, // Roboto
-                    fontSize = 16.sp,
-                    fontWeight = if (isNextUpcoming) FontWeight.Bold else FontWeight.Medium
-                ),
-                color = if (isNextUpcoming) 
-                    MaterialTheme.colorScheme.primary 
-                else 
-                    MaterialTheme.colorScheme.onSurface
-            )
-            
-            // Простое отображение для ближайшего рейса
-            if (isNextUpcoming) {
+            // Основное содержимое по центру
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Время отправления
                 Text(
-                    text = "Следующий",
-                    style = androidx.compose.ui.text.TextStyle(
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Default, // Roboto
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Normal
+                    text = schedule.departureTime,
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = if (isNextUpcoming) FontWeight.Bold else FontWeight.SemiBold
                     ),
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                    color = if (isNextUpcoming) 
+                        MaterialTheme.colorScheme.primary 
+                    else 
+                        MaterialTheme.colorScheme.onSurface
                 )
+                
+                // Простое отображение для ближайшего рейса
+                if (isNextUpcoming) {
+                    Text(
+                        text = "Следующий",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                    )
+                }
             }
             
-            // Кнопка избранного
+            // Кнопка избранного справа по центру
             IconButton(
                 onClick = onFavoriteClick,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .size(32.dp)
             ) {
                 Icon(
-                    imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                    imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
                     contentDescription = if (isFavorite) "Убрать из избранного" else "Добавить в избранное",
                     tint = if (isFavorite) 
                         MaterialTheme.colorScheme.primary 
                     else 
                         MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
