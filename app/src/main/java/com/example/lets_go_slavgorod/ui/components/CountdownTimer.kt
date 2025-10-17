@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.lets_go_slavgorod.data.model.BusSchedule
+import com.example.lets_go_slavgorod.utils.Constants
 import com.example.lets_go_slavgorod.utils.TimeUtils
 import kotlinx.coroutines.delay
 import java.util.*
@@ -85,7 +86,7 @@ fun CountdownTimer(
     LaunchedEffect(isNextDeparture) {
         if (isNextDeparture) {
             while (true) {
-                delay(1000)
+                delay(Constants.TIMER_UPDATE_INTERVAL_MS)
                 currentTime = System.currentTimeMillis()
             }
         }

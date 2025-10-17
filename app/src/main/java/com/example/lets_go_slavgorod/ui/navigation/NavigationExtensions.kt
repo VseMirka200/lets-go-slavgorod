@@ -7,6 +7,9 @@ import timber.log.Timber
 /**
  * Extension функции для упрощения навигации в приложении
  * 
+ * Версия: 3.0
+ * Последнее обновление: Октябрь 2025
+ * 
  * Предоставляет удобные методы для навигации с общими параметрами,
  * устраняя дублирование кода и обеспечивая единообразие поведения.
  * 
@@ -21,8 +24,12 @@ import timber.log.Timber
  * - Переиспользуемые конфигурации (launchSingleTop, restoreState)
  * - Type-safe навигация через параметры
  * 
+ * Изменения v3.0:
+ * - Удалена устаревшая функция navigateToAbout()
+ * - Упрощена навигационная структура
+ * 
  * @author VseMirka200
- * @version 2.0
+ * @version 3.0
  * @since 2.0
  */
 
@@ -85,16 +92,6 @@ fun NavController.navigateToRouteNotificationSettings(routeId: String) {
 }
 
 /**
- * Навигация к экрану "О программе"
- */
-fun NavController.navigateToAbout() {
-    navigateOptimized(
-        route = Screen.About.route,
-        popUpToRoute = "settings"
-    )
-}
-
-/**
  * Навигация назад с обработкой ошибок
  * 
  * @return true если навигация успешна, false иначе
@@ -130,4 +127,3 @@ fun NavController.navigateToHome(clearBackStack: Boolean = false) {
 fun NavController.isCurrentRoute(route: String): Boolean {
     return currentDestination?.route == route
 }
-

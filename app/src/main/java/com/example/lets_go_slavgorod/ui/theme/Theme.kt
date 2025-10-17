@@ -11,6 +11,32 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
+/**
+ * Тема приложения "Поехали! Славгород"
+ * 
+ * Версия: 2.0
+ * Последнее обновление: Октябрь 2025
+ * 
+ * Определяет цветовые схемы приложения для светлой и темной темы
+ * в соответствии с Material Design 3.
+ * 
+ * Цветовая палитра:
+ * - **BusBlue** (#1976D2) - основной цвет автобусной тематики
+ * - **AccentTeal** (#26A69A) - акцентный цвет для важных элементов
+ * - **TransportOrange** (#FF9800) - для предупреждений и выделений
+ * - **TransportRed** (#F44336) - для ошибок и критических уведомлений
+ * 
+ * Поддержка:
+ * - Светлая тема (LightColorScheme)
+ * - Темная тема (DarkColorScheme)
+ * - Динамические цвета Android 12+ (опционально)
+ * - Автоматическое переключение по системным настройкам
+ * 
+ * @author VseMirka200
+ * @version 2.0
+ * @since 1.0
+ */
+
 private val DarkColorScheme = darkColorScheme(
     primary = BusBlueLight,
     onPrimary = Color.Black,

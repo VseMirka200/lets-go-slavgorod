@@ -6,6 +6,46 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
+/**
+ * Типографика приложения "Поехали! Славгород"
+ * 
+ * Версия: 2.0
+ * Последнее обновление: Октябрь 2025
+ * 
+ * Определяет все текстовые стили приложения в соответствии с Material Design 3.
+ * Использует системный шрифт Roboto (FontFamily.Default) для всех элементов.
+ * 
+ * Категории стилей:
+ * 
+ * **Display** (57sp, 45sp, 36sp) - для очень крупных заголовков:
+ * - Bold weight для максимального визуального воздействия
+ * - Отрицательный letterSpacing для displayLarge
+ * 
+ * **Headline** (32sp, 28sp, 24sp) - для заголовков секций:
+ * - SemiBold weight для баланса между читаемостью и акцентом
+ * - Используется в заголовках экранов и карточках
+ * 
+ * **Title** (22sp, 16sp, 14sp) - для подзаголовков:
+ * - Medium/SemiBold weight
+ * - Используется в топбарах, карточках, диалогах
+ * 
+ * **Body** (16sp, 14sp, 12sp) - для основного текста:
+ * - Normal weight для лучшей читаемости
+ * - Увеличенный letterSpacing для улучшения читаемости
+ * 
+ * **Label** (14sp, 12sp, 11sp) - для меток и кнопок:
+ * - Medium/SemiBold weight для контраста
+ * - Используется в кнопках, чипах, подсказках
+ * 
+ * Изменения v2.0:
+ * - Все стили явно используют FontFamily.Default (Roboto)
+ * - Унифицированы размеры для всех заголовков
+ * - Оптимизированы letterSpacing значения
+ * 
+ * @author VseMirka200
+ * @version 2.0
+ * @since 1.0
+ */
 val Typography = Typography(
     // Заголовки - более жирные и читаемые
     displayLarge = TextStyle(

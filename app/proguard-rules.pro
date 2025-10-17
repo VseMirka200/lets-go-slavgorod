@@ -165,17 +165,20 @@
 # НОВЫЕ КОМПОНЕНТЫ (v2.0)
 # =============================================================================
 
-# Error Handling система
+# Error Handling система - type-safe обработка ошибок
 -keep class com.example.lets_go_slavgorod.data.model.AppError { *; }
 -keep class com.example.lets_go_slavgorod.data.model.AppError$* { *; }
 -keep class com.example.lets_go_slavgorod.utils.ErrorHandler { *; }
 
-# Update Cache
--keep class com.example.lets_go_slavgorod.updates.UpdateCache { *; }
+# Update Manager - система обновлений
+-keep class com.example.lets_go_slavgorod.updates.UpdateManager { *; }
 
-# ViewModelFactory
+# ViewModelFactory - создание ViewModels
 -keep class com.example.lets_go_slavgorod.ui.viewmodel.AndroidViewModelFactory { *; }
 -keep class com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory { *; }
 
-# Use Cases - не удалять бизнес-логику
+# Use Cases - бизнес-логика приложения
 -keep class com.example.lets_go_slavgorod.domain.usecase.** { *; }
+
+# Remote Data Source - загрузка данных из GitHub
+-keep class com.example.lets_go_slavgorod.data.remote.RemoteDataSource { *; }
