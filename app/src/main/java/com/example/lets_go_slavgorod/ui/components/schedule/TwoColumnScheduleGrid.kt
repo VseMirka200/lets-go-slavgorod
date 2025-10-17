@@ -124,29 +124,33 @@ fun TwoColumnScheduleGrid(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp),
+                .padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // Заголовок левой колонки
             Box(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = leftTitle,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.primary,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
             }
             
             // Заголовок правой колонки
             Box(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = rightTitle,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.primary,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
             }
@@ -184,7 +188,6 @@ fun TwoColumnScheduleGrid(
                             },
                             isNextUpcoming = isNextUpcoming,
                             orderNumber = i + 1,
-                            allSchedules = filteredLeftSchedules,
                             modifier = Modifier.fillMaxWidth()
                         )
                     } else {
@@ -214,7 +217,6 @@ fun TwoColumnScheduleGrid(
                             },
                             isNextUpcoming = isNextUpcoming,
                             orderNumber = i + 1,
-                            allSchedules = filteredRightSchedules,
                             modifier = Modifier.fillMaxWidth()
                         )
                     } else {
