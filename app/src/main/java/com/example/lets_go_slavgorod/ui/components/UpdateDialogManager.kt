@@ -11,13 +11,40 @@ import com.example.lets_go_slavgorod.ui.screens.UpdateAvailableDialog
 /**
  * Менеджер для показа диалога обновления приложения
  * 
+ * Версия: 1.0
+ * Последнее обновление: Октябрь 2025
+ * 
+ * Управляет жизненным циклом диалога уведомления об обновлениях.
+ * Автоматически показывает диалог когда доступно новое обновление
+ * и скрывает его после действий пользователя.
+ * 
  * Отвечает за:
  * - Управление состоянием показа диалога обновления
+ * - Автоматическое отображение при наличии обновления
  * - Отображение диалога с информацией о новой версии
- * - Обработку действий пользователя (скачать/отложить)
+ * - Обработку действий пользователя (скачать/отложить/закрыть)
+ * - Очистку состояния после действий
+ * 
+ * Использование:
+ * ```kotlin
+ * UpdateDialogManager(
+ *     availableUpdateVersion = "v1.9",
+ *     availableUpdateUrl = "https://...",
+ *     availableUpdateNotes = "Что нового...",
+ *     onDownloadUpdate = { url -> openBrowser(url) },
+ *     onClearAvailableUpdate = { clearCache() }
+ * )
+ * ```
+ * 
+ * @param availableUpdateVersion версия доступного обновления или null
+ * @param availableUpdateUrl URL для скачивания обновления или null
+ * @param availableUpdateNotes описание изменений или null
+ * @param onDownloadUpdate callback для скачивания обновления
+ * @param onClearAvailableUpdate callback для очистки информации об обновлении
  * 
  * @author VseMirka200
  * @version 1.0
+ * @since 2.0
  */
 @Composable
 fun UpdateDialogManager(

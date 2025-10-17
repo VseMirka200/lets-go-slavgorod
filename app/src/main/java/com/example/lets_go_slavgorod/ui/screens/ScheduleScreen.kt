@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package com.example.lets_go_slavgorod.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
@@ -28,23 +26,14 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.model.BusSchedule
-import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
 import com.example.lets_go_slavgorod.ui.components.schedule.ScheduleList
 import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
 import com.example.lets_go_slavgorod.utils.ScheduleUtils
 import com.example.lets_go_slavgorod.utils.ConditionalLogging
+import com.example.lets_go_slavgorod.utils.Constants
 import timber.log.Timber
-import androidx.compose.ui.platform.LocalContext
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Calendar
-
-const val STOP_SLAVGORD_RYNOK = "Рынок (Славгород)"
-const val STOP_YAROVOE_MCHS = "МСЧ-128 (Яровое)"
-const val STOP_YAROVOE_ZORI = "Ст. Зори (Яровое)"
-const val STOP_VOKZAL = "вокзал"
-const val STOP_SOVHOZ = "совхоз"
 
 /**
  * Экран расписания конкретного маршрута
@@ -113,28 +102,6 @@ fun ScheduleScreen(
     var nextUpcomingVokzalId by remember { mutableStateOf<String?>(null) }
     var nextUpcomingSovhozId by remember { mutableStateOf<String?>(null) }
     
-    // Получаем контекст для доступа к репозиторию
-    val context = LocalContext.current
-    
-    // Автоматическая проверка обновлений расписания при входе на экран
-    LaunchedEffect(route) {
-        if (route != null) {
-            // Проверяем обновления в фоне
-            withContext(Dispatchers.IO) {
-                try {
-                    val repository = BusRouteRepository(context)
-                    val hasUpdates = repository.checkForDataUpdates()
-                    if (hasUpdates) {
-                        Timber.i("Schedule updates available, refreshing...")
-                        repository.refreshRoutesFromRemote()
-                    }
-                } catch (e: Exception) {
-                    Timber.e(e, "Error checking for schedule updates")
-                }
-            }
-        }
-    }
-    
     // Динамическая загрузка и обработка данных расписания
     // LaunchedEffect с зависимостью от route перезапускает загрузку при смене маршрута
     LaunchedEffect(route) {
@@ -155,7 +122,7 @@ fun ScheduleScreen(
             // Фильтруем и сортируем расписания по точкам отправления
             // Каждая точка отправления отображается в отдельной секции
             schedulesSlavgorod = allSchedules
-                .filter { it.departurePoint == STOP_SLAVGORD_RYNOK }
+                .filter { it.departurePoint == Constants.STOP_SLAVGOROD_RYNOK }
                 .sortedBy { it.departureTime }
             ConditionalLogging.debug("Schedule") { "Slavgorod schedules: ${schedulesSlavgorod.size}" }
             
@@ -163,9 +130,9 @@ fun ScheduleScreen(
             schedulesYarovoe = allSchedules
                 .filter { 
                     if (route.id == "102B") {
-                        it.departurePoint == STOP_YAROVOE_ZORI
+                        it.departurePoint == Constants.STOP_YAROVOE_ZORI
                     } else {
-                        it.departurePoint == STOP_YAROVOE_MCHS
+                        it.departurePoint == Constants.STOP_YAROVOE_MCHS
                     }
                 }
                 .sortedBy { it.departureTime }
@@ -176,12 +143,12 @@ fun ScheduleScreen(
             
             // Расписания для городских маршрутов (только маршрут №1)
             schedulesVokzal = allSchedules
-                .filter { it.departurePoint == STOP_VOKZAL }
+                .filter { it.departurePoint == Constants.STOP_ROUTE1_VOKZAL }
                 .sortedBy { it.departureTime }
             ConditionalLogging.debug("Schedule") { "Vokzal schedules: ${schedulesVokzal.size}" }
             
             schedulesSovhoz = allSchedules
-                .filter { it.departurePoint == STOP_SOVHOZ }
+                .filter { it.departurePoint == Constants.STOP_ROUTE1_SOVHOZ }
                 .sortedBy { it.departureTime }
             ConditionalLogging.debug("Schedule") { "Sovhoz schedules: ${schedulesSovhoz.size}" }
             
@@ -195,10 +162,10 @@ fun ScheduleScreen(
             val elapsedTime = System.currentTimeMillis() - startTime
             ConditionalLogging.debug("Schedule") { "Schedule data fully loaded in ${elapsedTime}ms" }
             
-            // Гарантируем показ анимации загрузки минимум 1 секунду
+            // Гарантируем показ анимации загрузки минимум указанное время
             // Это улучшает UX, не допуская "мерцания" при быстрой загрузке
-            if (elapsedTime < 1000) {
-                delay(1000 - elapsedTime)
+            if (elapsedTime < Constants.MIN_LOADING_ANIMATION_MS) {
+                delay(Constants.MIN_LOADING_ANIMATION_MS - elapsedTime)
             }
             
             isLoading = false

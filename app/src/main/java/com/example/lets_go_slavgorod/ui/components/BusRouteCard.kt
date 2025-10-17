@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
@@ -33,10 +32,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.ui.theme.DesignTokens
+import com.example.lets_go_slavgorod.ui.theme.lets_go_slavgorodTheme
 import com.example.lets_go_slavgorod.utils.Constants
 
 /**
@@ -442,6 +443,55 @@ fun BusRouteCard(
             modifier = modifier,
             showNotificationButton = showNotificationButton,
             onNotificationClick = onNotificationClick
+        )
+    }
+}
+
+// =============================================================================
+//                              PREVIEWS
+// =============================================================================
+
+@Preview(name = "Light Mode - Grid 2 columns", showBackground = true)
+@Preview(name = "Dark Mode - Grid 2 columns", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun PreviewBusRouteCardGrid() {
+    lets_go_slavgorodTheme {
+        BusRouteCard(
+            route = BusRoute(
+                id = "102",
+                routeNumber = "102",
+                name = "Автобус №102",
+                description = "Рынок (Славгород) — Ст. Зори (Яровое)",
+                travelTime = "~40 минут",
+                pricePrimary = "38₽ город / 55₽ межгород",
+                paymentMethods = "Нал. / Безнал.",
+                color = "#FF5722"
+            ),
+            onClick = {},
+            isGridMode = true,
+            gridColumns = 2
+        )
+    }
+}
+
+@Preview(name = "Light Mode - List", showBackground = true)
+@Preview(name = "Dark Mode - List", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun PreviewBusRouteCardList() {
+    lets_go_slavgorodTheme {
+        BusRouteCard(
+            route = BusRoute(
+                id = "1",
+                routeNumber = "1",
+                name = "Автобус №1",
+                description = "Маршрут вокзал — совхоз",
+                travelTime = "~24 минуты",
+                pricePrimary = "38₽ город",
+                paymentMethods = "Нал. / Безнал.",
+                color = "#4CAF50"
+            ),
+            onClick = {},
+            isGridMode = false
         )
     }
 }

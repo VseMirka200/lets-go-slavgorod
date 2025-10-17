@@ -46,7 +46,6 @@ import com.example.lets_go_slavgorod.ui.components.UpdateDialogManager
 import com.example.lets_go_slavgorod.ui.components.DisclaimerDialog
 import com.example.lets_go_slavgorod.ui.navigation.Screen
 import com.example.lets_go_slavgorod.data.local.DisclaimerManager
-import com.example.lets_go_slavgorod.ui.screens.AboutScreen
 import com.example.lets_go_slavgorod.ui.screens.HomeScreen
 import com.example.lets_go_slavgorod.ui.screens.RouteNotificationSettingsScreen
 import com.example.lets_go_slavgorod.ui.screens.ScheduleScreen
@@ -474,15 +473,6 @@ fun AppNavHost(
             SettingsScreen(
                 navController = navController,
                 themeViewModel = themeViewModel
-            )
-        }
-
-        composable(
-            route = Screen.About.route
-        ) {
-            AboutScreen(
-                navController = navController,
-                onBackClick = { navController.popBackStack() }
             )
         }
         

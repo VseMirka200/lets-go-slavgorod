@@ -30,32 +30,41 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 /**
- * Главный класс приложения "Let's Go Slavgorod" с Hilt DI
+ * Главный класс приложения "Поехали! Славгород"
  * 
  * Управляет глобальным состоянием приложения и инициализацией компонентов.
  * Наследуется от MultiDexApplication для поддержки большого количества методов.
- * Использует Hilt для Dependency Injection.
+ * Использует ручную Dependency Injection через lazy properties и фабрики.
  * 
  * Основные функции:
- * - Инициализация Timber для логирования
- * - Создание каналов уведомлений
- * - Восстановление запланированных уведомлений при запуске
- * - Управление жизненным циклом фоновых задач
- * - Инициализация репозиториев и менеджеров
+ * - Инициализация Timber для логирования (только в Debug режиме)
+ * - Создание каналов уведомлений через NotificationHelper
+ * - Восстановление запланированных уведомлений после перезагрузки
+ * - Управление жизненным циклом фоновых задач через CoroutineScope
+ * - Ленивая инициализация компонентов (database, repository, updateManager)
+ * - Автоматическая проверка обновлений при запуске
+ * - Мониторинг lifecycle приложения
  * 
  * Выполняется при:
  * - Первом запуске приложения
  * - Перезапуске после завершения процесса
  * - Обновлении приложения
+ * - Восстановлении после перезагрузки устройства
  * 
- * Архитектура:
+ * Архитектура DI (без фреймворков):
  * - Singleton паттерн для глобального доступа
- * - CoroutineScope для фоновых операций
- * - SupervisorJob для изоляции ошибок
- * - Dispatchers.IO для I/O операций
+ * - Lazy initialization для оптимизации запуска
+ * - CoroutineScope с SupervisorJob для фоновых операций
+ * - Dispatchers.IO для всех I/O операций
+ * - ViewModelFactory для передачи зависимостей в ViewModels
+ * 
+ * Оптимизации:
+ * - Lazy database/repository - создаются только при необходимости
+ * - Асинхронная проверка обновлений после задержки 5 секунд
+ * - Корректная очистка ресурсов через ProcessLifecycleOwner
  * 
  * @author VseMirka200
- * @version 2.0
+ * @version 3.0
  * @since 1.0
  */
 class BusApplication : MultiDexApplication() {
@@ -260,8 +269,8 @@ class BusApplication : MultiDexApplication() {
                 return
             }
             
-            // Ждем 5 секунд после запуска приложения, чтобы не блокировать UI
-            delay(5000)
+            // Ждем несколько секунд после запуска приложения, чтобы не блокировать UI
+            delay(Constants.UPDATE_CHECK_STARTUP_DELAY_MS)
             
             val updateManager = UpdateManager(this@BusApplication)
             val result = updateManager.checkForUpdatesWithResult()

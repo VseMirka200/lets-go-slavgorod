@@ -163,9 +163,6 @@ class BusViewModel(application: Application) : AndroidViewModel(application) {
     /** Кэш маршрутов для быстрого доступа */
     private var cachedRoutes: List<BusRoute> = emptyList()
     
-    /** Кэш избранных времен для оптимизации */
-    private var cachedFavoriteTimes: List<FavoriteTime> = emptyList()
-    
     val favoriteTimes: StateFlow<List<FavoriteTime>> =
         favoriteTimeDao.getAllFavoriteTimes()
             .map { entities ->

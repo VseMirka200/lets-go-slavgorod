@@ -33,21 +33,42 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.lets_go_slavgorod.R
+import com.example.lets_go_slavgorod.ui.theme.lets_go_slavgorodTheme
 
 /**
  * Диалог с предупреждением о неофициальном статусе приложения
  * 
+ * Версия: 1.0
+ * Последнее обновление: Октябрь 2025
+ * 
+ * Отображается при первом запуске приложения для информирования пользователя
+ * о том, что приложение не является официальным продуктом транспортной компании.
+ * 
  * Основные функции:
  * - Информирует пользователя о неофициальном статусе приложения
  * - Предупреждает о том, что приложение не связано с ООО "Транспорт"
+ * - Объясняет назначение приложения (справочный сервис)
+ * - Напоминает проверять актуальность расписания
  * - Позволяет пользователю подтвердить понимание
- * - Запоминает выбор пользователя
+ * - Запоминает выбор пользователя через DisclaimerManager
  * 
- * @param onDismiss вызывается при закрытии диалога
- * @param onAccept вызывается при принятии условий
+ * Особенности:
+ * - Прокручиваемое содержимое
+ * - Чекбокс "Не показывать снова"
+ * - Иконка предупреждения (Warning)
+ * - Иконка информации (Info)
+ * - Material Design 3 стиль
+ * 
+ * @param onDismiss вызывается при закрытии диалога без принятия
+ * @param onAccept вызывается при принятии условий (без "Не показывать снова")
  * @param onDontShowAgain вызывается при выборе "Не показывать снова"
+ * 
+ * @author VseMirka200
+ * @version 1.0
+ * @since 1.0
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -169,4 +190,21 @@ fun DisclaimerDialog(
             }
         }
     )
+}
+
+// =============================================================================
+//                              PREVIEWS
+// =============================================================================
+
+@Preview(name = "Light Mode", showBackground = true)
+@Preview(name = "Dark Mode", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun PreviewDisclaimerDialog() {
+    lets_go_slavgorodTheme {
+        DisclaimerDialog(
+            onDismiss = {},
+            onAccept = {},
+            onDontShowAgain = {}
+        )
+    }
 }

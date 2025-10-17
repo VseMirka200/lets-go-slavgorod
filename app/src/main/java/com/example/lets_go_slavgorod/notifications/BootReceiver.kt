@@ -37,8 +37,6 @@ import timber.log.Timber
  * @since 1.0
  */
 class BootReceiver : BroadcastReceiver() {
-    
-    companion object;
 
     override fun onReceive(context: Context, intent: Intent) {
         Timber.d("Boot event received: ${intent.action}")

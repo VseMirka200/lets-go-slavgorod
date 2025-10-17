@@ -1,11 +1,10 @@
 package com.example.lets_go_slavgorod.ui.screens
 
-import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,23 +20,26 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -47,6 +49,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -62,12 +65,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.lets_go_slavgorod.R
-import com.example.lets_go_slavgorod.ui.navigation.Screen
 import com.example.lets_go_slavgorod.ui.viewmodel.AppTheme
 import com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory
 import com.example.lets_go_slavgorod.ui.viewmodel.DataManagementViewModel
@@ -79,50 +82,79 @@ import com.example.lets_go_slavgorod.ui.viewmodel.ThemeViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.UpdateMode
 import com.example.lets_go_slavgorod.ui.viewmodel.UpdateSettingsViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.VibrationSettingsViewModel
-import androidx.compose.material3.Switch
-import androidx.compose.material.icons.filled.PhoneAndroid
+import com.example.lets_go_slavgorod.utils.Constants
 import timber.log.Timber
 
 /**
  * Экран настроек приложения
  * 
+ * Версия: 3.0
+ * Последнее обновление: Октябрь 2025
+ * 
  * Централизованный экран для управления всеми настройками приложения.
  * Доступен из главного экрана через иконку настроек в шапке.
  * 
- * Разделы настроек:
- * 1. Настройка темы
+ * Изменения v3.0:
+ * - Все разделы теперь сворачиваемые (по умолчанию свернуты)
+ * - Информация о приложении встроена прямо в настройки
+ * - Добавлены иконки ExpandLess/ExpandMore для визуальной индикации
+ * - Клик по заголовку раздела сворачивает/разворачивает его
+ * - Удален переход на отдельный экран AboutScreen
+ * 
+ * Сворачиваемые разделы настроек:
+ * 
+ * 1. **Настройка темы** 🎨
  *    - Выбор темы: Системная / Светлая / Темная
  *    - Модальный диалог выбора
+ *    - Автоматическое применение выбранной темы
  * 
- * 2. Настройка отображения
+ * 2. **Настройка отображения** 📱
  *    - Режим отображения маршрутов: Клетка / Список
  *    - Количество колонок в сетке: 1-4 (только для режима "Клетка")
  *    - Модальные диалоги выбора
  * 
- * 3. Настройка обновлений
+ * 3. **Настройка обновлений** 🔄
  *    - Режим проверки: Автоматически / Вручную / Отключено
  *    - Ручная проверка обновлений
  *    - Информация о последней проверке
  *    - Модальный диалог выбора режима
+ *    - Отображение доступных обновлений с changelog
  * 
- * 4. Настройка уведомлений (глобальные)
- *    - Режим уведомлений: Включены / Отключены / Временно
- *    - Временное отключение на N дней
- *    - Модальный диалог выбора
+ * 4. **Настройка уведомлений** 🔔
+ *    - Режим "Не беспокоить": Выключен / Всегда / На N дней / Пользовательский
+ *    - Временное отключение на выбранные дни недели
+ *    - Настройка вибрации для уведомлений
+ *    - Модальный диалог выбора режима
  * 
- * 5. Сброс настроек
+ * 5. **Управление данными** 💾
+ *    - Обновление расписания из GitHub
+ *    - Информация о версии данных и последнем обновлении
  *    - Сброс всех настроек к значениям по умолчанию
  *    - Очистка кэша приложения
+ *    - Диалоги подтверждения для опасных операций
  * 
- * 6. О приложении
- *    - Переход к экрану "О программе"
+ * 6. **О приложении** ℹ️
+ *    - Информация о приложении и версии
+ *    - Разработчик с кликабельной ссылкой на VK
+ *    - Форма обратной связи (Telegram)
+ *    - Поддержка разработчика (донаты, звезда на GitHub)
+ *    - Встроенные подсказки и инструкции
  * 
- * Все выпадающие меню реализованы как модальные диалоги с радио-кнопками.
+ * Особенности реализации:
+ * - Все выпадающие меню реализованы как модальные диалоги с радио-кнопками
+ * - Состояния сворачивания разделов сохраняются через remember
+ * - Диалоги подтверждения для необратимых действий
+ * - Обработка ошибок при открытии внешних ссылок
+ * - Адаптивная верстка с учетом размера экрана
  * 
- * @param navController контроллер навигации
+ * @param navController контроллер навигации (может быть null)
  * @param modifier модификатор для настройки внешнего вида
- * @param themeViewModel ViewModel для управления темой
+ * @param themeViewModel ViewModel для управления темой приложения
  * @param updateSettingsViewModel ViewModel для настроек обновлений (опционально)
+ * 
+ * @author VseMirka200
+ * @version 3.0
+ * @since 1.0
  */
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -199,6 +231,21 @@ fun SettingsScreen(
     var showResetSettingsDialog by remember { mutableStateOf(false) }
     var showClearCacheDialog by remember { mutableStateOf(false) }
     var cacheCleared by remember { mutableStateOf(false) }
+    
+    // Информация о приложении
+    val developerName = stringResource(id = R.string.developer_name)
+    val developerVkUrl = stringResource(id = R.string.developer_vk_url)
+    val telegramUrl = stringResource(id = R.string.feedback_telegram_url)
+    val appVersion = Constants.APP_VERSION
+    
+    // Состояния сворачивания разделов (по умолчанию все свернуты)
+    var isThemeSectionExpanded by remember { mutableStateOf(false) }
+    var isDisplaySectionExpanded by remember { mutableStateOf(false) }
+    var isUpdateSectionExpanded by remember { mutableStateOf(false) }
+    var isNotificationSectionExpanded by remember { mutableStateOf(false) }
+    var isVibrationSectionExpanded by remember { mutableStateOf(false) }
+    var isDataSectionExpanded by remember { mutableStateOf(false) }
+    var isAboutSectionExpanded by remember { mutableStateOf(false) }
 
         Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -238,15 +285,29 @@ fun SettingsScreen(
         ) {
             Spacer(Modifier.height(16.dp))
             // Заголовок секции "Настройка темы"
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { isThemeSectionExpanded = !isThemeSectionExpanded }
+                    .padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
             Text(
                 text = "Настройка темы",
                 style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Icon(
+                    imageVector = if (isThemeSectionExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    contentDescription = if (isThemeSectionExpanded) "Свернуть" else "Развернуть",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
             
+            if (isThemeSectionExpanded) {
             ThemeSettingsCard(
                 currentAppTheme = currentAppTheme,
                 showThemeDropdown = showThemeDropdown,
@@ -256,19 +317,34 @@ fun SettingsScreen(
                     themeViewModel.setTheme(theme)
                 }
             )
+            }
 
             Spacer(Modifier.height(24.dp))
 
             // Заголовок секции "Отображение"
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { isDisplaySectionExpanded = !isDisplaySectionExpanded }
+                    .padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
             Text(
                 text = "Настройка отображения",
                 style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Icon(
+                    imageVector = if (isDisplaySectionExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    contentDescription = if (isDisplaySectionExpanded) "Свернуть" else "Развернуть",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
             
+            if (isDisplaySectionExpanded) {
             DisplaySettingsCard(
                 currentDisplayMode = currentDisplayMode,
                 currentGridColumns = currentGridColumns,
@@ -285,19 +361,34 @@ fun SettingsScreen(
                 onShowColumnsDropdownChange = { showColumnsDropdown = it },
                 columnsOptions = columnsOptions
             )
+            }
 
             Spacer(Modifier.height(16.dp))
             
             // Заголовок секции "Обновления"
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { isUpdateSectionExpanded = !isUpdateSectionExpanded }
+                    .padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
             Text(
                 text = "Настройка обновлений",
                 style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Icon(
+                    imageVector = if (isUpdateSectionExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    contentDescription = if (isUpdateSectionExpanded) "Свернуть" else "Развернуть",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
             
+            if (isUpdateSectionExpanded) {
             UpdateSettingsCard(
                 currentUpdateMode = currentUpdateMode,
                 showUpdateModeDropdown = showUpdateModeDropdown,
@@ -332,19 +423,34 @@ fun SettingsScreen(
                     }
                 }
             )
+            }
 
             Spacer(Modifier.height(24.dp))
 
             // Заголовок секции "Уведомления"
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { isNotificationSectionExpanded = !isNotificationSectionExpanded }
+                    .padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
             Text(
                 text = "Настройка уведомлений",
                 style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Icon(
+                    imageVector = if (isNotificationSectionExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    contentDescription = if (isNotificationSectionExpanded) "Свернуть" else "Развернуть",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
             
+            if (isNotificationSectionExpanded) {
             QuietModeSettingsCard(
                 currentQuietMode = currentQuietMode,
                 showQuietModeDropdown = showQuietModeDropdown,
@@ -355,50 +461,73 @@ fun SettingsScreen(
                     quietModeViewModel.setQuietMode(mode, days)
                 }
             )
-            
-            Spacer(Modifier.height(16.dp))
-            
-            // Карточка настройки вибрации
-            VibrationSettingsCard(
-                vibrationEnabled = vibrationSettingsViewModel.vibrationEnabled.collectAsState().value,
-                onVibrationToggle = { enabled ->
-                    vibrationSettingsViewModel.setVibrationEnabled(enabled)
-                }
-            )
+                
+                Spacer(Modifier.height(16.dp))
+                
+                // Карточка настройки вибрации (оптимизация: collect один раз)
+                val vibrationEnabled by vibrationSettingsViewModel.vibrationEnabled.collectAsState()
+                VibrationSettingsCard(
+                    vibrationEnabled = vibrationEnabled,
+                    onVibrationToggle = { enabled ->
+                        vibrationSettingsViewModel.setVibrationEnabled(enabled)
+                    }
+                )
+            }
             
             Spacer(Modifier.height(24.dp))
 
             // Заголовок секции "Управление данными"
-            Text(
-                text = "Управление данными",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { isDataSectionExpanded = !isDataSectionExpanded }
+                    .padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Управление данными",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Icon(
+                    imageVector = if (isDataSectionExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    contentDescription = if (isDataSectionExpanded) "Свернуть" else "Развернуть",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
             
-            ScheduleUpdateCard(
-                isRefreshing = dataManagementViewModel.isRefreshingSchedule.collectAsState().value,
-                refreshError = dataManagementViewModel.scheduleRefreshError.collectAsState().value,
-                refreshSuccess = dataManagementViewModel.scheduleRefreshSuccess.collectAsState().value,
-                dataVersion = dataManagementViewModel.dataVersion.collectAsState().value,
-                dataLastUpdated = dataManagementViewModel.dataLastUpdated.collectAsState().value,
-                onRefresh = {
-                    dataManagementViewModel.refreshScheduleFromGitHub()
-                },
-                onClearStatus = {
-                    dataManagementViewModel.clearScheduleRefreshStatus()
-                }
-            )
-            
-            Spacer(Modifier.height(24.dp))
+            if (isDataSectionExpanded) {
+                // Оптимизация: collect один раз для каждого состояния
+                val isRefreshing by dataManagementViewModel.isRefreshingSchedule.collectAsState()
+                val refreshError by dataManagementViewModel.scheduleRefreshError.collectAsState()
+                val refreshSuccess by dataManagementViewModel.scheduleRefreshSuccess.collectAsState()
+                val dataVersion by dataManagementViewModel.dataVersion.collectAsState()
+                val dataLastUpdated by dataManagementViewModel.dataLastUpdated.collectAsState()
+                
+                ScheduleUpdateCard(
+                    isRefreshing = isRefreshing,
+                    refreshError = refreshError,
+                    refreshSuccess = refreshSuccess,
+                    dataVersion = dataVersion,
+                    dataLastUpdated = dataLastUpdated,
+                    onRefresh = {
+                        dataManagementViewModel.refreshScheduleFromGitHub()
+                    },
+                    onClearStatus = {
+                        dataManagementViewModel.clearScheduleRefreshStatus()
+                    }
+                )
+                
+                Spacer(Modifier.height(24.dp))
 
-            // Заголовок секции "Сброс настроек"
+                // Заголовок подсекции "Сброс настроек"
             Text(
                 text = "Сброс настроек",
                 style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold
                 ),
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -414,22 +543,255 @@ fun SettingsScreen(
                 onClearCache = { showClearCacheDialog = true },
                 cacheCleared = cacheCleared
             )
+            }
 
             Spacer(Modifier.height(24.dp))
             
             // Заголовок секции "О приложении"
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { isAboutSectionExpanded = !isAboutSectionExpanded }
+                    .padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
             Text(
                 text = "О приложении",
                 style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Icon(
+                    imageVector = if (isAboutSectionExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    contentDescription = if (isAboutSectionExpanded) "Свернуть" else "Развернуть",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+            
+            if (isAboutSectionExpanded) {
+                // Информация о приложении
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.app_name),
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                        )
+                        
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Разработал:",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = developerName,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    textDecoration = TextDecoration.Underline
                 ),
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
+                                modifier = Modifier.clickable {
+                                    try {
+                                        val intent = Intent(Intent.ACTION_VIEW, developerVkUrl.toUri())
+                                        context.startActivity(intent)
+                                    } catch (e: Exception) {
+                                        Timber.e(e, "Could not open VK profile")
+                                    }
+                                }
+                            )
+                        }
+                        
+                        Text(
+                            text = "Версия: $appVersion",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             
-            AboutNavigationCard(
-                navController = navController
-            )
+            Spacer(Modifier.height(16.dp))
+                
+                // Обратная связь
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        Text(
+                            text = "Есть вопросы или предложения? Заполните форму обратной связи!",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        Spacer(Modifier.height(16.dp))
+
+                        // Кнопка обратной связи
+                        Button(
+                            onClick = {
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW, telegramUrl.toUri())
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    Timber.e(e, "Could not open feedback form")
+                                    android.widget.Toast.makeText(
+                                        context,
+                                        context.getString(R.string.error_open_feedback_form),
+                                        android.widget.Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Feedback,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text("Обратная связь")
+                        }
+
+                        Spacer(Modifier.height(8.dp))
+
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(3.dp)
+                            ) {
+                                Text(
+                                    text = "💬 Что можно сообщить:",
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    text = "• Ошибки в приложении\n" +
+                                           "• Предложения по улучшению\n" +
+                                           "• Вопросы по расписанию",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                Spacer(Modifier.height(16.dp))
+                
+                // Поддержка разработчика
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        Text(
+                            text = "Если приложение вам нравится, вы можете поддержать его разработку:",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        
+                        Spacer(Modifier.height(12.dp))
+                        
+                        // Кнопки поддержки
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            // Кнопка "Поддержать"
+                            OutlinedButton(
+                                onClick = {
+                                    val intent = Intent(Intent.ACTION_VIEW, "https://donatty.com/vv-olyushin".toUri())
+                                    try {
+                                        context.startActivity(intent)
+                                    } catch (e: Exception) {
+                                        Timber.e(e, "Could not open donation link")
+                                    }
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Favorite,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text("Поддержать")
+                            }
+                            
+                            // Кнопка "Оценить"
+                            OutlinedButton(
+                                onClick = {
+                                    val intent = Intent(Intent.ACTION_VIEW, "https://github.com/VseMirka200/lets_go_slavgorod".toUri())
+                                    try {
+                                        context.startActivity(intent)
+                                    } catch (e: Exception) {
+                                        Timber.e(e, "Could not open GitHub")
+                                    }
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text("Оценить")
+                            }
+                        }
+                        
+                        Spacer(Modifier.height(8.dp))
+                        
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(3.dp)
+                            ) {
+                                Text(
+                                    text = "💡 Способы поддержки:",
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    text = "• Поставить звезду на GitHub\n" +
+                                           "• Поделиться приложением с друзьями\n" +
+                                           "• Оставить отзыв и предложения",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+                    }
+                }
+            }
             
             Spacer(Modifier.height(16.dp))
         }
@@ -649,18 +1011,18 @@ private fun DisplaySettingsCard(
                     )
                 }
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                        .clickable { onShowDisplayModeDropdownChange(true) }
-                ) {
-                    Text(
-                        text = displayModeOptions.find { it.first == currentDisplayMode }?.second ?: "Клетка",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .clickable { onShowDisplayModeDropdownChange(true) }
+                    ) {
+                        Text(
+                            text = displayModeOptions.find { it.first == currentDisplayMode }?.second ?: "Клетка",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                 }
             }
             
@@ -684,18 +1046,18 @@ private fun DisplaySettingsCard(
                         style = MaterialTheme.typography.bodyLarge
                     )
                     
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .clickable { onShowColumnsDropdownChange(true) }
-                    ) {
-                        Text(
-                            text = columnsOptions.find { it.first == currentGridColumns }?.second ?: "2 колонки",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier
+                                .padding(start = 8.dp)
+                                .clickable { onShowColumnsDropdownChange(true) }
+                        ) {
+                            Text(
+                                text = columnsOptions.find { it.first == currentGridColumns }?.second ?: "2 колонки",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
                     }
                 }
             }
@@ -771,24 +1133,24 @@ fun ThemeSettingsCard(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f)
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Palette,
-                    contentDescription = stringResource(R.string.settings_appearance_icon_desc),
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(Modifier.width(16.dp))
-                Text(
+                    Icon(
+                        imageVector = Icons.Filled.Palette,
+                        contentDescription = stringResource(R.string.settings_appearance_icon_desc),
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(Modifier.width(16.dp))
+                    Text(
                     text = "Темы",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
             
-            Text(
-                text = themeOptions.find { it.first == currentAppTheme }?.second ?: "Как в системе",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
+                    Text(
+                        text = themeOptions.find { it.first == currentAppTheme }?.second ?: "Как в системе",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
         }
     }
     
@@ -800,10 +1162,10 @@ fun ThemeSettingsCard(
             selectedIndex = themeOptions.indexOfFirst { it.first == currentAppTheme },
             onOptionSelected = { index ->
                 onThemeSelected(themeOptions[index].first)
-                onShowThemeDropdownChange(false)
+                            onShowThemeDropdownChange(false)
             },
             onDismiss = { onShowThemeDropdownChange(false) }
-        )
+                    )
     }
 }
 
@@ -886,9 +1248,9 @@ fun UpdateSettingsCard(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .clickable { onShowUpdateModeDropdownChange(true) }
+                            modifier = Modifier
+                                .padding(start = 8.dp)
+                                .clickable { onShowUpdateModeDropdownChange(true) }
                     ) {
                         Text(
                             text = when (currentUpdateMode) {
@@ -899,7 +1261,7 @@ fun UpdateSettingsCard(
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary
                         )
-                    }
+                }
             }
             
             // Разделитель
@@ -1225,20 +1587,20 @@ private fun QuietModeSettingsCard(
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier.clickable { onShowQuietModeDropdownChange(true) }
-                ) {
-                    Text(
-                        text = when (currentQuietMode) {
-                            QuietMode.DISABLED -> "Отключены"
-                            QuietMode.ENABLED -> "Включены"
-                            QuietMode.CUSTOM_DAYS -> "Временно: $customDays ${getDaysWord(customDays)}"
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.clickable { onShowQuietModeDropdownChange(true) }
+                    ) {
+                        Text(
+                            text = when (currentQuietMode) {
+                                QuietMode.DISABLED -> "Отключены"
+                                QuietMode.ENABLED -> "Включены"
+                                QuietMode.CUSTOM_DAYS -> "Временно: $customDays ${getDaysWord(customDays)}"
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                 }
             }
             
@@ -1739,8 +2101,8 @@ private fun ScheduleUpdateCard(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                     )
-                ) {
-                    Row(
+    ) {
+        Row(
                         modifier = Modifier.padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -1856,7 +2218,7 @@ private fun VibrationSettingsCard(
                 )
                 Spacer(Modifier.width(16.dp))
                 Column {
-                    Text(
+                Text(
                         text = "Вибрация при уведомлениях",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface
@@ -1871,60 +2233,6 @@ private fun VibrationSettingsCard(
             Switch(
                 checked = vibrationEnabled,
                 onCheckedChange = onVibrationToggle
-            )
-        }
-    }
-}
-
-/**
- * Карточка навигации к экрану "О программе"
- * 
- * При клике переходит к экрану AboutScreen с информацией о приложении,
- * разработчике, обратной связью и поддержкой.
- * 
- * @param navController контроллер навигации
- */
-@Composable
-private fun AboutNavigationCard(
-    navController: NavController?
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    try {
-                        navController?.navigate(Screen.About.route) {
-                            launchSingleTop = true
-                        }
-                    } catch (e: Exception) {
-                        Timber.e(e, "Navigation error to About screen")
-                    }
-                }
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Info,
-                    contentDescription = stringResource(R.string.settings_about_icon_desc),
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(Modifier.width(16.dp))
-                Text(
-                    text = stringResource(R.string.about_screen_title),
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = "Перейти к разделу О программе",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
