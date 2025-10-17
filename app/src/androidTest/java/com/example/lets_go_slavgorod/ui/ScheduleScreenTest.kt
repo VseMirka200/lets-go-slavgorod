@@ -57,29 +57,26 @@ class ScheduleScreenTest {
         BusSchedule(
             id = "102_1",
             routeId = "102",
+            stopName = "Рынок (Славгород)",
             departureTime = "08:30",
-            arrivalTime = "09:10",
-            departurePoint = "Рынок (Славгород)",
-            arrivalPoint = "Ст. Зори (Яровое)",
-            isWorkingDay = true
+            dayOfWeek = 2, // Понедельник
+            departurePoint = "Рынок (Славгород)"
         ),
         BusSchedule(
             id = "102_2",
             routeId = "102",
+            stopName = "Рынок (Славгород)",
             departureTime = "10:00",
-            arrivalTime = "10:40",
-            departurePoint = "Рынок (Славгород)",
-            arrivalPoint = "Ст. Зори (Яровое)",
-            isWorkingDay = true
+            dayOfWeek = 2, // Понедельник
+            departurePoint = "Рынок (Славгород)"
         ),
         BusSchedule(
             id = "102_3",
             routeId = "102",
+            stopName = "Ст. Зори (Яровое)",
             departureTime = "14:30",
-            arrivalTime = "15:10",
-            departurePoint = "Ст. Зори (Яровое)",
-            arrivalPoint = "Рынок (Славгород)",
-            isWorkingDay = true
+            dayOfWeek = 2, // Понедельник
+            departurePoint = "Ст. Зори (Яровое)"
         )
     )
     

@@ -68,9 +68,9 @@ class CountdownIntegrationTest {
                 assertTrue("Time until departure should be positive for $time", minutes > 0)
                 
                 // Проверяем форматирование
-                val formatted = TimeUtils.formatTimeUntilDepartureWithExactTime(minutes, time)
+                val formatted = TimeUtils.formatTimeUntilDeparture(minutes)
                 assertNotNull("Should format time for $time", formatted)
-                assertTrue("Formatted time should contain minutes for $time", formatted.contains(minutes.toString()))
+                assertTrue("Formatted time should not be empty for $time", formatted.isNotEmpty())
             }
         }
     }
@@ -93,14 +93,13 @@ class CountdownIntegrationTest {
                     if (timeWithSeconds != null) {
                         TimeUtils.formatTimeUntilDepartureWithSeconds(
                             timeWithSeconds.first, 
-                            timeWithSeconds.second,
-                            nextDeparture.departureTime
+                            timeWithSeconds.second
                         )
                     } else {
-                        TimeUtils.formatTimeUntilDepartureWithExactTime(timeUntilDeparture, nextDeparture.departureTime)
+                        TimeUtils.formatTimeUntilDeparture(timeUntilDeparture)
                     }
                 } else {
-                    TimeUtils.formatTimeUntilDepartureWithExactTime(timeUntilDeparture, nextDeparture.departureTime)
+                    TimeUtils.formatTimeUntilDeparture(timeUntilDeparture)
                 }
                 
                 assertNotNull("Should format time for next departure", formatted)

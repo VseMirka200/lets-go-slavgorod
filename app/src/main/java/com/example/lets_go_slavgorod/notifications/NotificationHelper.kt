@@ -89,7 +89,6 @@ object NotificationHelper {
      * @param favoriteTimeId ID избранного времени
      * @param routeInfo информация о маршруте
      * @param departureTimeInfo время отправления
-     * @param destinationInfo информация о пункте назначения (не используется)
      * @param departurePointInfo информация о точке отправления
      */
     fun showDepartureNotification(

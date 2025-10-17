@@ -258,8 +258,7 @@ private fun getNextUpcomingScheduleId(schedules: List<BusSchedule>): String? {
             if (departureTime != null) {
                 // Создаем Calendar для времени отправления
                 val scheduleCalendar = Calendar.getInstance().apply {
-                    set(Calendar.HOUR_OF_DAY, departureTime.hours)
-                    set(Calendar.MINUTE, departureTime.minutes)
+                    time = departureTime
                     set(Calendar.SECOND, 0)
                     set(Calendar.MILLISECOND, 0)
                 }

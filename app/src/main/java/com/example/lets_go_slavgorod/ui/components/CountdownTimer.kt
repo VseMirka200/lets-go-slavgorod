@@ -1,25 +1,39 @@
 package com.example.lets_go_slavgorod.ui.components
 
-import android.annotation.SuppressLint
-import timber.log.Timber
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.lets_go_slavgorod.data.model.BusSchedule
 import com.example.lets_go_slavgorod.utils.Constants
 import com.example.lets_go_slavgorod.utils.TimeUtils
 import kotlinx.coroutines.delay
-import java.util.*
+import timber.log.Timber
+import java.util.Calendar
 
 /**
  * Компонент обратного отсчета времени до отправления автобуса
@@ -112,17 +126,16 @@ fun CountdownTimer(
     val minutes = timeUntilDeparture ?: -1
     
     // Форматируем время для отображения (оптимизировано)
-    val formattedTime = remember(minutes, timeWithSeconds, isNextDeparture, schedule.departureTime) {
+    val formattedTime = remember(minutes, timeWithSeconds, isNextDeparture) {
         if (isNextDeparture && timeWithSeconds != null) {
             // Для ближайших рейсов показываем секунды
             TimeUtils.formatTimeUntilDepartureWithSeconds(
                 timeWithSeconds.first,
-                timeWithSeconds.second,
-                schedule.departureTime
+                timeWithSeconds.second
             )
         } else {
-            // Для дальних рейсов показываем только минуты с точным временем
-            TimeUtils.formatTimeUntilDepartureWithExactTime(minutes, schedule.departureTime)
+            // Для дальних рейсов показываем только минуты
+            TimeUtils.formatTimeUntilDeparture(minutes)
         }
     }
     

@@ -18,9 +18,4 @@ class ScreenTest {
         assertEquals("settings", Screen.Settings.route)
     }
 
-    @Test
-    fun `About route should be correct`() {
-        assertEquals("about", Screen.About.route)
-    }
-
 }

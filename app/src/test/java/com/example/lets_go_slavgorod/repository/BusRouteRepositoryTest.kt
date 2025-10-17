@@ -1,7 +1,6 @@
 package com.example.lets_go_slavgorod.repository
 
 import android.content.Context
-import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
 import org.junit.Before
 import org.junit.Test

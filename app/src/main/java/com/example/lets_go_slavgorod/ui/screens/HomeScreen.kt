@@ -216,6 +216,30 @@ fun EmptyState(searchQuery: String) {
 }
 
 /**
+ * Выполняет навигацию к экрану расписания маршрута
+ * 
+ * Централизованная функция для навигации с единообразной обработкой ошибок
+ * и конфигурацией параметров навигации (launchSingleTop, restoreState, saveState).
+ * 
+ * @param navController контроллер навигации
+ * @param route маршрут для перехода к расписанию
+ */
+private fun navigateToSchedule(navController: NavController, route: BusRoute) {
+    try {
+        ConditionalLogging.debug("Navigation") { "Route clicked: ${route.id} - ${route.name}" }
+        navController.navigate("schedule/${route.id}") {
+            launchSingleTop = true
+            restoreState = true
+            popUpTo("home") {
+                saveState = true
+            }
+        }
+    } catch (e: Exception) {
+        ConditionalLogging.error("Navigation", e) { "Navigation error for route: ${route.id}" }
+    }
+}
+
+/**
  * Компонент отображения списка маршрутов
  * 
  * Поддерживает два режима отображения:
@@ -224,9 +248,10 @@ fun EmptyState(searchQuery: String) {
  * 
  * Особенности:
  * - Адаптивная сетка с оптимизированными отступами
- * - Клик на карточку -> переход к расписанию маршрута
+ * - Клик на карточку -> переход к расписанию маршрута (через navigateToSchedule)
  * - Сохранение и восстановление состояния при навигации
  * - Минимизация перекомпозиций через key и contentType
+ * - Единообразная обработка навигации и ошибок
  * 
  * @param routes список маршрутов для отображения
  * @param navController контроллер навигации для перехода к расписанию
@@ -265,26 +290,11 @@ fun RoutesListState(
                     key = { route -> route.id },
                     contentType = { BusRoute::class }
                 ) { route ->
-                    // Оптимизированная карточка маршрута с минимальными перекомпозициями
                     BusRouteCard(
                         route = route,
                         isGridMode = true,
                         gridColumns = gridColumns,
-                        onClick = {
-                            // Быстрая навигация без задержек
-                            try {
-                                ConditionalLogging.debug("Navigation") { "Route clicked: ${route.id} - ${route.name}" }
-                                navController.navigate("schedule/${route.id}") {
-                                    launchSingleTop = true
-                                    restoreState = true
-                                    popUpTo("home") {
-                                        saveState = true
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                ConditionalLogging.error("Navigation", e) { "Navigation error for route: ${route.id}" }
-                            }
-                        }
+                        onClick = { navigateToSchedule(navController, route) }
                     )
                 }
             }
@@ -305,20 +315,7 @@ fun RoutesListState(
                     BusRouteCard(
                         route = route,
                         isGridMode = false,
-                        onClick = {
-                            try {
-                                Timber.d("Route clicked: ${route.id} - ${route.name}")
-                                navController.navigate("schedule/${route.id}") {
-                                    launchSingleTop = true
-                                    restoreState = true
-                                    popUpTo("home") {
-                                        saveState = true
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                Timber.e(e, "Navigation error for route: ${route.id}")
-                            }
-                        }
+                        onClick = { navigateToSchedule(navController, route) }
                     )
                 }
             }

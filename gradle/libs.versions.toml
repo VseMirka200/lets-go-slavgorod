@@ -32,6 +32,8 @@ kotlinxCoroutinesTest = "1.9.0"
 mockito = "5.8.0"
 mockitoKotlin = "5.2.1"
 androidxArchCore = "2.2.0"
+kotlinTest = "2.0.21"
+androidxTestCore = "1.6.1"
 
 # Desugaring
 desugarJdkLibs = "2.1.2"
@@ -90,6 +92,8 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
 mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockitoKotlin" }
 androidx-arch-core-testing = { group = "androidx.arch.core", name = "core-testing", version.ref = "androidxArchCore" }
+kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlinTest" }
+androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
 
 # Desugaring
 desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }

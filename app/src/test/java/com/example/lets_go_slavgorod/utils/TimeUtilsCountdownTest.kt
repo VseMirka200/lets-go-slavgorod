@@ -59,7 +59,7 @@ class TimeUtilsCountdownTest {
     
     @Test
     fun `formatTimeUntilDepartureWithSeconds should format correctly`() {
-        val formatted = TimeUtils.formatTimeUntilDepartureWithSeconds(5, 30, "10:05")
+        val formatted = TimeUtils.formatTimeUntilDepartureWithSeconds(5, 30)
         
         assertNotNull("Should return formatted string", formatted)
         assertTrue("Should contain minutes", formatted.contains("5"))
@@ -67,12 +67,11 @@ class TimeUtilsCountdownTest {
     }
     
     @Test
-    fun `formatTimeUntilDepartureWithExactTime should format correctly`() {
-        val formatted = TimeUtils.formatTimeUntilDepartureWithExactTime(30, "10:30")
+    fun `formatTimeUntilDeparture should format correctly`() {
+        val formatted = TimeUtils.formatTimeUntilDeparture(30)
         
         assertNotNull("Should return formatted string", formatted)
         assertTrue("Should contain minutes", formatted.contains("30"))
-        assertTrue("Should contain departure time", formatted.contains("10:30"))
     }
     
     @Test

@@ -28,7 +28,30 @@ object TimeUtils {
     @SuppressLint("ConstantLocale")
     private val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
     
-    // Вычисление времени до отправления (в минутах)
+    /**
+     * Вычисляет время до отправления в минутах
+     * 
+     * Определяет сколько минут осталось до указанного времени отправления.
+     * Если время уже прошло сегодня, возвращает null (не считает на завтра).
+     * 
+     * Особенности:
+     * - Учитывает переход через полночь в рамках суток
+     * - Обнуляет секунды и миллисекунды для точного сравнения
+     * - Возвращает null для прошедшего времени
+     * - Логирует процесс вычисления для отладки
+     * 
+     * Примеры:
+     * - Текущее время 10:00, отправление 10:30 → возвращает 30
+     * - Текущее время 10:00, отправление 09:00 → возвращает null (уже прошло)
+     * - Текущее время 23:50, отправление 00:10 → возвращает null (считается прошедшим)
+     * 
+     * @param departureTime время отправления в формате "HH:mm"
+     * @param currentTime текущее время для сравнения (по умолчанию системное)
+     * @return количество минут до отправления или null если время прошло
+     * 
+     * @see getTimeUntilDepartureWithSeconds для получения с секундами
+     * @see parseTime для парсинга времени из строки
+     */
     fun getTimeUntilDeparture(departureTime: String, currentTime: Calendar = Calendar.getInstance()): Int? {
         return try {
             Timber.d("Calculating time until departure: $departureTime")
@@ -122,57 +145,64 @@ object TimeUtils {
     /**
      * Форматирует время до отправления в читаемый вид
      * 
-     * @param minutes количество минут до отправления
-     * @return отформатированная строка
+     * Преобразует количество минут в естественную строку на русском языке.
+     * Используется для отображения времени до прибытия автобуса в UI.
+     * 
+     * Примеры форматирования:
+     * - 0 минут: "Сейчас"
+     * - 1 минута: "1 минуту"
+     * - 5 минут: " 5 мин"
+     * - 60 минут: "Через 1 ч"
+     * - 90 минут: "Через 1 ч 30 мин"
+     * - 120 минут: "Через 2 ч"
+     * 
+     * @param minutes количество минут до отправления (неотрицательное число)
+     * @return отформатированная строка времени
      */
     fun formatTimeUntilDeparture(minutes: Int): String {
         return when {
             minutes < 1 -> "Сейчас"
             minutes == 1 -> "1 минуту"
             minutes < 60 -> " $minutes мин"
-            else -> {
-                val hours = minutes / 60
-                val remainingMinutes = minutes % 60
-                when {
-                    remainingMinutes == 0 -> "Через $hours ч"
-                    hours == 1 -> "Через 1 ч $remainingMinutes мин"
-                    else -> "Через $hours ч $remainingMinutes мин"
-                }
-            }
+            else -> formatHoursAndMinutes(minutes)
         }
     }
     
     /**
-     * Форматирует время до отправления с точным временем
+     * Внутренняя функция для форматирования часов и минут
      * 
-     * @param minutes количество минут до отправления
-     * @return отформатированная строка с точным временем
+     * Избегает дублирования кода между функциями форматирования.
+     * 
+     * @param totalMinutes общее количество минут
+     * @return отформатированная строка вида "Через X ч Y мин"
      */
-    fun formatTimeUntilDepartureWithExactTime(minutes: Int, departureTime: String): String {
+    private fun formatHoursAndMinutes(totalMinutes: Int): String {
+        val hours = totalMinutes / 60
+        val remainingMinutes = totalMinutes % 60
         return when {
-            minutes < 1 -> "Сейчас"
-            minutes == 1 -> "Через 1 минуту"
-            minutes < 60 -> "Через $minutes мин"
-            else -> {
-                val hours = minutes / 60
-                val remainingMinutes = minutes % 60
-                when {
-                    remainingMinutes == 0 -> "Через $hours ч"
-                    hours == 1 -> "Через 1 ч $remainingMinutes мин"
-                    else -> "Через $hours ч $remainingMinutes мин"
-                }
-            }
+            remainingMinutes == 0 -> "Через $hours ч"
+            hours == 1 -> "Через 1 ч $remainingMinutes мин"
+            else -> "Через $hours ч $remainingMinutes мин"
         }
     }
     
     /**
      * Форматирует время до отправления с секундами для ближайших рейсов
      * 
+     * Используется для отображения точного времени до отправления с учетом секунд.
+     * Показывает секунды только для рейсов отправляющихся в ближайшие минуты.
+     * 
+     * Примеры форматирования:
+     * - 0 мин 45 сек: "Через 45 сек"
+     * - 1 мин 30 сек: "Через 1 мин 30 сек"
+     * - 5 мин 10 сек: "Через 5 мин 10 сек"
+     * - 60 мин 0 сек: "Через 1 ч"
+     * 
      * @param minutes количество минут до отправления
-     * @param seconds количество секунд до отправления
-     * @return отформатированная строка с секундами
+     * @param seconds количество секунд до отправления (0-59)
+     * @return отформатированная строка с точным временем
      */
-    fun formatTimeUntilDepartureWithSeconds(minutes: Int, seconds: Int, departureTime: String): String {
+    fun formatTimeUntilDepartureWithSeconds(minutes: Int, seconds: Int): String {
         return when {
             minutes < 1 -> {
                 if (seconds <= 0) "Сейчас"
@@ -195,39 +225,33 @@ object TimeUtils {
     /**
      * Получает ближайший рейс из списка расписаний
      * 
-     * @param schedules список расписаний
-     * @param currentTime текущее время
-     * @return ближайший рейс или null
+     * Находит расписание с минимальным временем до отправления.
+     * Если рейс уже прошел сегодня, он считается как "на завтра"
+     * и получает соответствующий приоритет.
+     * 
+     * Алгоритм:
+     * 1. Для каждого расписания вычисляет время до отправления
+     * 2. Если время положительное - использует его как приоритет
+     * 3. Если время отрицательное (уже прошло) - добавляет 24 часа
+     * 4. Находит расписание с минимальным приоритетом
+     * 
+     * Оптимизация:
+     * - Использует getTimeUntilDeparture для единообразной логики
+     * - Избегает дублирования кода вычисления времени
+     * - Использует minByOrNull для эффективного поиска
+     * 
+     * @param schedules список расписаний для поиска
+     * @param currentTime текущее время (по умолчанию - системное)
+     * @return ближайшее расписание или null если список пуст
      */
     fun getNextDeparture(schedules: List<BusSchedule>, currentTime: Calendar = Calendar.getInstance()): BusSchedule? {
         if (schedules.isEmpty()) return null
         
-        // Находим ближайший рейс среди всех расписаний
-        val nextDeparture = schedules.minByOrNull { schedule ->
-            val timeUntilDeparture = getTimeUntilDeparture(schedule.departureTime, currentTime)
-            if (timeUntilDeparture != null) {
-                timeUntilDeparture
-            } else {
-                // Если рейс уже прошел сегодня, считаем его на завтра
-                val departureCalendar = parseTime(schedule.departureTime)
-                val current = currentTime.clone() as Calendar
-                current.set(Calendar.SECOND, 0)
-                current.set(Calendar.MILLISECOND, 0)
-                
-                // Добавляем день к времени отправления
-                departureCalendar.add(Calendar.DAY_OF_MONTH, 1)
-                
-                val diffInMillis = departureCalendar.timeInMillis - current.timeInMillis
-                val diffInMinutes = (diffInMillis / (1000 * 60)).toInt()
-                
-                if (diffInMinutes >= 0) {
-                    diffInMinutes
-                } else {
-                    Int.MAX_VALUE
-                }
-            }
+        // Находим рейс с минимальным временем до отправления
+        return schedules.minByOrNull { schedule ->
+            getTimeUntilDeparture(schedule.departureTime, currentTime) 
+                ?: Int.MAX_VALUE // Если рейс прошел сегодня, даем минимальный приоритет
         }
-        return nextDeparture
     }
     
     /**
@@ -260,5 +284,42 @@ object TimeUtils {
     ): String? {
         val minutes = getTimeUntilDeparture(schedule.departureTime, currentTime)
         return minutes?.let { formatTimeUntilDeparture(it) }
+    }
+    
+    /**
+     * Получает текущий день недели
+     * 
+     * @return день недели (1-7, где 1 - воскресенье, 7 - суббота)
+     */
+    fun getCurrentDayOfWeek(): Int {
+        val calendar = Calendar.getInstance()
+        return calendar.get(Calendar.DAY_OF_WEEK)
+    }
+    
+    /**
+     * Фильтрует расписания, оставляя только будущие
+     * 
+     * @param schedules список расписаний
+     * @param currentTime текущее время
+     * @return отфильтрованный список расписаний
+     */
+    fun filterSchedulesByTime(
+        schedules: List<BusSchedule>,
+        currentTime: Calendar = Calendar.getInstance()
+    ): List<BusSchedule> {
+        return schedules.filter { schedule ->
+            val timeUntilDeparture = getTimeUntilDeparture(schedule.departureTime, currentTime)
+            timeUntilDeparture != null && timeUntilDeparture > 0
+        }
+    }
+    
+    /**
+     * Группирует расписания по дням недели
+     * 
+     * @param schedules список расписаний
+     * @return карта, где ключ - день недели, значение - список расписаний
+     */
+    fun groupSchedulesByDayOfWeek(schedules: List<BusSchedule>): Map<Int, List<BusSchedule>> {
+        return schedules.groupBy { it.dayOfWeek }
     }
 }

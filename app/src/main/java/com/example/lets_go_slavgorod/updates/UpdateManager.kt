@@ -11,7 +11,6 @@
 
 package com.example.lets_go_slavgorod.updates
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
@@ -46,7 +45,21 @@ class UpdateManager(private val context: Context) {
     }
 
     /**
-     * Создает безопасное HTTPS соединение с проверкой SSL
+     * Создает настроенное HTTPS соединение для запросов к GitHub API
+     * 
+     * Настраивает HttpURLConnection с необходимыми параметрами:
+     * - Метод GET для получения данных
+     * - Таймауты подключения и чтения (10 секунд)
+     * - Отключение кэширования для актуальных данных
+     * - Connection: close для корректного закрытия
+     * 
+     * Безопасность:
+     * - Принудительное использование HTTPS
+     * - Стандартная валидация SSL-сертификатов
+     * - Закрытие соединения после использования
+     * 
+     * @param url URL для подключения (должен быть HTTPS)
+     * @return настроенный HttpURLConnection готовый к использованию
      */
     private fun createSecureConnection(url: URL): HttpURLConnection {
         val connection = url.openConnection() as HttpURLConnection
@@ -70,6 +83,18 @@ class UpdateManager(private val context: Context) {
     
     /**
      * Результат проверки обновлений
+     * 
+     * Универсальный контейнер для результата операции проверки обновлений.
+     * Позволяет различать три состояния: успех с обновлением, успех без обновления, ошибка.
+     * 
+     * @property success true если проверка прошла успешно (независимо от наличия обновления)
+     * @property update информация об обновлении если доступна новая версия, null если обновлений нет
+     * @property error сообщение об ошибке для пользователя, null если операция успешна
+     * 
+     * Возможные комбинации:
+     * - success=true, update=UpdateInfo, error=null  → Есть новая версия
+     * - success=true, update=null, error=null        → Обновлений нет, текущая версия актуальна
+     * - success=false, update=null, error="..."      → Ошибка при проверке
      */
     data class UpdateResult(
         val success: Boolean,
@@ -78,7 +103,23 @@ class UpdateManager(private val context: Context) {
     )
     
     /**
-     * Информация об обновлении
+     * Информация об обновлении приложения
+     * 
+     * Содержит все необходимые данные для отображения и загрузки обновления.
+     * Получается из GitHub Releases API.
+     * 
+     * @property versionName версия релиза
+     * @property downloadUrl прямая ссылка на скачивание APK файла
+     * @property releaseNotes описание изменений в новой версии (из GitHub release body)
+     * 
+     * Пример:
+     * ```
+     * UpdateInfo(
+     *     versionName = "1.8",
+     *     downloadUrl = "https://github.com/.../app-release.apk",
+     *     releaseNotes = "- Исправлены ошибки\n- Добавлены новые функции"
+     * )
+     * ```
      */
     data class UpdateInfo(
         val versionName: String,
@@ -87,7 +128,18 @@ class UpdateManager(private val context: Context) {
     )
     
     /**
-     * Проверяет доступность интернет-соединения
+     * Проверяет доступность активного интернет-соединения
+     * 
+     * Использует ConnectivityManager для определения наличия работающего
+     * сетевого подключения с возможностью доступа к интернету.
+     * 
+     * Поддерживаемые типы соединений:
+     * - Wi-Fi
+     * - Мобильные данные (3G/4G/5G)
+     * - Ethernet
+     * - VPN (проверяется underlying сеть)
+     * 
+     * @return true если есть активное соединение с интернетом, false иначе
      */
     private fun isNetworkAvailable(): Boolean {
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
@@ -147,9 +199,34 @@ class UpdateManager(private val context: Context) {
     }
     
     /**
-     * Получает информацию о последнем релизе с GitHub API
+     * Выполняет однократный запрос к GitHub API для получения последнего релиза
      * 
-     * Внутренний метод, используемый fetchLatestReleaseWithRetry()
+     * Внутренний метод, используемый fetchLatestReleaseWithRetry() для фактического
+     * выполнения HTTP запроса. Обрабатывает JSON ответ и извлекает информацию о релизе.
+     * 
+     * Процесс запроса:
+     * 1. Создает безопасное HTTPS соединение
+     * 2. Добавляет необходимые заголовки (Accept, User-Agent)
+     * 3. Отправляет GET запрос к GitHub API
+     * 4. Обрабатывает HTTP коды ответа (200, 403, 404, 503)
+     * 5. Парсит JSON и извлекает данные релиза
+     * 6. Валидирует полученные данные
+     * 7. Закрывает соединение
+     * 
+     * Извлекаемые данные:
+     * - tag_name: версия релиза (например "v1.8")
+     * - assets[0].browser_download_url: ссылка на APK файл
+     * - body: описание изменений (release notes)
+     * 
+     * Обработка ошибок:
+     * - 200 OK: парсит и возвращает данные
+     * - 403 Forbidden: rate limit или проблемы с доступом
+     * - 404 Not Found: репозиторий не найден
+     * - 503 Unavailable: GitHub недоступен
+     * - Network errors: timeout, unknown host, connection failed
+     * - JSON errors: невалидный формат ответа
+     * 
+     * @return UpdateInfo с данными релиза или null при ошибке
      */
     private suspend fun fetchLatestRelease(): UpdateInfo? = withContext(Dispatchers.IO) {
         var connection: HttpURLConnection? = null
@@ -243,7 +320,7 @@ class UpdateManager(private val context: Context) {
     /**
      * Сравнивает версии приложения
      */
-    private fun compareVersions(currentVersion: String, latestVersion: String): Boolean {
+    internal fun compareVersions(currentVersion: String, latestVersion: String): Boolean {
         return try {
             val current = parseVersion(currentVersion)
             val latest = parseVersion(latestVersion)
@@ -266,7 +343,19 @@ class UpdateManager(private val context: Context) {
     }
     
     /**
-     * Парсит версию в массив чисел
+     * Парсит строку версии в список целых чисел для сравнения
+     * 
+     * Преобразует версию формата "1.2.3" или "v1.2.3" в список [1, 2, 3].
+     * Игнорирует нечисловые части и префикс "v".
+     * 
+     * Примеры:
+     * - "1.2.3" -> [1, 2, 3]
+     * - "v2.0" -> [2, 0]
+     * - "1.10.5" -> [1, 10, 5]
+     * - "1.2.3-beta" -> [1, 2, 3] (игнорирует "-beta")
+     * 
+     * @param version строка версии для парсинга
+     * @return список целых чисел представляющих части версии
      */
     private fun parseVersion(version: String): List<Int> {
         return version.replace("v", "").split(".")
@@ -276,7 +365,7 @@ class UpdateManager(private val context: Context) {
     /**
      * Получает текущую версию приложения
      */
-    private fun getCurrentVersion(): String {
+    internal fun getCurrentVersion(): String {
         return try {
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             packageInfo.versionName
@@ -287,7 +376,41 @@ class UpdateManager(private val context: Context) {
     }
     
     /**
-     * Проверяет наличие обновлений
+     * Проверяет наличие обновлений приложения с полной обработкой ошибок
+     * 
+     * Выполняет комплексную проверку наличия новой версии приложения:
+     * 1. Проверка доступности интернет-соединения
+     * 2. Получение текущей версии приложения
+     * 3. Запрос к GitHub API для получения информации о последнем релизе
+     * 4. Сравнение версий (текущая vs последняя)
+     * 5. Формирование результата с детальной информацией
+     * 
+     * Использует механизм повторных попыток (retry) с exponential backoff:
+     * - Максимум 3 попытки
+     * - Задержки: 1s, 2s, 4s
+     * - Таймаут каждого запроса: 10 секунд
+     * 
+     * Возвращаемый результат содержит:
+     * - success: true если операция успешна (независимо от наличия обновления)
+     * - update: UpdateInfo если доступна новая версия, null если обновлений нет
+     * - error: сообщение об ошибке если операция неудачна
+     * 
+     * Примеры результатов:
+     * - UpdateResult(success=true, update=UpdateInfo(...), error=null) - есть обновление
+     * - UpdateResult(success=true, update=null, error=null) - обновлений нет
+     * - UpdateResult(success=false, update=null, error="Нет интернет-соединения") - ошибка
+     * 
+     * Обработка ошибок:
+     * - SocketTimeoutException -> "Превышено время ожидания"
+     * - UnknownHostException -> "Не удалось подключиться к серверу"
+     * - ConnectException -> "Ошибка подключения к серверу"
+     * - Другие исключения -> Текст ошибки с деталями
+     * 
+     * @return UpdateResult с результатом проверки обновлений
+     * 
+     * @see UpdateResult для структуры результата
+     * @see UpdateInfo для информации об обновлении
+     * @see fetchLatestReleaseWithRetry для логики запросов с повторами
      */
     suspend fun checkForUpdatesWithResult(): UpdateResult = withContext(Dispatchers.IO) {
         try {

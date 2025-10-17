@@ -37,7 +37,7 @@ package com.example.lets_go_slavgorod.utils
 object Constants {
     
     // Информация о приложении
-    const val APP_VERSION = "v1.8"  // Версия приложения
+    const val APP_VERSION = "v2.0"  // Версия приложения
     
     // Размеры UI (в dp)
     const val CARD_ELEVATION = 2                    // Тень карточек

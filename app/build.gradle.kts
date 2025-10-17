@@ -1,5 +1,3 @@
-import io.gitlab.arturbosch.detekt.Detekt
-
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
@@ -17,7 +15,7 @@ android {
         minSdk = 24
         targetSdk = 35
         versionCode = 10081
-        versionName = "1.8"
+        versionName = "2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -26,7 +24,6 @@ android {
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
         }
-        resourceConfigurations += setOf("ru")
         
         // BuildConfig поля для конфигурации
         buildConfigField("String", "GITHUB_REPO_OWNER", "\"VseMirka200\"")
@@ -56,9 +53,22 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Дополнительные оптимизации для размера APK
+            
+            // Оптимизации для размера APK
             ndk {
                 debugSymbolLevel = "none"
+            }
+            
+            // Оптимизация ресурсов
+            packaging {
+                resources {
+                    excludes += setOf(
+                        "META-INF/**",
+                        "kotlin/**",
+                        "**.properties",
+                        "**.bin"
+                    )
+                }
             }
         }
         debug {
@@ -67,6 +77,11 @@ android {
             isMinifyEnabled = false
             isShrinkResources = false
         }
+    }
+    
+    // Фильтрация локалей для уменьшения размера APK
+    androidResources {
+        localeFilters += setOf("ru")
     }
     
     compileOptions {
@@ -137,10 +152,12 @@ dependencies {
     
     // Testing
     testImplementation(libs.junit)
+    testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.androidx.arch.core.testing)
+    testImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

@@ -33,11 +33,10 @@ class CompactScheduleCardTest {
     private val testSchedule = BusSchedule(
         id = "102_1",
         routeId = "102",
+        stopName = "Рынок (Славгород)",
         departureTime = "08:30",
-        arrivalTime = "09:10",
-        departurePoint = "Рынок (Славгород)",
-        arrivalPoint = "Ст. Зори (Яровое)",
-        isWorkingDay = true
+        dayOfWeek = 2, // Понедельник
+        departurePoint = "Рынок (Славгород)"
     )
     
     @Test
@@ -48,7 +47,6 @@ class CompactScheduleCardTest {
                     schedule = testSchedule,
                     isFavorite = false,
                     onFavoriteClick = {},
-                    onCardClick = {},
                     isNextUpcoming = false,
                     orderNumber = 1
                 )
@@ -69,7 +67,6 @@ class CompactScheduleCardTest {
                     schedule = testSchedule,
                     isFavorite = false,
                     onFavoriteClick = {},
-                    onCardClick = {},
                     isNextUpcoming = false,
                     orderNumber = 5
                 )
@@ -90,7 +87,6 @@ class CompactScheduleCardTest {
                     schedule = testSchedule,
                     isFavorite = false,
                     onFavoriteClick = {},
-                    onCardClick = {},
                     isNextUpcoming = false,
                     orderNumber = 1
                 )
@@ -112,7 +108,6 @@ class CompactScheduleCardTest {
                     schedule = testSchedule,
                     isFavorite = true,
                     onFavoriteClick = {},
-                    onCardClick = {},
                     isNextUpcoming = false,
                     orderNumber = 1
                 )
@@ -134,7 +129,6 @@ class CompactScheduleCardTest {
                     schedule = testSchedule,
                     isFavorite = false,
                     onFavoriteClick = {},
-                    onCardClick = {},
                     isNextUpcoming = true,
                     orderNumber = 1
                 )
@@ -155,7 +149,6 @@ class CompactScheduleCardTest {
                     schedule = testSchedule,
                     isFavorite = false,
                     onFavoriteClick = {},
-                    onCardClick = {},
                     isNextUpcoming = false,
                     orderNumber = 1
                 )
@@ -169,32 +162,6 @@ class CompactScheduleCardTest {
     }
     
     @Test
-    fun compactScheduleCard_isClickable() {
-        var clicked = false
-        
-        composeTestRule.setContent {
-            lets_go_slavgorodTheme {
-                CompactScheduleCard(
-                    schedule = testSchedule,
-                    isFavorite = false,
-                    onFavoriteClick = {},
-                    onCardClick = { clicked = true },
-                    isNextUpcoming = false,
-                    orderNumber = 1
-                )
-            }
-        }
-        
-        // Нажимаем на карточку
-        composeTestRule
-            .onNodeWithText("08:30")
-            .performClick()
-        
-        // Проверяем, что обработчик был вызван
-        assert(clicked) { "Card click was not handled" }
-    }
-    
-    @Test
     fun compactScheduleCard_favoriteButton_isClickable() {
         var favoriteClicked = false
         
@@ -204,7 +171,6 @@ class CompactScheduleCardTest {
                     schedule = testSchedule,
                     isFavorite = false,
                     onFavoriteClick = { favoriteClicked = true },
-                    onCardClick = {},
                     isNextUpcoming = false,
                     orderNumber = 1
                 )
@@ -228,7 +194,6 @@ class CompactScheduleCardTest {
                     schedule = testSchedule,
                     isFavorite = true,
                     onFavoriteClick = {},
-                    onCardClick = {},
                     isNextUpcoming = true,
                     orderNumber = 7
                 )

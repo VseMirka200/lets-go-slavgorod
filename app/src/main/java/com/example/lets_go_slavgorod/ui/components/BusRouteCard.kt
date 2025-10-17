@@ -83,9 +83,7 @@ import com.example.lets_go_slavgorod.utils.Constants
  * @param route данные маршрута для отображения
  * @param onRouteClick callback при клике на карточку
  * @param modifier модификатор для настройки внешнего вида
- * @param showNotificationButton не используется (оставлен для совместимости)
- * @param onNotificationClick не используется (оставлен для совместимости)
- * @param gridColumns количество колонок в сетке (1-4)
+ * @param gridColumns количество колонок в сетке (1-4), используется для адаптации размеров
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,8 +91,6 @@ fun BusRouteCardGrid(
     route: BusRoute,
     onRouteClick: () -> Unit,
     modifier: Modifier = Modifier,
-    showNotificationButton: Boolean = false,
-    onNotificationClick: (() -> Unit)? = null,
     gridColumns: Int = 2
 ) {
     // Получаем цвет фона карточки
@@ -247,27 +243,6 @@ fun BusRouteCardGrid(
                     )
                 }
             }
-            
-            // Кнопка уведомлений в правом верхнем углу (если showNotificationButton = true)
-            if (showNotificationButton && onNotificationClick != null) {
-                IconButton(
-                    onClick = { onNotificationClick() },
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(4.dp)
-                        .semantics {
-                            role = Role.Button
-                            contentDescription = "Настройки уведомлений для маршрута ${route.routeNumber}"
-                        }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Notifications,
-                        contentDescription = null, // Уже указано в semantics
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
         }
     }
 }
@@ -286,17 +261,13 @@ fun BusRouteCardGrid(
  * @param route данные маршрута для отображения
  * @param onRouteClick callback при клике на карточку
  * @param modifier модификатор для настройки внешнего вида
- * @param showNotificationButton не используется (оставлен для совместимости)
- * @param onNotificationClick не используется (оставлен для совместимости)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BusRouteCardList(
     route: BusRoute,
     onRouteClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    showNotificationButton: Boolean = false,
-    onNotificationClick: (() -> Unit)? = null
+    modifier: Modifier = Modifier
 ) {
     // Получаем цвет фона карточки
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -383,19 +354,6 @@ fun BusRouteCardList(
                     modifier = Modifier.padding(end = Constants.PADDING_SMALL.dp)
                 )
             }
-            
-            // Кнопка уведомлений справа (если showNotificationButton = true)
-            if (showNotificationButton && onNotificationClick != null) {
-                IconButton(
-                    onClick = { onNotificationClick() }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Notifications,
-                        contentDescription = "Настройки уведомлений",
-                        tint = androidx.compose.ui.graphics.Color.White
-                    )
-                }
-            }
         }
     }
 }
@@ -412,9 +370,7 @@ fun BusRouteCardList(
  * @param route данные маршрута для отображения
  * @param onClick callback при клике на карточку маршрута
  * @param modifier модификатор для настройки внешнего вида
- * @param isGridMode true = режим сетки, false = режим списка
- * @param showNotificationButton не используется (оставлен для совместимости API)
- * @param onNotificationClick не используется (оставлен для совместимости API)
+ * @param isGridMode true = режим сетки (компактный), false = режим списка (расширенный)
  * @param gridColumns количество колонок в сетке (актуально только для isGridMode = true)
  */
 @Composable
@@ -423,8 +379,6 @@ fun BusRouteCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     isGridMode: Boolean = true,
-    showNotificationButton: Boolean = false,
-    onNotificationClick: (() -> Unit)? = null,
     gridColumns: Int = 2
 ) {
     if (isGridMode) {
@@ -432,17 +386,13 @@ fun BusRouteCard(
             route = route, 
             onRouteClick = { onClick() },
             modifier = modifier,
-            showNotificationButton = showNotificationButton,
-            onNotificationClick = onNotificationClick,
             gridColumns = gridColumns
         )
     } else {
         BusRouteCardList(
             route = route, 
             onRouteClick = { onClick() },
-            modifier = modifier,
-            showNotificationButton = showNotificationButton,
-            onNotificationClick = onNotificationClick
+            modifier = modifier
         )
     }
 }
