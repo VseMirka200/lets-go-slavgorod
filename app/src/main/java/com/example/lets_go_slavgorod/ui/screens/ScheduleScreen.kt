@@ -28,14 +28,15 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.model.BusSchedule
-import com.example.lets_go_slavgorod.ui.components.schedule.RouteDetailsSummaryCard
-import com.example.lets_go_slavgorod.ui.components.schedule.ScheduleHeader
+import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
 import com.example.lets_go_slavgorod.ui.components.schedule.ScheduleList
-import com.example.lets_go_slavgorod.ui.components.schedule.UnifiedScheduleHeader
 import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
 import com.example.lets_go_slavgorod.utils.ScheduleUtils
 import com.example.lets_go_slavgorod.utils.ConditionalLogging
 import timber.log.Timber
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
@@ -46,41 +47,50 @@ const val STOP_VOKZAL = "вокзал"
 const val STOP_SOVHOZ = "совхоз"
 
 /**
- * Экран расписания маршрута с детальной информацией
+ * Экран расписания конкретного маршрута
  * 
- * Отображает полное расписание автобусного маршрута с разделением по точкам
- * отправления и подсветкой ближайших рейсов.
+ * Отображает полное расписание автобусного маршрута с детальной информацией,
+ * разделением по точкам отправления и интерактивными элементами.
+ * 
+ * Структура экрана:
+ * 1. Заголовок (UnifiedScheduleHeader):
+ *    - Стрелка назад
+ *    - Название маршрута
+ *    - Кнопка настроек уведомлений
+ *    - Детальная информация (время в пути, стоимость, оплата)
+ * 
+ * 2. Расписание (ScheduleList):
+ *    - Варьируется в зависимости от маршрута
+ *    - Добавление времен в избранное (звёздочка)
+ *    - Подсветка ближайших рейсов
  * 
  * Функциональность:
- * - Отображение расписания для выбранного маршрута
- * - Автоматическое разделение по точкам отправления
- * - Сворачивание/разворачивание секций
- * - Интеграция с избранными временами (добавление/удаление)
- * - Подсветка ближайшего рейса с обратным отсчетом
- * - Плавная загрузка с минимальной анимацией 1 секунда
+ * - Загрузка расписания из JSON или fallback данных
+ * - Фильтрация расписаний по точкам отправления
+ * - Определение ближайших рейсов для каждой точки
+ * - Добавление/удаление времен в избранное
+ * - Навигация к настройкам уведомлений маршрута
+ * - Анимация загрузки (минимум 1 секунда)
  * 
- * Источники данных:
- * - Приоритет: JSON файл (routes_data.json)
- * - Fallback: Hardcoded данные (ScheduleUtils)
+ * Точки отправления:
+ * - Маршруты 102/102Б: Славгород (Рынок) ↔ Яровое (МСЧ-128/Зори)
+ * - Маршрут №1: Вокзал ↔ Совхоз (по выходам)
  * 
- * Оптимизации:
- * - LaunchedEffect с зависимостью от route для предотвращения лишних загрузок
- * - Remember для кэширования вычисленных списков расписаний
- * - Условный рендеринг только необходимых секций
- * 
- * @param route маршрут для отображения расписания (null = показать пустое состояние)
- * @param onBackClick callback для кнопки "Назад"
- * @param viewModel BusViewModel для доступа к данным и избранным
+ * @param route маршрут для отображения расписания (null = пустое состояние)
+ * @param onBackClick callback для возврата на главный экран
+ * @param viewModel BusViewModel для данных и избранного
+ * @param onNotificationClick callback для открытия настроек уведомлений маршрута
  * 
  * @author VseMirka200
- * @version 2.0
+ * @version 3.0
  * @since 1.0
  */
 @Composable
 fun ScheduleScreen(
     route: BusRoute?,
     onBackClick: () -> Unit,
-    viewModel: BusViewModel
+    viewModel: BusViewModel,
+    onNotificationClick: ((String) -> Unit)? = null
 ) {
     // Состояние загрузки и данных
     // Remember с зависимостью от route гарантирует сброс при смене маршрута
@@ -102,6 +112,28 @@ fun ScheduleScreen(
     var nextUpcomingYarovoeId by remember { mutableStateOf<String?>(null) }
     var nextUpcomingVokzalId by remember { mutableStateOf<String?>(null) }
     var nextUpcomingSovhozId by remember { mutableStateOf<String?>(null) }
+    
+    // Получаем контекст для доступа к репозиторию
+    val context = LocalContext.current
+    
+    // Автоматическая проверка обновлений расписания при входе на экран
+    LaunchedEffect(route) {
+        if (route != null) {
+            // Проверяем обновления в фоне
+            withContext(Dispatchers.IO) {
+                try {
+                    val repository = BusRouteRepository(context)
+                    val hasUpdates = repository.checkForDataUpdates()
+                    if (hasUpdates) {
+                        Timber.i("Schedule updates available, refreshing...")
+                        repository.refreshRoutesFromRemote()
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Error checking for schedule updates")
+                }
+            }
+        }
+    }
     
     // Динамическая загрузка и обработка данных расписания
     // LaunchedEffect с зависимостью от route перезапускает загрузку при смене маршрута
@@ -194,11 +226,7 @@ fun ScheduleScreen(
                     )
                     Text(
                         text = "Загрузка расписания...",
-                        style = androidx.compose.ui.text.TextStyle(
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Default, // Roboto
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Normal
-                        ),
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -216,6 +244,9 @@ fun ScheduleScreen(
                 nextUpcomingSovhozId = nextUpcomingSovhozId,
                 viewModel = viewModel,
                 onBackClick = onBackClick,
+                onNotificationClick = if (onNotificationClick != null) {
+                    { onNotificationClick(route.id) }
+                } else null,
                 onScrollOffsetChange = { offset ->
                     // Можно удалить, так как заголовок теперь скроллится естественным образом
                 },

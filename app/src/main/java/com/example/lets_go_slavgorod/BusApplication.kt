@@ -236,7 +236,7 @@ class BusApplication : MultiDexApplication() {
                     description = "Маршрут",
                     travelTime = "~40 минут",
                     pricePrimary = "38₽ город / 55₽ межгород",
-                    paymentMethods = "Нал. / Безнал.",
+                    paymentMethods = "Наличный / Картой",
                     color = Constants.DEFAULT_ROUTE_COLOR
                 )
             }

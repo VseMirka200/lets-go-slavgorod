@@ -1,12 +1,12 @@
 {
-  "version": "2.0.0",
-  "last_updated": "2025-10-12",
+  "version": "0.0.3",
+  "last_updated": "2025-10-16",
   "routes": [
     {
       "id": "102",
       "routeNumber": "102",
       "name": "Автобус №102",
-      "description": "Рынок (Славгород) — Ст. Зори (Яровое)",
+      "description": "Рынок (Славгород) — МСЧ-128 (Яровое)",
       "travelTime": "~40 минут",
       "pricePrimary": "38₽ город / 55₽ межгород",
       "paymentMethods": "Наличный / Картой",

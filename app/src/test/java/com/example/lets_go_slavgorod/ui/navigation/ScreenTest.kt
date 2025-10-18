@@ -14,11 +14,6 @@ class ScreenTest {
     }
 
     @Test
-    fun `FavoriteTimes route should be correct`() {
-        assertEquals("favorite_times", Screen.FavoriteTimes.route)
-    }
-
-    @Test
     fun `Settings route should be correct`() {
         assertEquals("settings", Screen.Settings.route)
     }

@@ -19,9 +19,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -214,22 +216,28 @@ fun EmptyState(searchQuery: String) {
 }
 
 /**
- * Сетка маршрутов с максимальной оптимизацией производительности
+ * Компонент отображения списка маршрутов
  * 
- * Высокопроизводительная сетка с агрессивными оптимизациями:
- * - LazyVerticalGrid с оптимизированным кэшированием
- * - Предварительная загрузка элементов
- * - Минимизация перекомпозиций
- * - Оптимизированная навигация без задержек
+ * Поддерживает два режима отображения:
+ * - GRID: сетка с настраиваемым количеством колонок (1-4)
+ * - LIST: вертикальный список
+ * 
+ * Особенности:
+ * - Адаптивная сетка с оптимизированными отступами
+ * - Клик на карточку -> переход к расписанию маршрута
+ * - Сохранение и восстановление состояния при навигации
+ * - Минимизация перекомпозиций через key и contentType
  * 
  * @param routes список маршрутов для отображения
- * @param navController контроллер навигации для перехода к деталям маршрута
+ * @param navController контроллер навигации для перехода к расписанию
+ * @param modifier модификатор для настройки внешнего вида
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RoutesListState(
     routes: List<BusRoute>,
-    navController: NavController
+    navController: NavController,
+    modifier: Modifier = Modifier
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val displaySettingsViewModel: DisplaySettingsViewModel = viewModel(
@@ -321,19 +329,36 @@ fun RoutesListState(
 /**
  * Главный экран приложения с маршрутами автобусов
  * 
- * Основные функции:
- * - Отображение списка доступных маршрутов
- * - Поиск по маршрутам в реальном времени
- * - Навигация к деталям конкретного маршрута
- * - Обработка состояний загрузки, ошибок и пустого списка
+ * Версия: 2.0
+ * Последнее обновление: Октябрь 2025
+ * 
+ * Основной и единственный экран в навигации приложения.
+ * Отображает список всех доступных автобусных маршрутов города Славгород.
+ * 
+ * Функциональность:
+ * - Отображение списка маршрутов в режиме сетки (1-4 колонки) или списка
+ * - Поиск по маршрутам в реальном времени (по номеру и названию)
+ * - Навигация к расписанию конкретного маршрута (клик на карточку)
+ * - Быстрый доступ к настройкам через иконку в шапке
+ * - Обработка состояний: загрузка, ошибка, пустой список, нет результатов поиска
+ * 
+ * Шапка экрана:
+ * - Название приложения "Поехали! Славгород" (Material Design titleLarge)
+ * - Кнопка настроек справа (Settings icon)
+ * 
+ * Изменения v2.0:
+ * - Удалено нижнее меню навигации (единственный главный экран)
+ * - Улучшена типографика с использованием Roboto
+ * - Оптимизирована структура для более быстрой навигации
  * 
  * Оптимизации:
- * - Использует LazyColumn для эффективного отображения списков
- * - Кэширует состояние для быстрого отклика
- * - Минимизирует перекомпозиции
+ * - LazyVerticalGrid/LazyColumn для эффективного отображения больших списков
+ * - Кэширование состояния для быстрого отклика и сохранения позиции
+ * - Минимизация перекомпозиций через key (route.id) и contentType
+ * - Использование remember для вычисляемых значений
  * 
  * @param navController контроллер навигации для переходов между экранами
- * @param viewModel ViewModel для управления данными маршрутов
+ * @param viewModel ViewModel для управления данными маршрутов и состоянием
  * @param modifier модификатор для настройки внешнего вида
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -375,11 +400,22 @@ fun HomeScreen(
                     )
                 },
                 actions = {
-                    // Убрана кнопка обновления маршрутов
+                    IconButton(onClick = { 
+                        navController.navigate("settings") {
+                            launchSingleTop = true
+                        }
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Настройки",
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
                 windowInsets = WindowInsets(0)
             )

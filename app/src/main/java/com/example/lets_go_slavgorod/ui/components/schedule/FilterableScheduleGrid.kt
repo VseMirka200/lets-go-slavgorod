@@ -3,6 +3,9 @@ package com.example.lets_go_slavgorod.ui.components.schedule
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,19 +19,32 @@ import com.example.lets_go_slavgorod.ui.components.CompactScheduleCard
 import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
 
 /**
- * Компонент для отображения расписания в две колонки с фильтрацией
+ * Компонент для отображения расписания в две колонки с интерактивной фильтрацией
  * 
- * При нажатии на заголовок колонки она подсвечивается, а другая становится полупрозрачной.
- * Это позволяет пользователю фокусироваться на конкретной точке отправления.
+ * Версия: 2.0
+ * Последнее обновление: Октябрь 2025
+ * 
+ * Функциональность:
+ * - Двухколоночное отображение (левая/правая точка отправления)
+ * - Клик на заголовок колонки для фокусировки (подсветка + затемнение другой)
+ * - Поддержка фильтров "Избранные" и "Следующий"
+ * - Автоматическое выравнивание колонок по высоте
+ * 
+ * Изменения v2.0:
+ * - Добавлена поддержка фильтра "Следующий"
+ * - Улучшена логика фильтрации с использованием when
+ * - Добавлены пустые состояния для фильтров
  * 
  * @param leftSchedules список расписаний для левой колонки
  * @param rightSchedules список расписаний для правой колонки
- * @param leftTitle заголовок для левой колонки
- * @param rightTitle заголовок для правой колонки
+ * @param leftTitle заголовок для левой колонки (например, "Из Славгорода")
+ * @param rightTitle заголовок для правой колонки (например, "Из Ярового")
  * @param nextUpcomingLeftId ID ближайшего предстоящего рейса в левой колонке
  * @param nextUpcomingRightId ID ближайшего предстоящего рейса в правой колонке
- * @param viewModel BusViewModel для работы с избранными
- * @param route маршрут для контекста
+ * @param viewModel BusViewModel для работы с избранными временами
+ * @param route маршрут для контекста (используется при добавлении в избранное)
+ * @param showOnlyFavorites если true, показывать только избранные времена
+ * @param showOnlyUpcoming если true, показывать только следующий рейс
  * @param modifier модификатор для настройки внешнего вида
  */
 @Composable
@@ -41,6 +57,8 @@ fun FilterableScheduleGrid(
     nextUpcomingRightId: String?,
     viewModel: BusViewModel,
     route: com.example.lets_go_slavgorod.data.model.BusRoute,
+    showOnlyFavorites: Boolean = false,
+    showOnlyUpcoming: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val favoriteTimesList by viewModel.favoriteTimes.collectAsState()
@@ -48,7 +66,58 @@ fun FilterableScheduleGrid(
     // Состояние фильтрации: null = показывать все, true = только левая, false = только правая
     var filterState by remember { mutableStateOf<Boolean?>(null) }
     
-    if (leftSchedules.isEmpty() && rightSchedules.isEmpty()) {
+    // Фильтруем расписания по избранному или следующему если включен фильтр
+    val filteredLeftSchedules = remember(leftSchedules, showOnlyFavorites, showOnlyUpcoming, favoriteTimesList, nextUpcomingLeftId) {
+        when {
+            showOnlyFavorites -> leftSchedules.filter { schedule ->
+                favoriteTimesList.any { it.id == schedule.id && it.isActive }
+            }
+            showOnlyUpcoming -> leftSchedules.filter { schedule ->
+                schedule.id == nextUpcomingLeftId
+            }
+            else -> leftSchedules
+        }
+    }
+    
+    val filteredRightSchedules = remember(rightSchedules, showOnlyFavorites, showOnlyUpcoming, favoriteTimesList, nextUpcomingRightId) {
+        when {
+            showOnlyFavorites -> rightSchedules.filter { schedule ->
+                favoriteTimesList.any { it.id == schedule.id && it.isActive }
+            }
+            showOnlyUpcoming -> rightSchedules.filter { schedule ->
+                schedule.id == nextUpcomingRightId
+            }
+            else -> rightSchedules
+        }
+    }
+    
+    if (filteredLeftSchedules.isEmpty() && filteredRightSchedules.isEmpty()) {
+        // Показываем сообщение если нет данных при активном фильтре
+        if (showOnlyFavorites || showOnlyUpcoming) {
+            Box(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.StarBorder,
+                        contentDescription = if (showOnlyFavorites) "Нет избранных" else "Нет следующих",
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                    )
+                    Text(
+                        text = if (showOnlyFavorites) "Нет избранных времен" else "Нет предстоящих рейсов",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
         return
     }
     
@@ -59,7 +128,7 @@ fun FilterableScheduleGrid(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp),
+                .padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // Заголовок левой колонки
@@ -81,19 +150,19 @@ fun FilterableScheduleGrid(
                         },
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
                     )
-                    .padding(12.dp)
+                    .padding(12.dp),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = leftTitle,
-                    style = androidx.compose.ui.text.TextStyle(
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Default, // Roboto
-                        fontSize = 16.sp,
+                    style = MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = if (filterState == true) FontWeight.Bold else FontWeight.Medium
                     ),
                     color = if (filterState == true) 
                         MaterialTheme.colorScheme.primary 
                     else 
                         MaterialTheme.colorScheme.onSurface,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     modifier = Modifier
                         .alpha(if (filterState == false) 0.4f else 1f)
                 )
@@ -118,19 +187,19 @@ fun FilterableScheduleGrid(
                         },
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
                     )
-                    .padding(12.dp)
+                    .padding(12.dp),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = rightTitle,
-                    style = androidx.compose.ui.text.TextStyle(
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Default, // Roboto
-                        fontSize = 16.sp,
+                    style = MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = if (filterState == false) FontWeight.Bold else FontWeight.Medium
                     ),
                     color = if (filterState == false) 
                         MaterialTheme.colorScheme.primary 
                     else 
                         MaterialTheme.colorScheme.onSurface,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     modifier = Modifier
                         .alpha(if (filterState == true) 0.4f else 1f)
                 )
@@ -138,7 +207,7 @@ fun FilterableScheduleGrid(
         }
         
         // Определяем максимальную длину для выравнивания
-        val maxLength = maxOf(leftSchedules.size, rightSchedules.size)
+        val maxLength = maxOf(filteredLeftSchedules.size, filteredRightSchedules.size)
         
         // Отображаем расписания построчно
         for (i in 0 until maxLength) {
@@ -154,8 +223,8 @@ fun FilterableScheduleGrid(
                         .weight(1f)
                         .alpha(if (filterState == false) 0.4f else 1f)
                 ) {
-                    if (i < leftSchedules.size) {
-                        val schedule = leftSchedules[i]
+                    if (i < filteredLeftSchedules.size) {
+                        val schedule = filteredLeftSchedules[i]
                         val isCurrentlyFavorite = favoriteTimesList.any { it.id == schedule.id && it.isActive }
                         val isNextUpcoming = schedule.id == nextUpcomingLeftId
                         
@@ -170,7 +239,7 @@ fun FilterableScheduleGrid(
                                 }
                             },
                             isNextUpcoming = isNextUpcoming,
-                            allSchedules = leftSchedules,
+                            orderNumber = i + 1,
                             modifier = Modifier.fillMaxWidth()
                         )
                     } else {
@@ -185,8 +254,8 @@ fun FilterableScheduleGrid(
                         .weight(1f)
                         .alpha(if (filterState == true) 0.4f else 1f)
                 ) {
-                    if (i < rightSchedules.size) {
-                        val schedule = rightSchedules[i]
+                    if (i < filteredRightSchedules.size) {
+                        val schedule = filteredRightSchedules[i]
                         val isCurrentlyFavorite = favoriteTimesList.any { it.id == schedule.id && it.isActive }
                         val isNextUpcoming = schedule.id == nextUpcomingRightId
                         
@@ -201,7 +270,7 @@ fun FilterableScheduleGrid(
                                 }
                             },
                             isNextUpcoming = isNextUpcoming,
-                            allSchedules = rightSchedules,
+                            orderNumber = i + 1,
                             modifier = Modifier.fillMaxWidth()
                         )
                     } else {

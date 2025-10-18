@@ -5,9 +5,13 @@ import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lets_go_slavgorod.data.local.dataStore
+import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
 import com.example.lets_go_slavgorod.ui.viewmodel.themeDataStore
 import com.example.lets_go_slavgorod.ui.viewmodel.displayDataStore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -16,10 +20,124 @@ import java.io.File
 /**
  * ViewModel для управления данными приложения
  * 
- * Функции:
+ * Версия: 2.0
+ * Последнее обновление: Октябрь 2025
+ * 
+ * Основные функции:
  * - Сброс настроек к значениям по умолчанию
+ * - Обновление расписания из GitHub
+ * - Проверка доступности обновлений расписания
+ * - Очистка кэша приложения
+ * 
+ * Изменения v2.0:
+ * - Добавлена поддержка удалённой загрузки расписания
+ * - Добавлены методы для ручного обновления данных
+ * - Добавлена проверка версии данных
+ * 
+ * @param context контекст приложения
+ * 
+ * @author VseMirka200
+ * @version 2.0
+ * @since 1.0
  */
 class DataManagementViewModel(private val context: Context) : ViewModel() {
+
+    private val repository = BusRouteRepository(context)
+    
+    // Состояния для обновления расписания
+    private val _isRefreshingSchedule = MutableStateFlow(false)
+    val isRefreshingSchedule: StateFlow<Boolean> = _isRefreshingSchedule.asStateFlow()
+    
+    private val _scheduleRefreshError = MutableStateFlow<String?>(null)
+    val scheduleRefreshError: StateFlow<String?> = _scheduleRefreshError.asStateFlow()
+    
+    private val _scheduleRefreshSuccess = MutableStateFlow(false)
+    val scheduleRefreshSuccess: StateFlow<Boolean> = _scheduleRefreshSuccess.asStateFlow()
+    
+    private val _dataVersion = MutableStateFlow<String?>(null)
+    val dataVersion: StateFlow<String?> = _dataVersion.asStateFlow()
+    
+    private val _dataLastUpdated = MutableStateFlow<String?>(null)
+    val dataLastUpdated: StateFlow<String?> = _dataLastUpdated.asStateFlow()
+    
+    init {
+        // Загружаем информацию о версии данных
+        viewModelScope.launch {
+            try {
+                _dataVersion.value = repository.getDataVersion()
+                _dataLastUpdated.value = repository.getDataLastUpdated()
+            } catch (e: Exception) {
+                Timber.e(e, "Error loading data version info")
+            }
+        }
+    }
+    
+    /**
+     * Обновляет расписание из GitHub
+     * 
+     * Загружает актуальную версию routes_data.json с GitHub
+     * и обновляет локальный кэш.
+     */
+    fun refreshScheduleFromGitHub() {
+        viewModelScope.launch {
+            try {
+                _isRefreshingSchedule.value = true
+                _scheduleRefreshError.value = null
+                _scheduleRefreshSuccess.value = false
+                
+                Timber.i("User initiated schedule refresh from GitHub")
+                
+                val success = repository.refreshRoutesFromRemote()
+                
+                if (success) {
+                    _scheduleRefreshSuccess.value = true
+                    _scheduleRefreshError.value = null
+                    
+                    // Обновляем версию данных
+                    _dataVersion.value = repository.getDataVersion()
+                    _dataLastUpdated.value = repository.getDataLastUpdated()
+                    
+                    Timber.i("Schedule successfully refreshed from GitHub. Restarting to apply changes...")
+                    
+                    // Перезапускаем приложение для применения изменений
+                    kotlinx.coroutines.delay(1000)
+                    withContext(Dispatchers.Main) {
+                        restartApp()
+                    }
+                } else {
+                    _scheduleRefreshError.value = "Не удалось загрузить данные с сервера"
+                    Timber.w("Failed to refresh schedule from GitHub")
+                }
+            } catch (e: Exception) {
+                _scheduleRefreshError.value = e.message ?: "Неизвестная ошибка"
+                Timber.e(e, "Error refreshing schedule from GitHub")
+            } finally {
+                _isRefreshingSchedule.value = false
+            }
+        }
+    }
+    
+    /**
+     * Проверяет доступность обновлений расписания
+     * 
+     * @return true если доступна новая версия
+     */
+    suspend fun checkForScheduleUpdates(): Boolean {
+        return try {
+            repository.checkForDataUpdates()
+        } catch (e: Exception) {
+            Timber.e(e, "Error checking for schedule updates")
+            false
+        }
+    }
+    
+    /**
+     * Очищает статус обновления расписания
+     */
+    fun clearScheduleRefreshStatus() {
+        _scheduleRefreshSuccess.value = false
+        _scheduleRefreshError.value = null
+    }
 
     /**
      * Сброс всех настроек к значениям по умолчанию

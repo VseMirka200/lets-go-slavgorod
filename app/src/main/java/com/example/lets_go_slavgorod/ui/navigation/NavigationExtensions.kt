@@ -8,16 +8,21 @@ import timber.log.Timber
  * Extension функции для упрощения навигации в приложении
  * 
  * Предоставляет удобные методы для навигации с общими параметрами,
- * устраняя дублирование кода.
+ * устраняя дублирование кода и обеспечивая единообразие поведения.
+ * 
+ * Архитектура навигации:
+ * - Один основной экран (Home) с маршрутами
+ * - Настройки доступны из главного экрана
+ * - Детали маршрута и уведомления в отдельных экранах
  * 
  * Особенности:
- * - Стандартизированная обработка ошибок
- * - Логирование навигационных событий
- * - Переиспользуемые конфигурации
- * - Type-safe навигация
+ * - Стандартизированная обработка ошибок с Timber
+ * - Логирование всех навигационных событий
+ * - Переиспользуемые конфигурации (launchSingleTop, restoreState)
+ * - Type-safe навигация через параметры
  * 
  * @author VseMirka200
- * @version 1.0
+ * @version 2.0
  * @since 2.0
  */
 
@@ -69,25 +74,13 @@ fun NavController.navigateToSchedule(routeId: String) {
 }
 
 /**
- * Навигация к деталям избранного маршрута
- * 
- * @param routeId ID маршрута
- */
-fun NavController.navigateToFavoriteRouteDetails(routeId: String) {
-    navigateOptimized(
-        route = "favorite_route_details/$routeId",
-        popUpToRoute = "favorites"
-    )
-}
-
-/**
  * Навигация к настройкам уведомлений маршрута
  * 
  * @param routeId ID маршрута
  */
 fun NavController.navigateToRouteNotificationSettings(routeId: String) {
     navigateOptimized(
-        route = "route_notification_settings/$routeId"
+        route = "route_notifications/$routeId"
     )
 }
 

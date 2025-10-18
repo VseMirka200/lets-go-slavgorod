@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,49 +39,42 @@ import androidx.compose.ui.unit.sp
 import com.example.lets_go_slavgorod.data.model.BusRoute
 
 /**
- * Заголовок экрана расписания с информацией о маршруте
+ * Объединенный заголовок экрана расписания маршрута
  * 
- * Функциональность:
- * - Отображение названия маршрута
- * - Кнопка "Назад"
- * - Информационная карточка с деталями маршрута
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ScheduleHeader(
-    route: BusRoute?,
-    onBackClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    TopAppBar(
-        title = {
-            Text(
-                text = route?.name ?: "Расписание",
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-        },
-        navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Назад")
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-        ),
-        windowInsets = androidx.compose.foundation.layout.WindowInsets(0),
-        modifier = modifier
-    )
-}
-
-/**
- * Объединенный заголовок с информацией о маршруте и анимацией скролла
+ * Версия: 2.0
+ * Последнее обновление: Октябрь 2025
  * 
- * Объединяет заголовок экрана и детальную информацию о маршруте в единый блок
- * с анимацией скрытия/показа при скролле
+ * Расширенный заголовок с навигацией и детальной информацией о маршруте.
+ * Отображается как первый элемент в LazyColumn экрана расписания.
+ * Унифицирован со стилем остальных экранов приложения.
+ * 
+ * Структура:
+ * 1. Шапка (высота 64dp, унифицированный стиль TopAppBar):
+ *    - Стрелка назад слева (onPrimaryContainer tint)
+ *    - Название маршрута (titleLarge, fontWeight Bold, maxLines 1)
+ *    - Кнопка уведомлений справа (если onNotificationClick не null)
+ * 
+ * 2. Детальная информация о маршруте (под шапкой):
+ *    - Время в пути (если указано)
+ *    - Стоимость проезда (если указана)
+ *    - Способы оплаты (наличные/карта, если указаны)
+ *    - Примечание о времени отправления
+ * 
+ * Визуальный дизайн:
+ * - Фон: primaryContainer (единый цвет для всего заголовка)
+ * - Закругленные углы снизу (bottomStart/End 16dp)
+ * - Разделители между секциями информации
+ * 
+ * Изменения v2.0:
+ * - Унифицированы все стрелки назад (tint, стиль)
+ * - Добавлена кнопка уведомлений в заголовок
+ * - Улучшена типографика (Roboto, единый размер)
+ * 
+ * @param route маршрут для отображения информации (может быть null при загрузке)
+ * @param onBackClick callback для возврата на главный экран
+ * @param isVisible не используется (deprecated, оставлен для совместимости API)
+ * @param onNotificationClick callback для открытия настроек уведомлений (если null - кнопка не отображается)
+ * @param modifier модификатор для настройки внешнего вида
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,6 +82,7 @@ fun UnifiedScheduleHeader(
     route: BusRoute?,
     onBackClick: () -> Unit,
     isVisible: Boolean = true,
+    onNotificationClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     // Единая карточка для всего заголовка
@@ -107,33 +102,47 @@ fun UnifiedScheduleHeader(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Заголовок с кнопкой назад
+            // Заголовок в стиле TopAppBar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .height(64.dp)
+                    .padding(horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                IconButton(onClick = onBackClick) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack, 
-                        "Назад",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Назад",
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                    
+                    Text(
+                        text = route?.name ?: "Расписание",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
                 }
                 
-                Text(
-                    text = route?.name ?: "Расписание",
-                    style = androidx.compose.ui.text.TextStyle(
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Default, // Roboto по умолчанию
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+                // Кнопка уведомлений
+                if (onNotificationClick != null) {
+                    IconButton(onClick = onNotificationClick) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = "Настройки уведомлений",
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
             }
             
             // Информация о маршруте (если есть)
@@ -176,11 +185,7 @@ fun UnifiedScheduleHeader(
                     )
                     Text(
                         text = "Примечание: Указано время отправления от начальных/конечных остановок маршрута.",
-                        style = androidx.compose.ui.text.TextStyle(
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Default, // Roboto
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal
-                        ),
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                         textAlign = TextAlign.Start
                     )
@@ -192,6 +197,13 @@ fun UnifiedScheduleHeader(
 
 /**
  * Элемент информации о маршруте
+ * 
+ * Отображает пару "метка: значение" в заголовке расписания.
+ * Используется для времени в пути и стоимости.
+ * 
+ * @param label название параметра (например, "Время в пути")
+ * @param value значение параметра (например, "~40 минут")
+ * @param modifier модификатор для настройки внешнего вида
  */
 @Composable
 private fun InfoItem(
@@ -205,89 +217,13 @@ private fun InfoItem(
     ) {
         Text(
             text = label,
-            style = androidx.compose.ui.text.TextStyle(
-                fontFamily = androidx.compose.ui.text.font.FontFamily.Default, // Roboto
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium
-            ),
+            style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
         )
         Text(
             text = value,
-            style = androidx.compose.ui.text.TextStyle(
-                fontFamily = androidx.compose.ui.text.font.FontFamily.Default, // Roboto
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Normal
-            ),
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onPrimaryContainer
         )
     }
 }
-
-/**
- * Карточка с детальной информацией о маршруте
- */
-@Composable
-fun RouteDetailsSummaryCard(
-    route: BusRoute,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
-    ) {
-        androidx.compose.foundation.layout.Column(
-            modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(3.dp)
-        ) {
-            route.travelTime?.let { DetailRow("Время в пути:", it) }
-            route.pricePrimary?.let { DetailRow("Стоимость:", it) }
-            route.paymentMethods?.let { DetailRow("Способы оплаты:", it, allowMultiLineValue = false) }
-            if (route.travelTime != null || route.pricePrimary != null || route.paymentMethods != null) {
-                HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 4.dp),
-                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                )
-            }
-            Text(
-                text = "Примечание: Указано время отправления от начальных/конечных остановок маршрута.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Start
-            )
-        }
-    }
-}
-
-/**
- * Строка деталей маршрута
- */
-@Composable
-private fun DetailRow(
-    label: String, 
-    value: String, 
-    allowMultiLineValue: Boolean = true
-) {
-    androidx.compose.foundation.layout.Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 1.dp),
-        verticalAlignment = if (allowMultiLineValue) Alignment.Top else Alignment.CenterVertically
-    ) {
-        Text(
-            text = "$label ",
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Normal,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-    }
-}
-

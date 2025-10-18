@@ -149,17 +149,15 @@ fun CountdownTimer(
             ) {
                 Text(
                     text = "Ближайший рейс",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold
                     ),
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = pulseAlpha)
                 )
                 Text(
                     text = "через ${formattedTime.replace("Через ", "")}",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold
                     ),
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = pulseAlpha)
                 )

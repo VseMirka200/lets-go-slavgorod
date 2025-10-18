@@ -51,12 +51,40 @@ import timber.log.Timber
 /**
  * Экран "О программе" - отображает информацию о приложении и разработчике
  * 
- * Содержит:
- * - Название приложения и версию
- * - Информацию о разработчике
- * - Ссылки на GitHub и Telegram
- * - Раздел поддержки разработчика с кнопками для благодарности
+ * Версия: 2.0
+ * Последнее обновление: Октябрь 2025
  * 
+ * Содержит следующие разделы:
+ * 1. Информация о приложении:
+ *    - Название приложения "Поехали! Славгород"
+ *    - Текущая версия (v1.8)
+ *    - Описание функциональности
+ * 
+ * 2. Информация о разработчике:
+ *    - Имя разработчика (из strings.xml)
+ *    - Ссылки на социальные сети (VK)
+ *    - Контактная информация
+ * 
+ * 3. Ссылки и ресурсы:
+ *    - GitHub репозиторий проекта
+ *    - Telegram для обратной связи
+ *    - Email разработчика
+ * 
+ * 4. Поддержка разработчика:
+ *    - Кнопки для благодарности
+ *    - Возможность оставить отзыв
+ *    - Ссылка на донаты/поддержку
+ * 
+ * Шапка:
+ * - Заголовок "О приложении"
+ * - Стрелка назад (унифицированный стиль)
+ * 
+ * Изменения v2.0:
+ * - Унифицирован стиль стрелки назад
+ * - Улучшена типографика (Roboto)
+ * - Оптимизирована верстка секций
+ * 
+ * @param navController контроллер навигации (может быть null)
  * @param onBackClick callback для обработки нажатия кнопки "Назад"
  * @param modifier модификатор для настройки внешнего вида
  */
@@ -90,7 +118,8 @@ fun AboutScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Назад"
+                            contentDescription = "Назад",
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 },
@@ -117,8 +146,7 @@ fun AboutScreen(
             Text(
                 text = "Информация о приложении",
                 style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = MaterialTheme.typography.titleMedium.fontSize * 1.15f
+                    fontWeight = FontWeight.Bold
                 ),
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -145,8 +173,7 @@ fun AboutScreen(
             Text(
                 text = "Обратная связь",
                 style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = MaterialTheme.typography.titleMedium.fontSize * 1.15f
+                    fontWeight = FontWeight.Bold
                 ),
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -160,8 +187,7 @@ fun AboutScreen(
             Text(
                 text = "Поддержка разработчика",
                 style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = MaterialTheme.typography.titleMedium.fontSize * 1.15f
+                    fontWeight = FontWeight.Bold
                 ),
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -381,7 +407,7 @@ private fun FeedbackCard() {
                 Text("Обратная связь")
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(8.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -408,8 +434,6 @@ private fun FeedbackCard() {
                     )
                 }
             }
-            
-            Spacer(Modifier.height(16.dp))
         }
     }
 }
