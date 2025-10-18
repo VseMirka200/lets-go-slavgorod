@@ -313,6 +313,22 @@ class RemoteDataSource(private val context: Context) {
     }
     
     /**
+     * Получает версию данных напрямую с GitHub (не из кэша)
+     * 
+     * Используется для проверки доступности обновлений
+     */
+    suspend fun getRemoteDataVersion(): String? = withContext(Dispatchers.IO) {
+        try {
+            val remoteJson = downloadRemoteJson() ?: return@withContext null
+            val jsonObject = JSONObject(remoteJson)
+            jsonObject.optString("version").takeIf { it.isNotEmpty() }
+        } catch (e: Exception) {
+            Timber.e(e, "Error getting remote data version")
+            null
+        }
+    }
+    
+    /**
      * Получает дату последнего обновления из JSON
      */
     suspend fun getLastUpdated(): String? = withContext(Dispatchers.IO) {
@@ -333,23 +349,41 @@ class RemoteDataSource(private val context: Context) {
      */
     suspend fun checkForUpdates(): Boolean = withContext(Dispatchers.IO) {
         try {
-            val remoteJson = downloadRemoteJson() ?: return@withContext false
+            Timber.d("🔍 Checking for updates from GitHub...")
+            val remoteJson = downloadRemoteJson()
+            
+            if (remoteJson == null) {
+                Timber.w("❌ Failed to download remote JSON - no internet or server error")
+                return@withContext false
+            }
+            
+            Timber.d("✓ Successfully downloaded remote JSON")
             val cachedJson = loadFromCache()
             
             if (cachedJson == null) {
                 // Если кэша нет, есть обновление
+                Timber.i("📦 No cache found - update available")
                 return@withContext true
             }
             
-            val remoteVersion = JSONObject(remoteJson).optString("version")
-            val cachedVersion = JSONObject(cachedJson).optString("version")
+            val remoteVersion = JSONObject(remoteJson).optString("version", "unknown")
+            val cachedVersion = JSONObject(cachedJson).optString("version", "unknown")
             
-            val hasUpdate = remoteVersion != cachedVersion
-            Timber.d("Update check: remote=$remoteVersion, cached=$cachedVersion, hasUpdate=$hasUpdate")
+            val hasUpdate = remoteVersion.isNotEmpty() && 
+                           cachedVersion.isNotEmpty() && 
+                           remoteVersion != cachedVersion
+            
+            Timber.i("📊 Update check: remote=$remoteVersion, cached=$cachedVersion, hasUpdate=$hasUpdate")
+            
+            if (hasUpdate) {
+                Timber.i("🎉 New version available: $remoteVersion (current: $cachedVersion)")
+            } else {
+                Timber.d("✓ Already on latest version: $cachedVersion")
+            }
             
             hasUpdate
         } catch (e: Exception) {
-            Timber.e(e, "Error checking for updates")
+            Timber.e(e, "❌ Error checking for updates")
             false
         }
     }
@@ -373,11 +407,29 @@ class RemoteDataSource(private val context: Context) {
     }
     
     /**
+     * Очищает кэш маршрутов только в памяти (не удаляет файл)
+     * 
+     * Используется при обновлении данных, чтобы принудить перечитать файл
+     */
+    fun clearRoutesMemoryCache() {
+        cachedRoutes = null
+        Timber.d("Routes memory cache cleared (file preserved)")
+    }
+    
+    /**
      * Очищает только кэш расписаний (чтобы они перезагрузились)
      */
     fun clearSchedulesCache() {
         cachedSchedules.clear()
         Timber.d("Schedules cache cleared")
+    }
+    
+    /**
+     * Очищает кэш расписания для конкретного маршрута
+     */
+    fun clearScheduleCache(routeId: String) {
+        cachedSchedules.remove(routeId)
+        Timber.d("Cleared schedule cache for route $routeId")
     }
 }
 

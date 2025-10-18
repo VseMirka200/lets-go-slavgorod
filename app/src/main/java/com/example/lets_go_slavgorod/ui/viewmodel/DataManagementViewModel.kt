@@ -60,12 +60,21 @@ class DataManagementViewModel(private val context: Context) : ViewModel() {
     private val _dataLastUpdated = MutableStateFlow<String?>(null)
     val dataLastUpdated: StateFlow<String?> = _dataLastUpdated.asStateFlow()
     
+    // Состояние доступности обновления расписания (для Badge)
+    private val _scheduleUpdateAvailable = MutableStateFlow(false)
+    val scheduleUpdateAvailable: StateFlow<Boolean> = _scheduleUpdateAvailable.asStateFlow()
+    
     init {
         // Загружаем информацию о версии данных
         viewModelScope.launch {
             try {
                 _dataVersion.value = repository.getDataVersion()
                 _dataLastUpdated.value = repository.getDataLastUpdated()
+                
+                // Проверяем доступность обновлений (без задержки, т.к. это ViewModel для настроек)
+                val hasUpdates = repository.checkForDataUpdates()
+                _scheduleUpdateAvailable.value = hasUpdates
+                Timber.d("DataManagementViewModel init: schedule update available = $hasUpdates")
             } catch (e: Exception) {
                 Timber.e(e, "Error loading data version info")
             }
@@ -73,10 +82,15 @@ class DataManagementViewModel(private val context: Context) : ViewModel() {
     }
     
     /**
-     * Обновляет расписание из GitHub
+     * Обновляет расписание из GitHub (Улучшенная версия без перезапуска)
      * 
-     * Загружает актуальную версию routes_data.json с GitHub
-     * и обновляет локальный кэш.
+     * Загружает актуальную версию routes_data.json с GitHub,
+     * обновляет локальный кэш и автоматически обновляет UI через StateFlow.
+     * 
+     * Изменения v2.1:
+     * - Убран перезапуск приложения
+     * - Реактивное обновление через StateFlow
+     * - Улучшенный UX с подробными статусами
      */
     fun refreshScheduleFromGitHub() {
         viewModelScope.launch {
@@ -97,13 +111,14 @@ class DataManagementViewModel(private val context: Context) : ViewModel() {
                     _dataVersion.value = repository.getDataVersion()
                     _dataLastUpdated.value = repository.getDataLastUpdated()
                     
-                    Timber.i("Schedule successfully refreshed from GitHub. Restarting to apply changes...")
+                    // Сбрасываем флаг доступности обновления
+                    _scheduleUpdateAvailable.value = false
                     
-                    // Перезапускаем приложение для применения изменений
-                    kotlinx.coroutines.delay(1000)
-                    withContext(Dispatchers.Main) {
-                        restartApp()
-                    }
+                    Timber.i("Schedule successfully refreshed from GitHub")
+                    Timber.i("UI will update automatically via StateFlow - no restart needed!")
+                    
+                    // UI автоматически обновится через StateFlow в BusViewModel
+                    // Перезапуск НЕ НУЖЕН - данные обновляются реактивно ✅
                 } else {
                     _scheduleRefreshError.value = "Не удалось загрузить данные с сервера"
                     Timber.w("Failed to refresh schedule from GitHub")
@@ -124,11 +139,22 @@ class DataManagementViewModel(private val context: Context) : ViewModel() {
      */
     suspend fun checkForScheduleUpdates(): Boolean {
         return try {
-            repository.checkForDataUpdates()
+            val hasUpdates = repository.checkForDataUpdates()
+            _scheduleUpdateAvailable.value = hasUpdates
+            hasUpdates
         } catch (e: Exception) {
             Timber.e(e, "Error checking for schedule updates")
             false
         }
+    }
+    
+    /**
+     * Сбрасывает флаг доступности обновления расписания
+     * 
+     * Вызывается после успешного обновления расписания
+     */
+    fun clearScheduleUpdateAvailable() {
+        _scheduleUpdateAvailable.value = false
     }
     
     /**
@@ -210,7 +236,7 @@ class DataManagementViewModel(private val context: Context) : ViewModel() {
                 Timber.d("=== All settings cleared, restarting app ===")
                 
                 // Даем время на завершение всех операций
-                kotlinx.coroutines.delay(500)
+                kotlinx.coroutines.delay(com.example.lets_go_slavgorod.utils.Constants.DATA_OPERATION_COMPLETION_DELAY_MS)
                 
                 // Перезапускаем приложение
                 withContext(Dispatchers.Main) {
@@ -224,7 +250,10 @@ class DataManagementViewModel(private val context: Context) : ViewModel() {
     }
     
     /**
-     * Перезапускает приложение
+     * Перезапускает приложение (используется только при сбросе настроек)
+     * 
+     * Примечание: Обновление расписания больше НЕ требует перезапуска,
+     * т.к. данные обновляются реактивно через StateFlow.
      */
     private fun restartApp() {
         try {

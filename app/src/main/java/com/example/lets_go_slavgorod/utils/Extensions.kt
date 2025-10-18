@@ -153,6 +153,55 @@ fun FavoriteTimeEntity.toFavoriteTime(routeRepository: Any? = null): FavoriteTim
 }
 
 /**
+ * Оптимизированное batch преобразование списка Entity в FavoriteTime
+ * 
+ * Решает проблему N+1 запросов путем загрузки всех маршрутов один раз
+ * и использования Map для быстрого поиска O(1).
+ * 
+ * Преимущества:
+ * - Один запрос к repository вместо N запросов
+ * - O(1) поиск маршрута по ID через HashMap
+ * - Значительное улучшение производительности для больших списков
+ * 
+ * @param routeRepository репозиторий маршрутов для batch загрузки
+ * @return список FavoriteTime с обогащенными данными
+ */
+fun List<FavoriteTimeEntity>.toFavoriteTimesBatch(routeRepository: BusRouteRepository?): List<FavoriteTime> {
+    if (this.isEmpty()) return emptyList()
+    
+    // Batch loading: загружаем все маршруты один раз
+    val routesMap: Map<String, BusRoute> = routeRepository?.getAllRoutes()
+        ?.associateBy { it.id }
+        ?: emptyMap()
+    
+    // Преобразуем каждую entity с использованием предзагруженной Map
+    return this.map { entity ->
+        val route = routesMap[entity.routeId]
+        
+        FavoriteTime(
+            id = entity.id,
+            routeId = entity.routeId,
+            routeNumber = route?.routeNumber ?: entity.routeNumber.takeIf { it.isNotBlank() } ?: entity.routeId,
+            routeName = route?.name ?: entity.routeName.takeIf { it.isNotBlank() } ?: "Маршрут ${entity.routeId}", // TODO: strings.xml
+            stopName = entity.stopName.takeIf { it.isNotBlank() } ?: "Неизвестная остановка", // TODO: strings.xml
+            departureTime = entity.departureTime.takeIf { it.isNotBlank() } ?: "00:00",
+            dayOfWeek = entity.dayOfWeek.takeIf { it in 1..7 } ?: 1,
+            departurePoint = entity.departurePoint.takeIf { it.isNotBlank() } ?: "Неизвестный пункт", // TODO: strings.xml
+            addedDate = if (entity.addedDate <= 0L) System.currentTimeMillis() else entity.addedDate,
+            isActive = entity.isActive
+        )
+    }
+}
+
+/**
+ * Extension для проверки что список не null и не пустой
+ * 
+ * Упрощает частую проверку `list != null && list.isNotEmpty()`
+ * Примечание: inline убран - он эффективен только для функций с lambda параметрами
+ */
+fun <T> List<T>?.isNotNullOrEmpty(): Boolean = this != null && this.isNotEmpty()
+
+/**
  * Фабричная функция для создания объекта BusRoute с валидацией
  * 
  * Создает новый объект маршрута автобуса с автоматической валидацией

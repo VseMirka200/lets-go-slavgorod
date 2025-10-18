@@ -1,6 +1,5 @@
 package com.example.lets_go_slavgorod
 
-import android.app.Application
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ProcessLifecycleOwner
@@ -137,8 +136,11 @@ class BusApplication : MultiDexApplication() {
             
             // Маршруты загружаются автоматически при инициализации репозитория
             
-            // Запускаем автоматическую проверку обновлений
+            // Запускаем автоматическую проверку обновлений приложения
             startAutomaticUpdateCheck()
+            
+            // Проверяем обновления расписания в фоне (после загрузки приложения)
+            checkScheduleUpdatesInBackground()
         }
         
         // Добавляем наблюдатель за жизненным циклом процесса
@@ -179,14 +181,7 @@ class BusApplication : MultiDexApplication() {
             val database = AppDatabase.getDatabase(this@BusApplication)
             val favoriteTimeDao = database.favoriteTimeDao()
             
-            // Удаляем избранные времена для удалённых маршрутов
-            val removedRouteIds = listOf("2", "4", "5")
-            removedRouteIds.forEach { routeId ->
-                val deletedCount = favoriteTimeDao.deleteByRouteId(routeId)
-                if (deletedCount > 0) {
-                    logd("Removed $deletedCount favorite times for deleted route: $routeId")
-                }
-            }
+            // Очистка избранных времён для несуществующих маршрутов выполняется автоматически при валидации
             
             val favoriteTimeEntities = favoriteTimeDao.getAllFavoriteTimes().firstOrNull() ?: emptyList()
             
@@ -197,7 +192,7 @@ class BusApplication : MultiDexApplication() {
                 .filter { it.isActive }
                 .forEach { entity: FavoriteTimeEntity ->
                     try {
-                        val route = getRouteById(entity.routeId)
+                        val route = getRouteByIdSuspend(entity.routeId)
                         val favoriteTime = FavoriteTime(
                             id = entity.id,
                             routeId = entity.routeId,
@@ -226,31 +221,15 @@ class BusApplication : MultiDexApplication() {
         }
     }
     
-    // Получение маршрута по ID
-    private fun getRouteById(routeId: String): BusRoute? {
+    // Получение маршрута по ID (оптимизировано - использует кэш из repository)
+    private suspend fun getRouteByIdSuspend(routeId: String): BusRoute? {
         return try {
-            val repository = BusRouteRepository()
-            repository.getRouteById(routeId) ?: run {
-                // Проверяем, не является ли это удалённым маршрутом
-                if (routeId in listOf("2", "3", "4", "5")) {
-                    loge("Attempted to access removed route: $routeId")
-                    return null
-                }
-                
-                // Создаем fallback объект только для допустимых маршрутов
-                createBusRoute(
-                    id = routeId,
-                    routeNumber = routeId,
-                    name = "Автобус №$routeId",
-                    description = "Маршрут",
-                    travelTime = "~40 минут",
-                    pricePrimary = "38₽ город / 55₽ межгород",
-                    paymentMethods = "Наличный / Картой",
-                    color = Constants.DEFAULT_ROUTE_COLOR
-                )
+            // Используем withContext для безопасного вызова
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                busRouteRepository.getRouteById(routeId)
             }
         } catch (e: Exception) {
-            loge("Error creating route object for ID: $routeId", e)
+            loge("Error getting route for ID: $routeId", e)
             null
         }
     }
@@ -319,6 +298,43 @@ class BusApplication : MultiDexApplication() {
         } catch (e: Exception) {
             loge("Error during automatic update check", e)
             // В случае ошибки не прерываем работу приложения
+        }
+    }
+    
+    // Фоновая проверка обновлений расписания
+    private suspend fun checkScheduleUpdatesInBackground() {
+        try {
+            logd("Checking for schedule data updates in background")
+            
+            // Ждем немного после запуска приложения
+            delay(Constants.UPDATE_CHECK_STARTUP_DELAY_MS)
+            
+            logd("Starting background check for schedule updates...")
+            val hasUpdates = busRouteRepository.checkForDataUpdates()
+            logd("Update check result: hasUpdates = $hasUpdates")
+            
+            if (hasUpdates) {
+                logd("Schedule data update available on GitHub")
+                
+                // Получаем версию обновления с GitHub
+                val newVersion = busRouteRepository.getRemoteDataVersion()
+                logd("New version available: $newVersion")
+                
+                // Показываем уведомление пользователю
+                try {
+                    NotificationHelper.showScheduleUpdateNotification(
+                        context = this@BusApplication,
+                        dataVersion = newVersion
+                    )
+                    logd("✅ Schedule update notification shown for version: $newVersion")
+                } catch (e: Exception) {
+                    loge("❌ Error showing schedule update notification", e)
+                }
+            } else {
+                logd("✓ Schedule data is up to date - no notification needed")
+            }
+        } catch (e: Exception) {
+            loge("Error checking for schedule updates", e)
         }
     }
 }

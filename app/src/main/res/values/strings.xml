@@ -83,6 +83,16 @@
     <string name="notification_route_fallback">Маршрут %1$s</string>
     <string name="notification_departure_time">в %1$s</string>
     <string name="notification_departure_point">От: %1$s</string>
+    
+    <!-- ===================================================================================== -->
+    <!--                                   FALLBACK VALUES                                     -->
+    <!-- ===================================================================================== -->
+    <string name="fallback_unknown_route">Неизвестный маршрут</string>
+    <string name="fallback_unknown_stop">Неизвестная остановка</string>
+    <string name="fallback_unknown_point">Неизвестный пункт</string>
+    <string name="fallback_route_id">Маршрут %1$s</string>
+    <string name="fallback_invalid_data">Некорректные данные</string>
+    <string name="fallback_price_not_specified">Цена не указана</string>
 
     <!-- ===================================================================================== -->
     <!--                                   ERROR HANDLING                                      -->
@@ -130,6 +140,14 @@
     <!-- ===================================================================================== -->
     <string name="success_generic">Успешно</string>
     <string name="loading_generic">Загрузка…</string>
+    
+    <!-- Обновление расписания -->
+    <string name="schedule_update_success">Расписание успешно обновлено!</string>
+    <string name="schedule_update_loading">Загрузка расписания из GitHub…</string>
+    <string name="schedule_update_no_changes">Расписание уже актуальное</string>
+    <string name="schedule_update_failed">Не удалось загрузить обновление</string>
+    <string name="schedule_check_updates">Проверка обновлений…</string>
+    <string name="schedule_update_available">Доступна новая версия расписания</string>
 
     <!-- ===================================================================================== -->
     <!--                                   SETTINGS DIALOGS                                    -->

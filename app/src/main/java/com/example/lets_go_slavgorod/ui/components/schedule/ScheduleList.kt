@@ -1,11 +1,13 @@
 package com.example.lets_go_slavgorod.ui.components.schedule
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Schedule
@@ -14,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.lets_go_slavgorod.data.model.BusRoute
@@ -22,9 +25,15 @@ import com.example.lets_go_slavgorod.ui.components.StickyDepartureHeader
 import com.example.lets_go_slavgorod.ui.components.schedule.TwoColumnScheduleGrid
 import com.example.lets_go_slavgorod.ui.components.schedule.FilterableScheduleGrid
 import com.example.lets_go_slavgorod.ui.components.schedule.UnifiedScheduleHeader
+import com.example.lets_go_slavgorod.ui.components.UniversalFilterRow
+import com.example.lets_go_slavgorod.ui.components.FilterItem
 import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
 import com.example.lets_go_slavgorod.utils.Constants
 import com.example.lets_go_slavgorod.ui.utils.TextFormattingUtils
+import com.example.lets_go_slavgorod.utils.ConditionalLogging
+import timber.log.Timber
+import java.text.SimpleDateFormat
+import java.util.*
 
 /**
  * Основной компонент списка расписаний маршрута
@@ -51,7 +60,7 @@ import com.example.lets_go_slavgorod.ui.utils.TextFormattingUtils
  * Варианты отображения:
  * - **Маршрут №102**: двухколоночная сетка Славгород ↔ Яровое (МСЧ-128) с фильтрацией
  * - **Маршрут №102Б**: двухколоночная сетка Славгород ↔ Яровое (Ст. Зори) с фильтрацией
- * - **Маршрут №1**: сворачиваемые секции по выходам (1 выход, 2 выход, 3 выход)
+ * - **Маршрут №1**: сворачиваемые секции по выходам (Выход 1, 2, 3)
  * 
  * Функциональность:
  * - Унифицированный заголовок с информацией о маршруте (UnifiedScheduleHeader)
@@ -87,6 +96,7 @@ import com.example.lets_go_slavgorod.ui.utils.TextFormattingUtils
  * - **Следующий**: показывает только ближайшие предстоящие рейсы
  * - Фильтры взаимоисключающие (активен только один или ни одного)
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleList(
     route: BusRoute,
@@ -94,6 +104,10 @@ fun ScheduleList(
     schedulesYarovoe: List<BusSchedule>,
     schedulesVokzal: List<BusSchedule>,
     schedulesSovhoz: List<BusSchedule>,
+    departurePoint1Name: String = "",
+    departurePoint2Name: String = "",
+    departurePoint3Name: String = "",
+    departurePoint4Name: String = "",
     nextUpcomingSlavgorodId: String?,
     nextUpcomingYarovoeId: String?,
     nextUpcomingVokzalId: String?,
@@ -104,15 +118,15 @@ fun ScheduleList(
     onScrollOffsetChange: (Float) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    // Состояния для секций выходов маршрута №1
-    var isExit1Expanded by remember { mutableStateOf(true) }
-    var isExit2Expanded by remember { mutableStateOf(true) }
-    var isExit3Expanded by remember { mutableStateOf(true) }
-    
-    // Фильтры
-    var showOnlyFavorites by remember { mutableStateOf(false) }
-    var showOnlyUpcoming by remember { mutableStateOf(false) }
+    // Универсальные фильтры
+    var selectedFilterId by remember { mutableStateOf<String?>(null) }
     val favoriteTimesList by viewModel.favoriteTimes.collectAsState()
+    
+    // Вычисляем производные состояния из selectedFilterId
+    val showOnlyFavorites = selectedFilterId == "favorites"
+    val showOnlyUpcoming = selectedFilterId == "upcoming"
+    val selectedRoute1Exit = if (selectedFilterId?.startsWith("exit_") == true) selectedFilterId?.removePrefix("exit_") else null
+    val selectedRoute4DeparturePoint = if (selectedFilterId?.startsWith("point4_") == true) selectedFilterId?.removePrefix("point4_") else null
 
     // Состояние для отслеживания скролла
     val listState = rememberLazyListState()
@@ -141,9 +155,27 @@ fun ScheduleList(
             )
         }
         
-        // Фильтры
+        // Универсальные фильтры для всех маршрутов
         item(key = "filters") {
-            Column(
+            val favCount = favoriteTimesList.count { it.isActive && it.routeId == route.id }
+            
+            UniversalFilterRow(
+                filters = listOf(
+                    FilterItem(
+                        id = "favorites",
+                        label = "Избранные",
+                        icon = if (showOnlyFavorites) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                        count = favCount
+                    ),
+                    FilterItem(
+                        id = "upcoming",
+                        label = "Следующий",
+                        icon = if (showOnlyUpcoming) Icons.Filled.Schedule else Icons.Outlined.Schedule
+                    )
+                ),
+                selectedFilterId = selectedFilterId,
+                onFilterSelected = { selectedFilterId = it },
+                useEqualWeights = true,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
@@ -151,100 +183,284 @@ fun ScheduleList(
                         top = Constants.PADDING_FILTER_TOP.dp, 
                         end = Constants.PADDING_MEDIUM.dp, 
                         bottom = Constants.PADDING_FILTER_BOTTOM.dp
-                    ),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                    )
+            )
+        }
+        
+        // Маршрут №4 (Пригородный) - фильтрация по точкам отправления с приглушением
+        if (route.id == "4") {
+            // Кнопка для открытия модального окна выбора точки отправления
+            item(key = "route_4_filters") {
+                var showBottomSheet by remember { mutableStateOf(false) }
+                
+                // Определяем текущий выбранный пункт
+                val selectedPointName = when {
+                    selectedFilterId == "point4_$departurePoint1Name" -> departurePoint1Name
+                    selectedFilterId == "point4_$departurePoint2Name" -> departurePoint2Name
+                    selectedFilterId == "point4_$departurePoint3Name" -> departurePoint3Name
+                    else -> "Все точки отправления"
+                }
+                
+                // Кнопка для открытия меню
+                OutlinedButton(
+                    onClick = { showBottomSheet = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Constants.PADDING_MEDIUM.dp, vertical = 4.dp)
+                        .height(56.dp),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // Фильтр "Избранные"
-                    FilterChip(
-                        selected = showOnlyFavorites,
-                        onClick = { 
-                            showOnlyFavorites = !showOnlyFavorites
-                            if (showOnlyFavorites) showOnlyUpcoming = false
-                        },
-                        label = { 
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center,
+                        horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = "Точка отправления",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = selectedPointName,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                                 Icon(
-                                    imageVector = if (showOnlyFavorites) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(Constants.FILTER_ICON_SIZE.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Избранные",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                            }
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(Constants.FILTER_CHIP_HEIGHT.dp)
-                    )
-                    
-                    // Фильтр "Следующий"
-                    FilterChip(
-                        selected = showOnlyUpcoming,
-                        onClick = { 
-                            showOnlyUpcoming = !showOnlyUpcoming
-                            if (showOnlyUpcoming) showOnlyFavorites = false
-                        },
-                        label = { 
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = if (showOnlyUpcoming) Icons.Filled.Schedule else Icons.Outlined.Schedule,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(Constants.FILTER_ICON_SIZE.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Следующий",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                            }
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(Constants.FILTER_CHIP_HEIGHT.dp)
-                    )
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Выбрать точку отправления"
+                        )
+                    }
                 }
                 
-                // Счетчик избранных
-                if (showOnlyFavorites) {
-                    val favCount = favoriteTimesList.count { it.isActive && it.routeId == route.id }
+                // Модальное окно с выбором
+                if (showBottomSheet) {
+                    ModalBottomSheet(
+                        onDismissRequest = { showBottomSheet = false },
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp)
+                        ) {
+                            // Заголовок
+                            Text(
+                                text = "Выберите точку отправления",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+                            )
+                            
+                            // Опция "Все"
+                            ListItem(
+                                headlineContent = {
+                                Text(
+                                        text = "Все точки отправления",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                },
+                                leadingContent = {
+                                    RadioButton(
+                                        selected = selectedFilterId == null,
+                                        onClick = null
+                                    )
+                                },
+                                modifier = Modifier.clickable {
+                                    selectedFilterId = null
+                                    showBottomSheet = false
+                                }
+                            )
+                            
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp))
+                            
+                            // Точка 1
+                            if (schedulesSlavgorod.isNotEmpty()) {
+                                ListItem(
+                                    headlineContent = {
+                                        Text(
+                                            text = departurePoint1Name,
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+                                    },
+                                    leadingContent = {
+                                        RadioButton(
+                                            selected = selectedFilterId == "point4_$departurePoint1Name",
+                                            onClick = null
+                                        )
+                                    },
+                                    modifier = Modifier.clickable {
+                                        selectedFilterId = "point4_$departurePoint1Name"
+                                        showBottomSheet = false
+                                    }
+                                )
+                            }
+                            
+                            // Точка 2
+                            if (schedulesYarovoe.isNotEmpty()) {
+                                ListItem(
+                                    headlineContent = {
+                                Text(
+                                            text = departurePoint2Name,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                    },
+                                    leadingContent = {
+                                        RadioButton(
+                                            selected = selectedFilterId == "point4_$departurePoint2Name",
+                                            onClick = null
+                                        )
+                                    },
+                                    modifier = Modifier.clickable {
+                                        selectedFilterId = "point4_$departurePoint2Name"
+                                        showBottomSheet = false
+                                    }
+                                )
+                            }
+                            
+                            // Точка 3
+                            if (schedulesVokzal.isNotEmpty()) {
+                                ListItem(
+                                    headlineContent = {
                     Text(
-                        text = TextFormattingUtils.formatCounter(
-                            favCount,
-                            "время",
-                            "времени",
-                            "времен"
-                        ),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 4.dp, top = 2.dp)
-                    )
+                                            text = departurePoint3Name,
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+                                    },
+                                    leadingContent = {
+                                        RadioButton(
+                                            selected = selectedFilterId == "point4_$departurePoint3Name",
+                                            onClick = null
+                                        )
+                                    },
+                                    modifier = Modifier.clickable {
+                                        selectedFilterId = "point4_$departurePoint3Name"
+                                        showBottomSheet = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Объединяем все расписания маршрута 4 для проверки фильтров
+            val allRoute4Schedules = schedulesSlavgorod + schedulesYarovoe + schedulesVokzal
+            
+            // Проверяем есть ли хоть что-то после применения фильтров
+            val hasFilteredSchedules = when {
+                showOnlyFavorites -> allRoute4Schedules.any { schedule -> 
+                    favoriteTimesList.any { it.id == schedule.id && it.isActive }
+                }
+                showOnlyUpcoming -> allRoute4Schedules.any { schedule ->
+                    schedule.id == nextUpcomingSlavgorodId || 
+                    schedule.id == nextUpcomingYarovoeId || 
+                    schedule.id == nextUpcomingVokzalId
+                }
+                else -> true
+            }
+            
+            // Показываем расписания только если есть что показывать после фильтров
+            if (hasFilteredSchedules) {
+                // Точки 1 и 2 в двухколоночной сетке
+                if (schedulesSlavgorod.isNotEmpty() || schedulesYarovoe.isNotEmpty()) {
+                    item(key = "route_4_grid_1_2") {
+                        // Определяем состояние фильтра для приглушения заголовков и расписаний
+                        val externalFilterState = when (selectedRoute4DeparturePoint) {
+                            departurePoint1Name -> true  // Левая активна, правая приглушена
+                            departurePoint2Name -> false // Правая активна, левая приглушена
+                            else -> null // Обе активны или обе приглушены
+                        }
+                        
+                        // Приглушаем весь блок, если выбрана точка 3
+                        val shouldDimGrid = selectedRoute4DeparturePoint == departurePoint3Name
+                        
+                        TwoColumnScheduleGrid(
+                    leftSchedules = schedulesSlavgorod,
+                    rightSchedules = schedulesYarovoe,
+                            leftTitle = departurePoint1Name,
+                            rightTitle = departurePoint2Name,
+                    nextUpcomingLeftId = nextUpcomingSlavgorodId,
+                    nextUpcomingRightId = nextUpcomingYarovoeId,
+                    viewModel = viewModel,
+                    route = route,
+                    showOnlyFavorites = showOnlyFavorites,
+                    showOnlyUpcoming = showOnlyUpcoming,
+                            enableHeaderClick = false,
+                            externalFilterState = externalFilterState,
+                            modifier = Modifier
+                                .padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 8.dp)
+                                .alpha(if (shouldDimGrid) 0.4f else 1f)
+                        )
+                    }
+                }
+
+                // Точка 3 отдельно
+                if (schedulesVokzal.isNotEmpty()) {
+                    item(key = "route_4_point3") {
+                        // Определяем состояние приглушения для точки 3
+                        val shouldDimPoint3 = selectedRoute4DeparturePoint != null && selectedRoute4DeparturePoint != departurePoint3Name
+                        
+                        TwoColumnScheduleGrid(
+                            leftSchedules = schedulesVokzal,
+                            rightSchedules = emptyList(),
+                            leftTitle = departurePoint3Name,
+                            rightTitle = "",
+                            nextUpcomingLeftId = nextUpcomingVokzalId,
+                            nextUpcomingRightId = null,
+                            viewModel = viewModel,
+                            route = route,
+                            showOnlyFavorites = showOnlyFavorites,
+                            showOnlyUpcoming = showOnlyUpcoming,
+                            enableHeaderClick = false,
+                            externalFilterState = if (shouldDimPoint3) false else null,
+                            modifier = Modifier
+                                .padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 8.dp)
+                                .alpha(if (shouldDimPoint3) 0.4f else 1f)
+                        )
+                    }
+                }
+            } else {
+                // Показываем ОДНО сообщение для всего маршрута 4 если нет данных после фильтрации
+                item(key = "route_4_no_filtered") {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.StarBorder,
+                                contentDescription = if (showOnlyFavorites) "Нет избранных" else "Нет следующих",
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                            )
+                            Text(
+                                text = if (showOnlyFavorites) "Нет избранных времен" else "Нет предстоящих рейсов",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             }
         }
         
-        // Маршрут №102 (Славгород — Яровое) - прямое отображение с фильтрацией
-        if (route.id == "102" && schedulesSlavgorod.isNotEmpty() && schedulesYarovoe.isNotEmpty()) {
-            item(key = "route_102_schedule") {
+        // Универсальная логика для маршрутов 102, 102Б - двухколоночная сетка
+        if ((route.id == "102" || route.id == "102B") && schedulesSlavgorod.isNotEmpty() && schedulesYarovoe.isNotEmpty()) {
+            item(key = "route_${route.id}_schedule_grid") {
                 FilterableScheduleGrid(
                     leftSchedules = schedulesSlavgorod,
                     rightSchedules = schedulesYarovoe,
-                    leftTitle = "Отправление из Рынок (Славгород)",
-                    rightTitle = "Отправление из МСЧ-128 (Яровое)",
+                    leftTitle = departurePoint1Name,
+                    rightTitle = departurePoint2Name,
                     nextUpcomingLeftId = nextUpcomingSlavgorodId,
                     nextUpcomingRightId = nextUpcomingYarovoeId,
                     viewModel = viewModel,
@@ -256,32 +472,14 @@ fun ScheduleList(
             }
         }
 
-        // Маршрут №102Б (Славгород — Яровое) - прямое отображение с фильтрацией
-        if (route.id == "102B" && schedulesSlavgorod.isNotEmpty() && schedulesYarovoe.isNotEmpty()) {
-            item(key = "route_102B_schedule") {
-                FilterableScheduleGrid(
-                    leftSchedules = schedulesSlavgorod,
-                    rightSchedules = schedulesYarovoe,
-                    leftTitle = "Отправление из Рынок (Славгород)",
-                    rightTitle = "Отправление из Ст. Зори (Яровое)",
-                    nextUpcomingLeftId = nextUpcomingSlavgorodId,
-                    nextUpcomingRightId = nextUpcomingYarovoeId,
-                    viewModel = viewModel,
-                    route = route,
-                    showOnlyFavorites = showOnlyFavorites,
-                    showOnlyUpcoming = showOnlyUpcoming,
-                    modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 0.dp, bottom = 8.dp)
-                )
-            }
-        }
-
-        // Секции для маршрута №1 (Вокзал — Совхоз) - группировка по выходам
+        // Маршрут №1 (Вокзал — Совхоз) - фильтрация по выходам
         if (route.id == "1") {
-            // Группируем все расписания по выходам
-            val allRoute1Schedules = schedulesVokzal + schedulesSovhoz
+            // Для маршрута 1 все расписания попадают в schedulesSlavgorod и schedulesYarovoe
+            // (т.к. "вокзал" и "совхоз" - первые две точки по алфавиту)
+            val allRoute1Schedules = schedulesSlavgorod + schedulesYarovoe
             val groupedByExit = allRoute1Schedules.groupBy { it.notes ?: "Без выхода" }
             
-            // Сортируем выходы: "1 выход", "2 выход", "3 выход"
+            // Сортируем выходы: "Выход 1", "Выход 2", "Выход 3"
             val sortedExits = groupedByExit.keys.sortedBy { exitName ->
                 when {
                     exitName.contains("1") -> 1
@@ -291,46 +489,187 @@ fun ScheduleList(
                 }
             }.toList()
             
-            // Создаем секцию для каждого выхода
-            sortedExits.forEachIndexed { index, exitName ->
-                val exitSchedules = groupedByExit[exitName] ?: emptyList()
-                val vokzalSchedules = exitSchedules.filter { it.departurePoint == Constants.STOP_ROUTE1_VOKZAL }
-                val sovhozSchedules = exitSchedules.filter { it.departurePoint == Constants.STOP_ROUTE1_SOVHOZ }
+            // Кнопки фильтрации по выходам
+            item(key = "route_1_filters") {
+                val filters = sortedExits.map { exitName ->
+                    FilterItem(id = "exit_$exitName", label = exitName)
+                }
                 
-                if (vokzalSchedules.isNotEmpty() && sovhozSchedules.isNotEmpty()) {
-                    ExpandableScheduleSection(
-                        title = exitName.replaceFirstChar { it.uppercase() },
-                        isExpanded = when(exitName) {
-                            "1 выход" -> isExit1Expanded
-                            "2 выход" -> isExit2Expanded
-                            "3 выход" -> isExit3Expanded
-                            else -> true
-                        },
-                        onToggleExpand = {
-                            when(exitName) {
-                                "1 выход" -> isExit1Expanded = !isExit1Expanded
-                                "2 выход" -> isExit2Expanded = !isExit2Expanded
-                                "3 выход" -> isExit3Expanded = !isExit3Expanded
+                UniversalFilterRow(
+                    filters = filters,
+                    selectedFilterId = selectedFilterId,
+                    onFilterSelected = { selectedFilterId = it },
+                    useEqualWeights = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Constants.PADDING_MEDIUM.dp)
+                )
+            }
+            
+            // Показываем все выходы в две колонки: Вокзал | Совхоз
+            sortedExits.forEach { exitName ->
+                val exitSchedules = groupedByExit[exitName] ?: emptyList()
+                val vokzalSchedules = exitSchedules.filter { it.stopName.contains("вокзал", ignoreCase = true) }
+                val sovhozSchedules = exitSchedules.filter { it.stopName.contains("совхоз", ignoreCase = true) }
+                
+                if ((vokzalSchedules.isNotEmpty() || sovhozSchedules.isNotEmpty()) &&
+                    (selectedRoute1Exit == null || selectedRoute1Exit == exitName)) {
+                    item(key = "route_1_exit_$exitName") {
+                        Column {
+                            // Заголовок выхода - красивый с фоном
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                            ) {
+                                Text(
+                                    text = exitName,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
                             }
-                        },
+                            
+                            TwoColumnScheduleGrid(
+                                leftSchedules = vokzalSchedules,
+                                rightSchedules = sovhozSchedules,
+                                leftTitle = "Вокзал",
+                                rightTitle = "Совхоз",
+                                nextUpcomingLeftId = getNextUpcomingScheduleId(vokzalSchedules),
+                                nextUpcomingRightId = getNextUpcomingScheduleId(sovhozSchedules),
                         viewModel = viewModel,
                         route = route,
-                        departurePointForCheck = "exit_$index",
-                        leftSchedules = vokzalSchedules,
-                        rightSchedules = sovhozSchedules,
-                        leftTitle = "Из вокзала",
-                        rightTitle = "Из совхоза",
-                        nextUpcomingLeftId = nextUpcomingVokzalId,
-                        nextUpcomingRightId = nextUpcomingSovhozId,
                         showOnlyFavorites = showOnlyFavorites,
-                        showOnlyUpcoming = showOnlyUpcoming
+                                showOnlyUpcoming = showOnlyUpcoming,
+                                modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Маршрут №3 (Кольцевой) - две секции: Радиозавод и Мясокомбинат
+        if (route.id == "3" && schedulesSlavgorod.isNotEmpty()) {
+            // Фильтры для выбора направления
+            item(key = "route_3_direction_filters") {
+                val selectedRoute3Direction = if (selectedFilterId?.startsWith("dir3_") == true) selectedFilterId?.removePrefix("dir3_") else null
+                
+                val filters = listOf(
+                    FilterItem(id = "dir3_radio", label = "Радиозавод"),
+                    FilterItem(id = "dir3_meat", label = "Мясокомбинат")
+                )
+                
+                UniversalFilterRow(
+                    filters = filters,
+                    selectedFilterId = selectedFilterId,
+                    onFilterSelected = { selectedFilterId = it },
+                    useEqualWeights = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Constants.PADDING_MEDIUM.dp)
+                )
+            }
+            
+            // Группируем расписания по направлениям
+            val selectedRoute3Direction = if (selectedFilterId?.startsWith("dir3_") == true) selectedFilterId?.removePrefix("dir3_") else null
+            
+            val allRadioSchedules = schedulesSlavgorod.filter { it.notes?.contains("Радиозавод") == true }
+            val allMeatSchedules = schedulesSlavgorod.filter { it.notes?.contains("Мясокомбинат") == true }
+            
+            // Разделяем по дням для Радиозавода
+            val radioWeekday = allRadioSchedules.filter { it.notes?.contains("будни") == true }
+            val radioWeekend = allRadioSchedules.filter { it.notes?.contains("суббота") == true || it.notes?.contains("выходные") == true }
+            
+            // Секция Радиозавода
+            if ((radioWeekday.isNotEmpty() || radioWeekend.isNotEmpty()) && 
+                (selectedRoute3Direction == null || selectedRoute3Direction == "radio")) {
+                item(key = "route_3_radio_header") {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "Радиозавод",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+                
+                item(key = "route_3_radio_grid") {
+                    TwoColumnScheduleGrid(
+                        leftSchedules = radioWeekday,
+                        rightSchedules = radioWeekend,
+                        leftTitle = "Будни",
+                        rightTitle = "Выходные",
+                        nextUpcomingLeftId = getNextUpcomingScheduleId(radioWeekday),
+                        nextUpcomingRightId = getNextUpcomingScheduleId(radioWeekend),
+                        viewModel = viewModel,
+                        route = route,
+                        showOnlyFavorites = showOnlyFavorites,
+                        showOnlyUpcoming = showOnlyUpcoming,
+                        modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 16.dp)
+                    )
+                }
+            }
+            
+            // Разделяем по дням для Мясокомбината
+            val meatWeekday = allMeatSchedules.filter { it.notes?.contains("будни") == true }
+            val meatWeekend = allMeatSchedules.filter { it.notes?.contains("выходные") == true }
+            
+            // Секция Мясокомбината
+            if ((meatWeekday.isNotEmpty() || meatWeekend.isNotEmpty()) && 
+                (selectedRoute3Direction == null || selectedRoute3Direction == "meat")) {
+                item(key = "route_3_meat_header") {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "Мясокомбинат",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+                
+                item(key = "route_3_meat_grid") {
+                    TwoColumnScheduleGrid(
+                        leftSchedules = meatWeekday,
+                        rightSchedules = meatWeekend,
+                        leftTitle = "Будни",
+                        rightTitle = "Выходные",
+                        nextUpcomingLeftId = getNextUpcomingScheduleId(meatWeekday),
+                        nextUpcomingRightId = getNextUpcomingScheduleId(meatWeekend),
+                        viewModel = viewModel,
+                        route = route,
+                        showOnlyFavorites = showOnlyFavorites,
+                        showOnlyUpcoming = showOnlyUpcoming,
+                        modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
                     )
                 }
             }
         }
 
-        // Сообщение об отсутствии расписания
-        if (shouldShowNoScheduleMessage(route)) {
+        // Сообщение об отсутствии расписания (только если действительно нет расписаний)
+        if (shouldShowNoScheduleMessage(route, schedulesSlavgorod, schedulesYarovoe, schedulesVokzal, schedulesSovhoz)) {
             item {
                 NoScheduleMessage(
                     departurePoint = "выбранного маршрута",
@@ -457,12 +796,52 @@ private fun NoScheduleMessage(
 
 /**
  * Проверяет, нужно ли показать сообщение об отсутствии расписания
+ * Проверяет реально есть ли хоть какие-то расписания для маршрута
  */
-private fun shouldShowNoScheduleMessage(route: BusRoute): Boolean {
-    return when (route.id) {
-        "102" -> false // Маршрут 102 всегда имеет расписание
-        "102B" -> false // Маршрут 102Б всегда имеет расписание
-        "1" -> false  // Маршрут 1 всегда имеет расписание
-        else -> true
+private fun shouldShowNoScheduleMessage(
+    route: BusRoute,
+    schedulesSlavgorod: List<BusSchedule>,
+    schedulesYarovoe: List<BusSchedule>,
+    schedulesVokzal: List<BusSchedule>,
+    schedulesSovhoz: List<BusSchedule>
+): Boolean {
+    // Показываем сообщение только если НЕТ вообще никаких расписаний
+    val totalSchedules = schedulesSlavgorod.size + schedulesYarovoe.size + 
+                        schedulesVokzal.size + schedulesSovhoz.size
+    return totalSchedules == 0
+}
+
+/**
+ * Определяет ID ближайшего предстоящего рейса из списка расписаний
+ */
+private fun getNextUpcomingScheduleId(schedules: List<BusSchedule>): String? {
+    if (schedules.isEmpty()) return null
+    
+    val currentTime = Calendar.getInstance()
+    val timeFormat = SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+    
+    val upcomingToday = schedules.filter { schedule ->
+        try {
+            val departureTime = timeFormat.parse(schedule.departureTime)
+            if (departureTime != null) {
+                val scheduleCalendar = Calendar.getInstance().apply {
+                    time = departureTime
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                scheduleCalendar.after(currentTime)
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Error parsing time: ${schedule.departureTime}")
+            false
+        }
     }
+    
+    if (upcomingToday.isNotEmpty()) {
+        return upcomingToday.first().id
+    }
+    
+    return schedules.firstOrNull()?.id
 }

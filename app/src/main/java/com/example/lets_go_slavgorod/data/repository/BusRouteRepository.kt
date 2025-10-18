@@ -210,6 +210,26 @@ class BusRouteRepository(private val context: Context? = null) {
                     pricePrimary = "38₽ город",
                     paymentMethods = "Нал. / Безнал.",
                     color = Constants.DEFAULT_ROUTE_COLOR_ALT
+                ),
+                createBusRoute(
+                    id = "3",
+                    routeNumber = "3",
+                    name = "Автобус №3 Кольцевой",
+                    description = "Автовокзал Славгород — Радиозавод / Мясокомбинат",
+                    travelTime = "~25 минут",
+                    pricePrimary = "38₽ город",
+                    paymentMethods = "Наличный / Картой",
+                    color = "#FF2E7D32"
+                ),
+                createBusRoute(
+                    id = "4",
+                    routeNumber = "4",
+                    name = "Автобус №4 Пригородный",
+                    description = "Славгород — Пригородные маршруты",
+                    travelTime = "~20 минут",
+                    pricePrimary = "38₽ город",
+                    paymentMethods = "Наличный / Картой",
+                    color = "#FFF57C00"
                 )
             )
             
@@ -321,14 +341,22 @@ class BusRouteRepository(private val context: Context? = null) {
      * @param routeId ID маршрута
      * @return список расписаний для маршрута
      */
-    suspend fun getSchedulesForRoute(routeId: String): List<BusSchedule> {
+    suspend fun getSchedulesForRoute(routeId: String, forceRefresh: Boolean = false): List<BusSchedule> {
         // Валидация входных данных
         require(routeId.isNotBlank()) { "Route ID cannot be blank" }
         
+        // Если требуется принудительное обновление, очищаем кэш для этого маршрута
+        if (forceRefresh) {
+            remoteDataSource?.clearScheduleCache(routeId)
+            jsonDataSource?.clearScheduleCache(routeId)
+            Timber.d("Force refresh: cleared schedule cache for route $routeId")
+        }
+        
         // Приоритет 1: Пытаемся загрузить из RemoteDataSource (GitHub)
+        // ВАЖНО: передаём forceRefresh чтобы принудительно загрузить с GitHub
         val remoteSchedules = if (remoteDataSource != null) {
             try {
-                remoteDataSource.loadSchedules(routeId, forceRefresh = false)
+                remoteDataSource.loadSchedules(routeId, forceRefresh = forceRefresh)
             } catch (e: Exception) {
                 Timber.w(e, "Failed to load schedules from RemoteDataSource for route $routeId")
                 null
@@ -367,9 +395,13 @@ class BusRouteRepository(private val context: Context? = null) {
     }
     
     /**
-     * Принудительно обновляет данные расписания из GitHub
+     * Принудительно обновляет данные расписания из GitHub (v2.1)
      * 
-     * Загружает актуальные данные с сервера и обновляет кэш.
+     * Улучшенная версия с реактивным обновлением UI:
+     * - Загружает актуальные данные с GitHub
+     * - Очищает все кэши для чистой загрузки
+     * - Обновляет StateFlow для автоматического обновления UI
+     * - Больше НЕ требует перезапуска приложения ✅
      * 
      * @return true если обновление прошло успешно
      */
@@ -382,21 +414,30 @@ class BusRouteRepository(private val context: Context? = null) {
             
             Timber.i("Starting manual refresh from GitHub...")
             
-            // ВАЖНО: Очищаем кэш расписаний перед обновлением
-            remoteDataSource.clearSchedulesCache()
-            jsonDataSource?.clearAllScheduleCache()
+            // ВАЖНО: Очищаем ВСЕ кэши В ПАМЯТИ перед загрузкой
+            // Это гарантирует, что мы загрузим свежие данные с GitHub
+            // НО НЕ удаляем файл кэша, т.к. туда будут сохранены новые данные
+            remoteDataSource.clearRoutesMemoryCache()  // Очищаем кэш маршрутов в памяти
+            remoteDataSource.clearSchedulesCache()  // Очищаем кэш расписаний в памяти
+            jsonDataSource?.clearCache()  // Очищаем кэш маршрутов в JsonDataSource
+            jsonDataSource?.clearAllScheduleCache()  // Очищаем кэш расписаний в JsonDataSource
             
+            // Загружаем свежие данные с GitHub (forceRefresh = true принудительно скачивает)
             val routes = remoteDataSource.loadRoutes(forceRefresh = true)
             
             if (routes.isNotEmpty()) {
-                // Обновляем кэш маршрутов
+                // Обновляем кэш маршрутов в Repository
                 routesCache.clear()
                 routes.forEach { route ->
                     routesCache[route.id] = route
                 }
+                
+                // Обновляем StateFlow - UI автоматически обновится! ✅
                 _routes.value = routes
                 
                 Timber.i("Successfully refreshed ${routes.size} routes from GitHub")
+                Timber.i("All caches cleared and refreshed with new data")
+                Timber.i("StateFlow updated - all subscribed UI will refresh automatically")
                 true
             } else {
                 Timber.w("No routes received from GitHub")
@@ -428,7 +469,7 @@ class BusRouteRepository(private val context: Context? = null) {
     }
     
     /**
-     * Получает версию данных
+     * Получает версию данных из кэша
      * 
      * @return строка с версией или null
      */
@@ -437,6 +478,22 @@ class BusRouteRepository(private val context: Context? = null) {
             remoteDataSource?.getDataVersion()
         } catch (e: Exception) {
             Timber.e(e, "Error getting data version")
+            null
+        }
+    }
+    
+    /**
+     * Получает версию данных напрямую с GitHub
+     * 
+     * Используется для показа версии в уведомлении о доступности обновления
+     * 
+     * @return строка с версией или null
+     */
+    suspend fun getRemoteDataVersion(): String? {
+        return try {
+            remoteDataSource?.getRemoteDataVersion()
+        } catch (e: Exception) {
+            Timber.e(e, "Error getting remote data version")
             null
         }
     }

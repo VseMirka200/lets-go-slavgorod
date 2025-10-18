@@ -58,17 +58,6 @@ object DisclaimerManager {
     }
     
     /**
-     * Flow для реактивного наблюдения за статусом disclaimer
-     */
-    fun observeShouldShowDisclaimer(context: Context): Flow<Boolean> {
-        return context.disclaimerDataStore.data.map { preferences ->
-            val disclaimerShown = preferences[Keys.DISCLAIMER_SHOWN] ?: false
-            val dontShowAgain = preferences[Keys.DISCLAIMER_DONT_SHOW] ?: false
-            !disclaimerShown || !dontShowAgain
-        }
-    }
-    
-    /**
      * Отмечает, что пользователь принял условия
      * 
      * @param context контекст приложения
@@ -91,18 +80,6 @@ object DisclaimerManager {
             preferences[Keys.DISCLAIMER_DONT_SHOW] = true
         }
         Timber.d("Disclaimer marked as 'don't show again'")
-    }
-    
-    /**
-     * Сбрасывает настройки диалога (для тестирования)
-     * 
-     * @param context контекст приложения
-     */
-    suspend fun resetDisclaimerSettings(context: Context) {
-        context.disclaimerDataStore.edit { preferences ->
-            preferences.clear()
-        }
-        Timber.d("Disclaimer settings reset")
     }
 }
 

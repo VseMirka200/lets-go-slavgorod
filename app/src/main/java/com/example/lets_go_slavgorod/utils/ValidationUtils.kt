@@ -134,8 +134,9 @@ object ValidationUtils {
             return false
         }
         
+        // isNotBlank() уже включает проверку isNotEmpty(), избыточность убрана
         val trimmed = routeNumber.trim()
-        val isValid = trimmed.isNotBlank() && trimmed.isNotEmpty()
+        val isValid = trimmed.isNotBlank()
         if (!isValid) {
             Timber.w("Route number is empty: '$routeNumber'")
         }

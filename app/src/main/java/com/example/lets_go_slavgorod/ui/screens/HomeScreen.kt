@@ -16,11 +16,15 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -385,6 +389,18 @@ fun HomeScreen(
         }
     }
 
+    // Pull-to-Refresh state
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
+    
+    // DataManagement ViewModel для проверки обновлений
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val dataManagementViewModel: com.example.lets_go_slavgorod.ui.viewmodel.DataManagementViewModel = viewModel(
+        factory = com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory.create(context) { 
+            com.example.lets_go_slavgorod.ui.viewmodel.DataManagementViewModel(it) 
+        }
+    )
+    val scheduleUpdateAvailable by dataManagementViewModel.scheduleUpdateAvailable.collectAsState()
+    
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -397,16 +413,27 @@ fun HomeScreen(
                     )
                 },
                 actions = {
+                    // Иконка настроек с Badge при доступности обновления
                     IconButton(onClick = { 
                         navController.navigate("settings") {
                             launchSingleTop = true
                         }
                     }) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Настройки",
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+                        BadgedBox(
+                            badge = {
+                                if (scheduleUpdateAvailable) {
+                                    Badge(
+                                        containerColor = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Настройки",
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -430,14 +457,21 @@ fun HomeScreen(
                 onSearch = { /* Действие при поиске, если нужно */ },
             )
 
-            when {
-                uiState.isLoading -> LoadingState()
-                uiState.error != null -> ErrorState(errorMessage = uiState.error!!)
-                uiState.routes.isEmpty() -> EmptyState(searchQuery = searchQuery)
-                else -> RoutesListState(
-                    routes = uiState.routes,
-                    navController = navController
-                )
+            // Pull-to-Refresh для обновления маршрутов
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { viewModel.refresh() },
+                modifier = Modifier.fillMaxSize()
+            ) {
+                when {
+                    uiState.isLoading -> LoadingState()
+                    uiState.error != null -> ErrorState(errorMessage = uiState.error!!)
+                    uiState.routes.isEmpty() -> EmptyState(searchQuery = searchQuery)
+                    else -> RoutesListState(
+                        routes = uiState.routes,
+                        navController = navController
+                    )
+                }
             }
         }
     }

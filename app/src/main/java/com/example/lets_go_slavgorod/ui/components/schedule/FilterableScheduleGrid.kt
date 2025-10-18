@@ -69,6 +69,7 @@ fun FilterableScheduleGrid(
     route: com.example.lets_go_slavgorod.data.model.BusRoute,
     showOnlyFavorites: Boolean = false,
     showOnlyUpcoming: Boolean = false,
+    showDayLabel: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val favoriteTimesList by viewModel.favoriteTimes.collectAsState()
@@ -262,6 +263,7 @@ fun FilterableScheduleGrid(
                             },
                             isNextUpcoming = isNextUpcoming,
                             orderNumber = i + 1,
+                            showDayLabel = showDayLabel,
                             modifier = Modifier.fillMaxWidth()
                         )
                     } else {
@@ -293,6 +295,7 @@ fun FilterableScheduleGrid(
                             },
                             isNextUpcoming = isNextUpcoming,
                             orderNumber = i + 1,
+                            showDayLabel = showDayLabel,
                             modifier = Modifier.fillMaxWidth()
                         )
                     } else {

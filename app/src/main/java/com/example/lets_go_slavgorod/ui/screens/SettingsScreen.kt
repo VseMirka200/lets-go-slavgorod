@@ -722,7 +722,7 @@ fun SettingsScreen(
                             // Кнопка "Поддержать"
                             OutlinedButton(
                                 onClick = {
-                                    val intent = Intent(Intent.ACTION_VIEW, "https://donatty.com/vv-olyushin".toUri())
+                                    val intent = Intent(Intent.ACTION_VIEW, "https://pay.cloudtips.ru/p/1fa22ea5".toUri())
                                     try {
                                         context.startActivity(intent)
                                     } catch (e: Exception) {

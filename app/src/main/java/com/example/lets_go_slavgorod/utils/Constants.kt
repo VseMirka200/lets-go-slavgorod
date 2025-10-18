@@ -101,12 +101,8 @@ object Constants {
     const val ROUTE_ID_102 = "102"                                 // Маршрут №102 (Славгород — Яровое)
     const val ROUTE_ID_102B = "102B"                               // Маршрут №102Б (Славгород — Яровое через Зори)
     const val ROUTE_ID_1 = "1"                                     // Маршрут №1 (Вокзал — Совхоз)
-    
-    // Удаленные маршруты (для очистки данных)
-    const val REMOVED_ROUTE_ID_2 = "2"                             // Удаленный маршрут №2
-    const val REMOVED_ROUTE_ID_3 = "3"                             // Удаленный маршрут №3
-    const val REMOVED_ROUTE_ID_4 = "4"                             // Удаленный маршрут №4
-    const val REMOVED_ROUTE_ID_5 = "5"                             // Удаленный маршрут №5
+    const val ROUTE_ID_3 = "3"                                     // Маршрут №3 (Кольцевой)
+    const val ROUTE_ID_4 = "4"                                     // Маршрут №4 (Пригородный)
     
     // Названия остановок (используются в расписаниях)
     const val STOP_SLAVGOROD_RYNOK = "Рынок (Славгород)"           // Остановка "Рынок" в Славгороде
@@ -119,4 +115,16 @@ object Constants {
     const val UPDATE_CHECK_STARTUP_DELAY_MS = 5000L                // Задержка перед проверкой обновлений при запуске
     const val TIMER_UPDATE_INTERVAL_MS = 1000L                     // Интервал обновления таймера обратного отсчета
     const val MIN_LOADING_ANIMATION_MS = 1000L                     // Минимальная длительность анимации загрузки
+    
+    // Задержки для UI оптимизаций
+    const val ROUTE_LOAD_RETRY_DELAY_MS = 100L                     // Задержка перед повторной попыткой загрузки маршрутов
+    const val PULL_TO_REFRESH_MIN_DELAY_MS = 500L                  // Минимальная задержка для pull-to-refresh анимации
+    const val SEARCH_DEBOUNCE_MS = 300L                            // Debounce для поиска маршрутов
+    
+    // Таймауты StateFlow
+    const val STATE_FLOW_TIMEOUT_MS = 5000L                        // Таймаут для WhileSubscribed в StateFlow
+    
+    // Задержки для UI операций (DataManagementViewModel)
+    const val APP_RESTART_DELAY_MS = 1000L                         // Задержка перед перезапуском приложения
+    const val DATA_OPERATION_COMPLETION_DELAY_MS = 500L            // Задержка для завершения операций с данными
 }

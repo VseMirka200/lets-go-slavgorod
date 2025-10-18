@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.lets_go_slavgorod.data.local.dao.FavoriteTimeDao
@@ -38,7 +37,6 @@ import com.example.lets_go_slavgorod.utils.Constants
     version = Constants.DATABASE_VERSION,
     exportSchema = false
 )
-@TypeConverters()
 abstract class AppDatabase : RoomDatabase() {
 
     /**

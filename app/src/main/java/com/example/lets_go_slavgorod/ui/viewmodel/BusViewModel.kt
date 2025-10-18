@@ -20,17 +20,13 @@ import com.example.lets_go_slavgorod.data.model.FavoriteTime
 import com.example.lets_go_slavgorod.data.local.AppDatabase
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
 
-// Use Cases
-import com.example.lets_go_slavgorod.domain.usecase.AddToFavoritesUseCase
-import com.example.lets_go_slavgorod.domain.usecase.GetFavoriteTimesUseCase
-import com.example.lets_go_slavgorod.domain.usecase.RemoveFromFavoritesUseCase
-
 // Уведомления
 import com.example.lets_go_slavgorod.notifications.AlarmScheduler
 
 // Утилиты
 import com.example.lets_go_slavgorod.utils.loge
 import com.example.lets_go_slavgorod.utils.toFavoriteTime
+import com.example.lets_go_slavgorod.utils.toFavoriteTimesBatch
 
 // Coroutines импорты
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -116,10 +112,6 @@ class BusViewModel(application: Application) : AndroidViewModel(application) {
     /** Репозиторий для работы с маршрутами */
     private val routeRepository = BusRouteRepository(appContext)
     
-    // Use Cases для улучшения архитектуры
-    private val getFavoriteTimesUseCase = GetFavoriteTimesUseCase(favoriteTimeDao, routeRepository)
-    private val addToFavoritesUseCase = AddToFavoritesUseCase(favoriteTimeDao)
-    private val removeFavoritesUseCase = RemoveFromFavoritesUseCase(favoriteTimeDao)
 
     // =====================================================================================
     //                              СОСТОЯНИЕ UI
@@ -139,7 +131,7 @@ class BusViewModel(application: Application) : AndroidViewModel(application) {
     
     /** Поисковые результаты с debounce для оптимизации */
     private val debouncedSearchResults = _searchQuery
-        .debounce(300) // Задержка 300мс перед поиском
+        .debounce(com.example.lets_go_slavgorod.utils.Constants.SEARCH_DEBOUNCE_MS) // Задержка перед поиском
         .map { query ->
             if (query.isBlank()) {
                 cachedRoutes
@@ -150,11 +142,11 @@ class BusViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(com.example.lets_go_slavgorod.utils.Constants.STATE_FLOW_TIMEOUT_MS),
+                initialValue = emptyList()
+            )
 
     // =====================================================================================
     //                              КЭШИРОВАНИЕ ДАННЫХ
@@ -166,9 +158,8 @@ class BusViewModel(application: Application) : AndroidViewModel(application) {
     val favoriteTimes: StateFlow<List<FavoriteTime>> =
         favoriteTimeDao.getAllFavoriteTimes()
             .map { entities ->
-                entities.map { entity ->
-                    entity.toFavoriteTime(routeRepository)
-                }
+                // Используем batch преобразование для оптимизации (избегаем N+1 запросов)
+                entities.toFavoriteTimesBatch(routeRepository)
             }
             .catch { exception ->
                 loge("Error collecting favorite times", exception)
@@ -176,7 +167,7 @@ class BusViewModel(application: Application) : AndroidViewModel(application) {
             }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
+                started = SharingStarted.WhileSubscribed(com.example.lets_go_slavgorod.utils.Constants.STATE_FLOW_TIMEOUT_MS),
                 initialValue = emptyList()
             )
 
@@ -235,7 +226,7 @@ class BusViewModel(application: Application) : AndroidViewModel(application) {
             Timber.w("No routes found! Repository may not be initialized yet.")
             // Попробуем загрузить еще раз через небольшую задержку
             viewModelScope.launch {
-                delay(100)
+                delay(com.example.lets_go_slavgorod.utils.Constants.ROUTE_LOAD_RETRY_DELAY_MS)
                 val retryRoutes = routeRepository.getAllRoutes()
                 Timber.d("Retry loading routes: ${retryRoutes.size} routes found")
                 cachedRoutes = retryRoutes
@@ -278,17 +269,52 @@ class BusViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     /**
-     * Обновляет данные маршрутов (для Pull-to-Refresh)
+     * Обновляет данные маршрутов (для Pull-to-Refresh или после обновления из GitHub)
+     * 
+     * Оптимизировано для реактивного обновления:
+     * - Очищает кэш для принудительной загрузки
+     * - Загружает свежие данные из repository
+     * - UI автоматически обновляется через StateFlow
      */
     fun refresh() {
         viewModelScope.launch {
             _isRefreshing.value = true
             try {
-                // Перезагружаем маршруты
+                // Очищаем кэш для принудительной перезагрузки
+                cachedRoutes = emptyList()
+                
+                // Перезагружаем маршруты (будут загружены из кэша RemoteDataSource)
                 loadInitialRoutes()
-                kotlinx.coroutines.delay(500) // Минимальная задержка для плавности
+                
+                kotlinx.coroutines.delay(com.example.lets_go_slavgorod.utils.Constants.PULL_TO_REFRESH_MIN_DELAY_MS)
+                
+                Timber.d("Routes refreshed successfully, UI updated via StateFlow")
             } finally {
                 _isRefreshing.value = false
+            }
+        }
+    }
+    
+    /**
+     * Принудительно обновляет расписание для конкретного маршрута
+     * 
+     * Полезно после обновления данных из GitHub или для Pull-to-Refresh.
+     * Очищает кэш расписания и перезагружает свежие данные.
+     * 
+     * @param routeId ID маршрута для обновления
+     */
+    fun refreshScheduleForRoute(routeId: String) {
+        viewModelScope.launch {
+            try {
+                Timber.d("Force refreshing schedule for route: $routeId")
+                
+                // Принудительно загружаем свежие данные расписания
+                // forceRefresh = true очистит кэш и загрузит новые данные
+                routeRepository.getSchedulesForRoute(routeId, forceRefresh = true)
+                
+                Timber.d("Schedule force refreshed for route: $routeId")
+            } catch (e: Exception) {
+                Timber.e(e, "Error refreshing schedule for route: $routeId")
             }
         }
     }
@@ -313,7 +339,7 @@ class BusViewModel(application: Application) : AndroidViewModel(application) {
                 val sanitizedSchedule = schedule.sanitized()
                 if (!sanitizedSchedule.isValid()) {
                     Timber.tag("BusViewModel").e("Invalid schedule data")
-                    _uiState.update { it.copy(isAddingFavorite = false, error = "Некорректные данные") }
+                    _uiState.update { it.copy(isAddingFavorite = false, error = "Некорректные данные") } // TODO: strings.xml
                     return@launch
                 }
                 

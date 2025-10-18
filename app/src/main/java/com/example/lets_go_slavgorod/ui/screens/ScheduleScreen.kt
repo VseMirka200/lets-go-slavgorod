@@ -11,11 +11,14 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,7 +26,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.ExperimentalMaterial3Api
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.model.BusSchedule
 import com.example.lets_go_slavgorod.ui.components.schedule.ScheduleList
@@ -74,6 +79,7 @@ import java.util.Calendar
  * @version 3.0
  * @since 1.0
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleScreen(
     route: BusRoute?,
@@ -85,6 +91,11 @@ fun ScheduleScreen(
     // Remember с зависимостью от route гарантирует сброс при смене маршрута
     var isLoading by remember(route) { mutableStateOf(true) }
     
+    // Состояние для Pull-to-Refresh
+    var isRefreshing by remember { mutableStateOf(false) }
+    var refreshTrigger by remember { mutableStateOf(0) }
+    val coroutineScope = rememberCoroutineScope()
+    
     // Состояние для управления видимостью заголовка при скролле
     var isHeaderVisible by remember { mutableStateOf(true) }
     var lastScrollOffset by remember { mutableStateOf(0f) }
@@ -95,6 +106,12 @@ fun ScheduleScreen(
     var schedulesVokzal by remember { mutableStateOf<List<BusSchedule>>(emptyList()) }
     var schedulesSovhoz by remember { mutableStateOf<List<BusSchedule>>(emptyList()) }
     
+    // Названия точек отправления (динамически определяются из данных)
+    var departurePoint1Name by remember { mutableStateOf("") }
+    var departurePoint2Name by remember { mutableStateOf("") }
+    var departurePoint3Name by remember { mutableStateOf("") }
+    var departurePoint4Name by remember { mutableStateOf("") }
+    
     // ID ближайших рейсов для каждой точки отправления
     // Используются для подсветки и анимации
     var nextUpcomingSlavgorodId by remember { mutableStateOf<String?>(null) }
@@ -103,8 +120,8 @@ fun ScheduleScreen(
     var nextUpcomingSovhozId by remember { mutableStateOf<String?>(null) }
     
     // Динамическая загрузка и обработка данных расписания
-    // LaunchedEffect с зависимостью от route перезапускает загрузку при смене маршрута
-    LaunchedEffect(route) {
+    // LaunchedEffect с зависимостью от route и refreshTrigger перезапускает загрузку
+    LaunchedEffect(route, refreshTrigger) {
         if (route != null) {
             isLoading = true
             ConditionalLogging.debug("Schedule") { "Starting schedule generation for route ${route.id}" }
@@ -119,38 +136,38 @@ fun ScheduleScreen(
                 ConditionalLogging.debug("Schedule") { "102B schedules: ${allSchedules.map { "${it.departurePoint} - ${it.departureTime}" }}" }
             }
             
-            // Фильтруем и сортируем расписания по точкам отправления
-            // Каждая точка отправления отображается в отдельной секции
-            schedulesSlavgorod = allSchedules
-                .filter { it.departurePoint == Constants.STOP_SLAVGOROD_RYNOK }
-                .sortedBy { it.departureTime }
-            ConditionalLogging.debug("Schedule") { "Slavgorod schedules: ${schedulesSlavgorod.size}" }
+            // Динамически определяем уникальные точки отправления из загруженных расписаний
+            // Это позволяет автоматически поддерживать новые маршруты без изменения кода
+            // Порядок сохраняется как в JSON (без сортировки по алфавиту)
+            val uniqueDeparturePoints = allSchedules
+                .map { it.departurePoint }
+                .distinct()
             
-            // Для маршрута 102Б используется другая остановка в Яровом
-            schedulesYarovoe = allSchedules
-                .filter { 
-                    if (route.id == "102B") {
-                        it.departurePoint == Constants.STOP_YAROVOE_ZORI
-                    } else {
-                        it.departurePoint == Constants.STOP_YAROVOE_MCHS
-                    }
-                }
-                .sortedBy { it.departureTime }
-            ConditionalLogging.debug("Schedule") { "Yarovoe schedules: ${schedulesYarovoe.size}" }
-            if (route.id == "102B") {
-                ConditionalLogging.debug("Schedule") { "102B Yarovoe schedules: ${schedulesYarovoe.map { "${it.departureTime}" }}" }
+            ConditionalLogging.debug("Schedule") { "Found ${uniqueDeparturePoints.size} unique departure points: $uniqueDeparturePoints" }
+            
+            // Фильтруем расписания для каждой уникальной точки отправления
+            // Используем первую точку как "основную" (schedulesSlavgorod)
+            // Вторую как "вторичную" (schedulesYarovoe), и т.д.
+            val schedulesByPoint = uniqueDeparturePoints.map { point ->
+                allSchedules.filter { it.departurePoint == point }.sortedBy { it.departureTime }
             }
             
-            // Расписания для городских маршрутов (только маршрут №1)
-            schedulesVokzal = allSchedules
-                .filter { it.departurePoint == Constants.STOP_ROUTE1_VOKZAL }
-                .sortedBy { it.departureTime }
-            ConditionalLogging.debug("Schedule") { "Vokzal schedules: ${schedulesVokzal.size}" }
+            // Присваиваем расписания в переменные для совместимости с существующим UI
+            schedulesSlavgorod = schedulesByPoint.getOrNull(0) ?: emptyList()
+            schedulesYarovoe = schedulesByPoint.getOrNull(1) ?: emptyList()
+            schedulesVokzal = schedulesByPoint.getOrNull(2) ?: emptyList()
+            schedulesSovhoz = schedulesByPoint.getOrNull(3) ?: emptyList()
             
-            schedulesSovhoz = allSchedules
-                .filter { it.departurePoint == Constants.STOP_ROUTE1_SOVHOZ }
-                .sortedBy { it.departureTime }
-            ConditionalLogging.debug("Schedule") { "Sovhoz schedules: ${schedulesSovhoz.size}" }
+            // Сохраняем названия точек отправления
+            departurePoint1Name = uniqueDeparturePoints.getOrNull(0) ?: ""
+            departurePoint2Name = uniqueDeparturePoints.getOrNull(1) ?: ""
+            departurePoint3Name = uniqueDeparturePoints.getOrNull(2) ?: ""
+            departurePoint4Name = uniqueDeparturePoints.getOrNull(3) ?: ""
+            
+            ConditionalLogging.debug("Schedule") { "Point 1 ($departurePoint1Name): ${schedulesSlavgorod.size} schedules" }
+            ConditionalLogging.debug("Schedule") { "Point 2 ($departurePoint2Name): ${schedulesYarovoe.size} schedules" }
+            ConditionalLogging.debug("Schedule") { "Point 3 ($departurePoint3Name): ${schedulesVokzal.size} schedules" }
+            ConditionalLogging.debug("Schedule") { "Point 4 ($departurePoint4Name): ${schedulesSovhoz.size} schedules" }
             
             // Определяем ID ближайших рейсов для каждой точки
             // Эти рейсы будут подсвечены и анимированы в UI
@@ -199,26 +216,55 @@ fun ScheduleScreen(
                 }
             }
         } else {
-            ScheduleList(
-                route = route,
-                schedulesSlavgorod = schedulesSlavgorod,
-                schedulesYarovoe = schedulesYarovoe,
-                schedulesVokzal = schedulesVokzal,
-                schedulesSovhoz = schedulesSovhoz,
-                nextUpcomingSlavgorodId = nextUpcomingSlavgorodId,
-                nextUpcomingYarovoeId = nextUpcomingYarovoeId,
-                nextUpcomingVokzalId = nextUpcomingVokzalId,
-                nextUpcomingSovhozId = nextUpcomingSovhozId,
-                viewModel = viewModel,
-                onBackClick = onBackClick,
-                onNotificationClick = if (onNotificationClick != null) {
-                    { onNotificationClick(route.id) }
-                } else null,
-                onScrollOffsetChange = { offset ->
-                    // Можно удалить, так как заголовок теперь скроллится естественным образом
+            // Pull-to-Refresh для обновления расписания
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = {
+                    isRefreshing = true
+                    coroutineScope.launch {
+                        try {
+                            // Очищаем кэш расписания для этого маршрута
+                            route.id.let { routeId ->
+                                viewModel.refreshScheduleForRoute(routeId)
+                            }
+                            
+                            // Небольшая задержка для анимации
+                            delay(com.example.lets_go_slavgorod.utils.Constants.PULL_TO_REFRESH_MIN_DELAY_MS)
+                            
+                            // Триггерим перезагрузку
+                            refreshTrigger++
+                        } finally {
+                            isRefreshing = false
+                        }
+                    }
                 },
                 modifier = Modifier.fillMaxSize()
-            )
+            ) {
+                ScheduleList(
+                    route = route,
+                    schedulesSlavgorod = schedulesSlavgorod,
+                    schedulesYarovoe = schedulesYarovoe,
+                    schedulesVokzal = schedulesVokzal,
+                    schedulesSovhoz = schedulesSovhoz,
+                    departurePoint1Name = departurePoint1Name,
+                    departurePoint2Name = departurePoint2Name,
+                    departurePoint3Name = departurePoint3Name,
+                    departurePoint4Name = departurePoint4Name,
+                    nextUpcomingSlavgorodId = nextUpcomingSlavgorodId,
+                    nextUpcomingYarovoeId = nextUpcomingYarovoeId,
+                    nextUpcomingVokzalId = nextUpcomingVokzalId,
+                    nextUpcomingSovhozId = nextUpcomingSovhozId,
+                    viewModel = viewModel,
+                    onBackClick = onBackClick,
+                    onNotificationClick = if (onNotificationClick != null) {
+                        { onNotificationClick(route.id) }
+                    } else null,
+                    onScrollOffsetChange = { offset ->
+                        // Можно удалить, так как заголовок теперь скроллится естественным образом
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
     }
 
