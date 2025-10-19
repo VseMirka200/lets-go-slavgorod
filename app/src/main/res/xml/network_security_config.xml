@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Network Security Configuration для "Поехали! Славгород"
+    
+    Обеспечивает безопасность сетевых соединений:
+    - Запрещает cleartext (HTTP) трафик
+    - Доверяет только системным сертификатам
+    - Защищает от MITM атак
+    
+    @author VseMirka200
+    @version 1.0
+    @since 2.0
+-->
+<network-security-config>
+    <!-- Базовая конфигурация для всего приложения -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <!-- Доверяем только системным CA сертификатам -->
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    
+    <!-- Конфигурация для отладки (только в debug сборках) -->
+    <debug-overrides>
+        <trust-anchors>
+            <!-- В debug можно добавить пользовательские сертификаты -->
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>
+
