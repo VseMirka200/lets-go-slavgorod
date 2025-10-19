@@ -1,18 +1,24 @@
 package com.example.lets_go_slavgorod.ui.screens.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -37,9 +43,13 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
 /**
@@ -97,10 +107,18 @@ fun SettingsMainScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = 16.dp)
         ) {
-            // Внешний вид
+            // Верхний отступ
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+            
+            // ========== ИНТЕРФЕЙС ==========
+            item(key = "header_interface") {
+                SettingsSectionHeader(title = "Интерфейс")
+            }
+            
+            item { Spacer(modifier = Modifier.height(12.dp)) }
+            
             item(key = "appearance") {
                 SettingsSectionCard(
                     title = "Внешний вид",
@@ -110,7 +128,6 @@ fun SettingsMainScreen(
                 )
             }
             
-            // Отображение
             item(key = "display") {
                 SettingsSectionCard(
                     title = "Отображение",
@@ -120,7 +137,13 @@ fun SettingsMainScreen(
                 )
             }
             
-            // Обновления
+            // ========== ДАННЫЕ ==========
+            item(key = "header_data") {
+                SettingsSectionHeader(title = "Данные")
+            }
+            
+            item { Spacer(modifier = Modifier.height(12.dp)) }
+            
             item(key = "updates") {
                 SettingsSectionCard(
                     title = "Обновления",
@@ -130,37 +153,6 @@ fun SettingsMainScreen(
                 )
             }
             
-            // Уведомления
-            item(key = "notifications") {
-                SettingsSectionCard(
-                    title = "Уведомления",
-                    subtitle = "Режим и расписание уведомлений",
-                    icon = Icons.Default.Notifications,
-                    onClick = { navController.navigate(SettingsDestination.Notifications.route) }
-                )
-            }
-            
-            // Тихий режим
-            item(key = "quiet") {
-                SettingsSectionCard(
-                    title = "Тихий режим",
-                    subtitle = "Временное отключение уведомлений",
-                    icon = Icons.Default.NotificationsOff,
-                    onClick = { navController.navigate(SettingsDestination.QuietMode.route) }
-                )
-            }
-            
-            // Вибрация
-            item(key = "vibration") {
-                SettingsSectionCard(
-                    title = "Вибрация",
-                    subtitle = "Вибрация при уведомлениях",
-                    icon = Icons.Default.Vibration,
-                    onClick = { navController.navigate(SettingsDestination.Vibration.route) }
-                )
-            }
-            
-            // Управление данными
             item(key = "data") {
                 SettingsSectionCard(
                     title = "Управление данными",
@@ -170,7 +162,51 @@ fun SettingsMainScreen(
                 )
             }
             
-            // О программе
+            // ========== УВЕДОМЛЕНИЯ ==========
+            item(key = "header_notifications") {
+                SettingsSectionHeader(title = "Уведомления")
+            }
+            
+            item { Spacer(modifier = Modifier.height(12.dp)) }
+            
+            item(key = "notifications") {
+                SettingsSectionCard(
+                    title = "Уведомления",
+                    subtitle = "Режим и расписание уведомлений",
+                    icon = Icons.Default.Notifications,
+                    onClick = { navController.navigate(SettingsDestination.Notifications.route) }
+                )
+            }
+            
+            item { Spacer(modifier = Modifier.height(8.dp)) }
+            
+            item(key = "quiet") {
+                SettingsSectionCard(
+                    title = "Тихий режим",
+                    subtitle = "Временное отключение уведомлений",
+                    icon = Icons.Default.NotificationsOff,
+                    onClick = { navController.navigate(SettingsDestination.QuietMode.route) }
+                )
+            }
+            
+            item { Spacer(modifier = Modifier.height(8.dp)) }
+            
+            item(key = "vibration") {
+                SettingsSectionCard(
+                    title = "Вибрация",
+                    subtitle = "Вибрация при уведомлениях",
+                    icon = Icons.Default.Vibration,
+                    onClick = { navController.navigate(SettingsDestination.Vibration.route) }
+                )
+            }
+            
+            // ========== ПРОЧЕЕ ==========
+            item(key = "header_other") {
+                SettingsSectionHeader(title = "Прочее")
+            }
+            
+            item { Spacer(modifier = Modifier.height(12.dp)) }
+            
             item(key = "about") {
                 SettingsSectionCard(
                     title = "О программе",
@@ -179,6 +215,9 @@ fun SettingsMainScreen(
                     onClick = { navController.navigate(SettingsDestination.About.route) }
                 )
             }
+            
+            // Нижний отступ
+            item { Spacer(modifier = Modifier.height(24.dp)) }
         }
     }
 }
@@ -191,16 +230,26 @@ private fun SettingsSectionCard(
     title: String,
     subtitle: String,
     icon: ImageVector,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    iconColor: Color = MaterialTheme.colorScheme.primary,
+    iconBackgroundGradient: List<Color> = listOf(
+        MaterialTheme.colorScheme.primaryContainer,
+        MaterialTheme.colorScheme.secondaryContainer
+    )
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 3.dp,
+            pressedElevation = 6.dp,
+            hoveredElevation = 4.dp
+        ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        shape = RoundedCornerShape(16.dp)
     ) {
         Row(
             modifier = Modifier
@@ -208,12 +257,25 @@ private fun SettingsSectionCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(32.dp)
-            )
+            // Иконка с градиентным фоном
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = iconBackgroundGradient
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconColor,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
             
             Spacer(modifier = Modifier.width(16.dp))
             
@@ -221,23 +283,37 @@ private fun SettingsSectionCard(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 
+                Spacer(modifier = Modifier.height(4.dp))
+                
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 18.sp
                 )
             }
             
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = "Открыть",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(24.dp)
-            )
+            Spacer(modifier = Modifier.width(12.dp))
+            
+            // Стрелка в кружке
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "Открыть",
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
     }
 }

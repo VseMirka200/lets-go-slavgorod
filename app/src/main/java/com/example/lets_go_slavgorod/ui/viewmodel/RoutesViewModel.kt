@@ -91,7 +91,26 @@ class RoutesViewModel(application: Application) : AndroidViewModel(application) 
     
     init {
         cachedRoutes = emptyList()
-        loadInitialRoutes()
+        
+        // Подписка на маршруты из Repository (реактивная загрузка)
+        viewModelScope.launch {
+            routeRepository.routes.collect { routes ->
+                Timber.d("📥 Received ${routes.size} routes from Repository")
+                cachedRoutes = routes
+                cachedRoutesMap = routes.associateBy { it.id }
+                
+                // Обновляем UI если нет активного поиска
+                if (_searchQuery.value.isEmpty()) {
+                    _uiState.update {
+                        it.copy(
+                            routes = routes,
+                            isLoading = false,
+                            error = if (routes.isEmpty()) "Маршруты не найдены" else null
+                        )
+                    }
+                }
+            }
+        }
         
         // Подписка на поисковые результаты
         viewModelScope.launch {
@@ -107,45 +126,6 @@ class RoutesViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
     
-    /**
-     * Загружает начальные маршруты
-     */
-    private fun loadInitialRoutes() {
-        Timber.d("Loading initial routes")
-        
-        if (cachedRoutes.isNotEmpty()) {
-            Timber.d("Using cached routes: ${cachedRoutes.size}")
-            _uiState.update { it.copy(routes = cachedRoutes, isLoading = false) }
-            return
-        }
-        
-        val routes = routeRepository.getAllRoutes()
-        Timber.d("Loaded ${routes.size} routes")
-        
-        cachedRoutes = routes
-        cachedRoutesMap = routes.associateBy { it.id }  // O(1) lookup optimization
-        
-        if (routes.isEmpty()) {
-            Timber.w("No routes found, retrying...")
-            viewModelScope.launch {
-                delay(Constants.ROUTE_LOAD_RETRY_DELAY_MS)
-                val retryRoutes = routeRepository.getAllRoutes()
-                cachedRoutes = retryRoutes
-                cachedRoutesMap = retryRoutes.associateBy { it.id }
-                _uiState.update {
-                    it.copy(
-                        routes = retryRoutes,
-                        isLoading = false,
-                        error = if (retryRoutes.isEmpty()) "Маршруты не найдены" else null
-                    )
-                }
-            }
-        } else {
-            _uiState.update {
-                it.copy(routes = routes, isLoading = false, error = null)
-            }
-        }
-    }
     
     /**
      * Обновляет поисковый запрос
@@ -161,13 +141,18 @@ class RoutesViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             _isRefreshing.value = true
             try {
-                // Очищаем оба кэша
-                cachedRoutes = emptyList()
-                cachedRoutesMap = emptyMap()
+                Timber.d("🔄 Refreshing routes from GitHub...")
                 
-                loadInitialRoutes()
+                // Принудительно обновляем из Repository
+                val success = routeRepository.refreshRoutesFromRemote()
+                
+                if (success) {
+                    Timber.i("✅ Routes refreshed successfully")
+                } else {
+                    Timber.w("⚠️ Failed to refresh routes")
+                }
+                
                 delay(Constants.PULL_TO_REFRESH_MIN_DELAY_MS)
-                Timber.d("Routes refreshed")
             } finally {
                 _isRefreshing.value = false
             }

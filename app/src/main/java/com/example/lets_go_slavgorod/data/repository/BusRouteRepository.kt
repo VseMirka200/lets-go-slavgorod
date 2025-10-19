@@ -14,6 +14,8 @@ import com.example.lets_go_slavgorod.utils.loge
 import com.example.lets_go_slavgorod.utils.search
 import com.example.lets_go_slavgorod.utils.NetworkMonitor
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -51,6 +53,7 @@ class BusRouteRepository(private val context: Context? = null) {
     
     // Потоки данных и кэширование
     private val _routes = MutableStateFlow<List<BusRoute>>(emptyList())
+    val routes: StateFlow<List<BusRoute>> = _routes.asStateFlow()
     private val routesCache = mutableMapOf<String, BusRoute>()
     
     // JSON источник данных (локальный assets)
@@ -99,21 +102,21 @@ class BusRouteRepository(private val context: Context? = null) {
     }
     
     init {
-        Timber.d("Repository initializing...")
+        Timber.i("🚀 Repository initializing...")
         // Очищаем JSON кэш при инициализации
         jsonDataSource?.clearCache()
-        Timber.d("Cleared JSON cache on initialization")
+        Timber.d("🗑️ Cleared JSON cache on initialization")
         
         // Очищаем кэш памяти RemoteDataSource (но не файл кэша)
         // Файл кэша будет проверен на валидность при loadFromCache()
         remoteDataSource?.clearRoutesMemoryCache()
-        Timber.d("Cleared RemoteDataSource memory cache")
+        Timber.d("🗑️ Cleared RemoteDataSource memory cache")
         
         // Запускаем асинхронную загрузку
         repositoryScope.launch {
             loadInitialRoutes()
         }
-        Timber.d("Repository initialization started (async)")
+        Timber.i("⏳ Repository initialization started (async)")
     }
     
     /**
@@ -129,66 +132,76 @@ class BusRouteRepository(private val context: Context? = null) {
     private suspend fun loadInitialRoutes() {
         loadMutex.withLock {
             if (isInitialized) {
+                Timber.d("⚠️ Already initialized, skipping")
                 return
             }
             
+            Timber.i("🔄 Starting initial routes loading...")
+            
             try {
                 // Приоритет 1: Пытаемся загрузить из RemoteDataSource (умная загрузка)
+                Timber.d("📡 Priority 1: Attempting RemoteDataSource (GitHub/Cache/Assets)...")
                 val remoteRoutes = if (remoteDataSource != null) {
                     try {
-                        Timber.d("Attempting to load routes from RemoteDataSource")
                         remoteDataSource.loadRoutes(forceRefresh = false)
                     } catch (e: Exception) {
-                        Timber.w(e, "Failed to load routes from RemoteDataSource")
+                        Timber.w(e, "❌ RemoteDataSource failed: ${e.message}")
                         null
                     }
                 } else {
+                    Timber.w("⚠️ RemoteDataSource is null (no context?)")
                     null
                 }
                 
                 // Если удалённая загрузка успешна, используем её
                 if (remoteRoutes != null && remoteRoutes.isNotEmpty()) {
-                    Timber.i("Using routes from RemoteDataSource: ${remoteRoutes.size} routes")
+                    Timber.i("✅ SUCCESS! Using routes from RemoteDataSource: ${remoteRoutes.size} routes")
                     remoteRoutes.forEach { route ->
                         routesCache[route.id] = route
                     }
                     _routes.value = remoteRoutes
                     isInitialized = true
+                    Timber.i("🎉 Repository initialized successfully with ${remoteRoutes.size} routes")
                     return
                 }
                 
                 // Приоритет 2: Пытаемся загрузить из JsonDataSource (assets)
+                Timber.d("📄 Priority 2: RemoteDataSource failed, trying JsonDataSource (assets)...")
                 val jsonRoutes = if (jsonDataSource != null) {
                     try {
-                        Timber.d("Attempting to load routes from JsonDataSource (assets)")
                         jsonDataSource.loadRoutes()
                     } catch (e: Exception) {
-                        Timber.w(e, "Failed to load routes from JsonDataSource")
+                        Timber.w(e, "❌ JsonDataSource failed: ${e.message}")
                         null
                     }
                 } else {
+                    Timber.w("⚠️ JsonDataSource is null (no context?)")
                     null
                 }
                 
                 // Если JSON загрузился успешно, используем его
                 if (jsonRoutes != null && jsonRoutes.isNotEmpty()) {
-                    Timber.i("Using routes from JsonDataSource: ${jsonRoutes.size} routes")
+                    Timber.i("✅ SUCCESS! Using routes from JsonDataSource: ${jsonRoutes.size} routes")
                     jsonRoutes.forEach { route ->
                         routesCache[route.id] = route
                     }
                     _routes.value = jsonRoutes
                     isInitialized = true
+                    Timber.i("🎉 Repository initialized successfully with ${jsonRoutes.size} routes")
                     return
                 }
                 
                 // Приоритет 3: Если всё не удалось - возвращаем пустой список
-                Timber.w("All data sources failed - no routes loaded")
-                Timber.w("Please check: 1) Internet connection 2) assets/routes_data.json exists 3) GitHub repository accessible")
+                Timber.e("❌❌❌ ALL DATA SOURCES FAILED - NO ROUTES LOADED ❌❌❌")
+                Timber.e("Please check:")
+                Timber.e("  1) Internet connection")
+                Timber.e("  2) app/src/main/assets/routes_data.json exists")
+                Timber.e("  3) GitHub repository accessible: https://github.com/VseMirka200/lets-go-slavgorod")
                 _routes.value = emptyList()
                 isInitialized = true
             
             } catch (e: Exception) {
-                loge("Error loading initial routes", e)
+                Timber.e(e, "❌ FATAL ERROR loading initial routes: ${e.javaClass.simpleName} - ${e.message}")
                 _routes.value = emptyList()
                 isInitialized = true // Даже при ошибке считаем инициализированным
             }
