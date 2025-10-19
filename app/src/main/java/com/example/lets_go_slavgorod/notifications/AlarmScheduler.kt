@@ -352,76 +352,29 @@ object AlarmScheduler {
         
         Timber.d("Calculating departure time for ${favoriteTime.id} in timezone: ${now.timeZone.id}")
 
-        // Получаем режим уведомлений из кэша (без runBlocking)
+        // Получаем режим уведомлений и создаем соответствующую стратегию
         val notificationMode = NotificationPreferencesCache.getNotificationMode(favoriteTime.routeId)
-
-        // Получаем выбранные дни из кэша
-        val selectedDays = if (notificationMode == NotificationMode.SELECTED_DAYS) {
-            NotificationPreferencesCache.getSelectedDays(favoriteTime.routeId)
-        } else {
-            emptySet()
-        }
-
-        when (notificationMode) {
-            NotificationMode.ALL_DAYS -> {
-                // Планируем на каждый день в указанное время
-                val nextDeparture = (nextDepartureBase.clone() as Calendar).apply {
-                    if (!after(now)) {
-                        add(Calendar.DAY_OF_YEAR, 1)
-                    }
-                }
-                Timber.d("Calculated next departure for ${favoriteTime.id} (${favoriteTime.departureTime}, ALL_DAYS): ${formatMillis(nextDeparture.timeInMillis)}")
-                return nextDeparture.timeInMillis
-            }
-            NotificationMode.WEEKDAYS -> {
-                // Планируем только на будние дни (пн-пт)
-                for (i in 0..14) {  // Проверяем 2 недели вперед
-                    val candidateDeparture = (nextDepartureBase.clone() as Calendar).apply {
-                        add(Calendar.DAY_OF_YEAR, i)
-                    }
-                    val candidateDay = candidateDeparture.get(Calendar.DAY_OF_WEEK)
-                    val isWeekday = candidateDay in Calendar.MONDAY..Calendar.FRIDAY
-                    
-                    if (isWeekday && candidateDeparture.after(now)) {
-                        Timber.d("Calculated next departure for ${favoriteTime.id} (${favoriteTime.departureTime}, WEEKDAYS): ${formatMillis(candidateDeparture.timeInMillis)} (day $candidateDay)")
-                        return candidateDeparture.timeInMillis
-                    }
-                }
-            }
+        
+        val strategy: DepartureTimeStrategy = when (notificationMode) {
+            NotificationMode.ALL_DAYS -> AllDaysStrategy()
+            NotificationMode.WEEKDAYS -> WeekdaysStrategy()
             NotificationMode.SELECTED_DAYS -> {
-                // Планируем только на выбранные дни
-                for (i in 0..14) {  // Проверяем 2 недели вперед
-                    val candidateDeparture = (nextDepartureBase.clone() as Calendar).apply {
-                        add(Calendar.DAY_OF_YEAR, i)
-                    }
-                    val candidateDay = candidateDeparture.get(Calendar.DAY_OF_WEEK)
-                    val candidateDayOfWeek = when (candidateDay) {
-                        Calendar.SUNDAY -> DayOfWeek.SUNDAY
-                        Calendar.MONDAY -> DayOfWeek.MONDAY
-                        Calendar.TUESDAY -> DayOfWeek.TUESDAY
-                        Calendar.WEDNESDAY -> DayOfWeek.WEDNESDAY
-                        Calendar.THURSDAY -> DayOfWeek.THURSDAY
-                        Calendar.FRIDAY -> DayOfWeek.FRIDAY
-                        Calendar.SATURDAY -> DayOfWeek.SATURDAY
-                        else -> null
-                    }
-                    val isSelectedDay = candidateDayOfWeek != null && candidateDayOfWeek in selectedDays
-                    
-                    if (isSelectedDay && candidateDeparture.after(now)) {
-                        Timber.d("Calculated next departure for ${favoriteTime.id} (${favoriteTime.departureTime}, SELECTED_DAYS): ${formatMillis(candidateDeparture.timeInMillis)} (day $candidateDayOfWeek)")
-                        return candidateDeparture.timeInMillis
-                    }
-                }
+                val selectedDays = NotificationPreferencesCache.getSelectedDays(favoriteTime.routeId)
+                SelectedDaysStrategy(selectedDays)
             }
-            NotificationMode.DISABLED -> {
-                Timber.d("Notifications disabled, not scheduling for ${favoriteTime.id}")
-                return -1L
-            }
+            NotificationMode.DISABLED -> DisabledStrategy()
         }
-
-        Timber.e("Could not find a suitable future departure day within 2 weeks for ${favoriteTime.id}. " +
-                "Mode: $notificationMode, selectedDays: $selectedDays")
-        return -1L
+        
+        // Используем стратегию для вычисления времени
+        val nextTimeMillis = strategy.calculateNextTime(nextDepartureBase, now)
+        
+        if (nextTimeMillis == -1L) {
+            Timber.e("Strategy ${strategy::class.simpleName} failed to find suitable time for ${favoriteTime.id}")
+        } else {
+            Timber.d("Calculated next departure for ${favoriteTime.id} using ${strategy::class.simpleName}: ${formatMillis(nextTimeMillis)}")
+        }
+        
+        return nextTimeMillis
     }
 
     /**

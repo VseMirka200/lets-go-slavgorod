@@ -6,6 +6,8 @@ import android.content.Intent
 import com.example.lets_go_slavgorod.data.local.AppDatabase
 import com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity
 import com.example.lets_go_slavgorod.data.model.FavoriteTime
+import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
+import com.example.lets_go_slavgorod.utils.toFavoriteTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
@@ -79,13 +81,14 @@ class BootReceiver : BroadcastReceiver() {
         try {
             Timber.d("Starting notification restoration process...")
             
-            // Получаем базу данных
+            // Получаем базу данных и репозиторий
             val database = AppDatabase.getDatabase(context.applicationContext)
             val favoriteTimeDao = database.favoriteTimeDao()
+            val repository = BusRouteRepository(context.applicationContext)
             
             // Удаляем избранные времена для удалённых маршрутов
             val removedRouteIds = listOf("2", "4", "5")
-            removedRouteIds.forEach { routeId ->
+            removedRouteIds.forEach { routeId: String ->
                 val deletedCount = favoriteTimeDao.deleteByRouteId(routeId)
                 if (deletedCount > 0) {
                     Timber.d("Removed $deletedCount favorite times for deleted route: $routeId")
@@ -93,29 +96,16 @@ class BootReceiver : BroadcastReceiver() {
             }
             
             // Получаем все активные избранные времена
-            val favoriteTimeEntities = favoriteTimeDao.getAllFavoriteTimes().firstOrNull() ?: emptyList()
+            val favoriteTimeEntities: List<FavoriteTimeEntity> = favoriteTimeDao.getAllFavoriteTimes().firstOrNull() ?: emptyList()
             
-            val activeFavoriteTimes = favoriteTimeEntities
-                .filter { it.isActive }
-                .map { entity: FavoriteTimeEntity ->
-                    FavoriteTime(
-                        id = entity.id,
-                        routeId = entity.routeId,
-                        routeNumber = "", // Будет получен из репозитория маршрутов
-                        routeName = "",   // Будет получен из репозитория маршрутов
-                        stopName = entity.stopName,
-                        departureTime = entity.departureTime,
-                        dayOfWeek = entity.dayOfWeek,
-                        departurePoint = entity.departurePoint,
-                        addedDate = entity.addedDate,
-                        isActive = entity.isActive
-                    )
-                }
+            val activeFavoriteTimes: List<FavoriteTime> = favoriteTimeEntities
+                .filter { entity: FavoriteTimeEntity -> entity.isActive }
+                .map { entity: FavoriteTimeEntity -> entity.toFavoriteTime(repository) }
             
             Timber.d("Found ${activeFavoriteTimes.size} active favorite times to restore")
             
             // Восстанавливаем уведомления для каждого активного избранного времени
-            activeFavoriteTimes.forEach { favoriteTime ->
+            activeFavoriteTimes.forEach { favoriteTime: FavoriteTime ->
                 try {
                     AlarmScheduler.checkAndUpdateNotifications(context.applicationContext, favoriteTime)
                     Timber.d("Notification restored for favorite time: ${favoriteTime.id}")

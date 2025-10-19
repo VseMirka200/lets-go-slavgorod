@@ -147,6 +147,13 @@ dependencies {
     // Utilities
     implementation(libs.timber)
     
+    // Koin
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+    
+    // WorkManager
+    implementation(libs.androidx.work.runtime)
+    
     // Baseline Profile
     implementation(libs.androidx.profileinstaller)
     

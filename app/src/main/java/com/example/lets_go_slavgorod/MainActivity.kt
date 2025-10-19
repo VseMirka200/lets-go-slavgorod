@@ -41,7 +41,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.lets_go_slavgorod.data.local.AppDatabase
 import com.example.lets_go_slavgorod.data.model.FavoriteTime
+import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
 import com.example.lets_go_slavgorod.notifications.AlarmScheduler
+import com.example.lets_go_slavgorod.utils.toFavoriteTime
 import com.example.lets_go_slavgorod.ui.components.UpdateDialogManager
 import com.example.lets_go_slavgorod.ui.components.DisclaimerDialog
 import com.example.lets_go_slavgorod.ui.navigation.Screen
@@ -192,25 +194,13 @@ class MainActivity : ComponentActivity() {
             
             val database = AppDatabase.getDatabase(this)
             val favoriteTimeDao = database.favoriteTimeDao()
+            val repository = BusRouteRepository(this)
             
             val favoriteTimeEntities = favoriteTimeDao.getAllFavoriteTimes().firstOrNull() ?: emptyList()
             
             val activeFavoriteTimes = favoriteTimeEntities
-                .filter { entity -> entity.isActive }
-                .map { entity ->
-                    FavoriteTime(
-                        id = entity.id,
-                        routeId = entity.routeId,
-                        routeNumber = "N/A",
-                        routeName = "Маршрут",
-                        stopName = entity.stopName,
-                        departureTime = entity.departureTime,
-                        dayOfWeek = entity.dayOfWeek,
-                        departurePoint = entity.departurePoint,
-                        addedDate = entity.addedDate,
-                        isActive = entity.isActive
-                    )
-                }
+                .filter { entity: com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity -> entity.isActive }
+                .map { entity: com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity -> entity.toFavoriteTime(repository) }
             
             AlarmScheduler.updateAllAlarmsBasedOnSettings(this, activeFavoriteTimes)
             Timber.d("Restored ${activeFavoriteTimes.size} active notifications")
@@ -564,8 +554,7 @@ fun AppNavHost(
             route = Screen.Home.route
         ) {
             HomeScreen(
-                navController = navController,
-                viewModel = busViewModel
+                navController = navController
             )
         }
 

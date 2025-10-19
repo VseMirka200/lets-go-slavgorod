@@ -13,6 +13,8 @@ import com.example.lets_go_slavgorod.data.local.AppDatabase
 import com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity
 import com.example.lets_go_slavgorod.data.local.NotificationPreferencesCache
 import com.example.lets_go_slavgorod.data.model.FavoriteTime
+import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
+import com.example.lets_go_slavgorod.utils.toFavoriteTime
 import com.example.lets_go_slavgorod.notifications.AlarmScheduler
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -309,25 +311,13 @@ class NotificationSettingsViewModel(application: Application) : AndroidViewModel
                 
                 val database = AppDatabase.getDatabase(getApplication())
                 val favoriteTimeDao = database.favoriteTimeDao()
+                val repository = BusRouteRepository(getApplication())
                 
-                val favoriteTimeEntities = favoriteTimeDao.getAllFavoriteTimes().firstOrNull() ?: emptyList()
+                val favoriteTimeEntities: List<FavoriteTimeEntity> = favoriteTimeDao.getAllFavoriteTimes().firstOrNull() ?: emptyList()
                 
-                val activeFavoriteTimes = favoriteTimeEntities
-                    .filter { it.isActive }
-                    .map { entity: FavoriteTimeEntity ->
-                        FavoriteTime(
-                            id = entity.id,
-                            routeId = entity.routeId,
-                            routeNumber = "N/A",
-                            routeName = "Маршрут",
-                            stopName = entity.stopName,
-                            departureTime = entity.departureTime,
-                            dayOfWeek = entity.dayOfWeek,
-                            departurePoint = entity.departurePoint,
-                            addedDate = entity.addedDate,
-                            isActive = entity.isActive
-                        )
-                    }
+                val activeFavoriteTimes: List<FavoriteTime> = favoriteTimeEntities
+                    .filter { entity: FavoriteTimeEntity -> entity.isActive }
+                    .map { entity: FavoriteTimeEntity -> entity.toFavoriteTime(repository) }
                 
                 AlarmScheduler.updateAllAlarmsBasedOnSettings(getApplication(), activeFavoriteTimes)
                 Timber.d("Updated ${activeFavoriteTimes.size} active alarms")

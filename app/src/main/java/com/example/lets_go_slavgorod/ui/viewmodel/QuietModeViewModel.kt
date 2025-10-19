@@ -9,7 +9,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.lets_go_slavgorod.data.local.AppDatabase
 import com.example.lets_go_slavgorod.data.local.dataStore
 import com.example.lets_go_slavgorod.data.local.NotificationPreferencesCache
+import com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity
 import com.example.lets_go_slavgorod.data.model.FavoriteTime
+import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
+import com.example.lets_go_slavgorod.utils.toFavoriteTime
 import com.example.lets_go_slavgorod.notifications.AlarmScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -170,24 +173,12 @@ class QuietModeViewModel(private val context: Context) : ViewModel() {
             try {
                 val database = AppDatabase.getDatabase(context)
                 val favoriteTimeDao = database.favoriteTimeDao()
+                val repository = BusRouteRepository(context)
                 
-                val favoriteTimeEntities = favoriteTimeDao.getAllFavoriteTimes().firstOrNull() ?: emptyList()
-                val activeFavoriteTimes = favoriteTimeEntities
-                    .filter { it.isActive }
-                    .map { entity ->
-                        FavoriteTime(
-                            id = entity.id,
-                            routeId = entity.routeId,
-                            routeNumber = "N/A",
-                            routeName = "Маршрут",
-                            stopName = entity.stopName,
-                            departureTime = entity.departureTime,
-                            dayOfWeek = entity.dayOfWeek,
-                            departurePoint = entity.departurePoint,
-                            addedDate = entity.addedDate,
-                            isActive = entity.isActive
-                        )
-                    }
+                val favoriteTimeEntities: List<FavoriteTimeEntity> = favoriteTimeDao.getAllFavoriteTimes().firstOrNull() ?: emptyList()
+                val activeFavoriteTimes: List<FavoriteTime> = favoriteTimeEntities
+                    .filter { entity: FavoriteTimeEntity -> entity.isActive }
+                    .map { entity: FavoriteTimeEntity -> entity.toFavoriteTime(repository) }
                 
                 AlarmScheduler.updateAllAlarmsBasedOnSettings(context, activeFavoriteTimes)
                 Timber.d("Updated all alarms based on quiet mode change")

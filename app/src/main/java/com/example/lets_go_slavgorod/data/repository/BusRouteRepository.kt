@@ -181,109 +181,11 @@ class BusRouteRepository(private val context: Context? = null) {
                     return
                 }
                 
-                // Приоритет 3: Fallback на hardcoded данные
-                logd("Using hardcoded routes data")
-            
-            // Загружаем базовые маршруты
-            val sampleRoutes = listOfNotNull(
-                createBusRoute(
-                    id = "102",
-                    routeNumber = "102",
-                    name = "Автобус №102",
-                    description = "Рынок (Славгород) — Ст. Зори (Яровое)",
-                    travelTime = "~40 минут",
-                    pricePrimary = "38₽ город / 55₽ межгород",
-                    paymentMethods = "Нал. / Безнал.",
-                    color = Constants.DEFAULT_ROUTE_COLOR
-                ),
-                createBusRoute(
-                    id = "102B",
-                    routeNumber = "102Б",
-                    name = "Автобус 102Б",
-                    description = "Рынок (Славгород) — Ст. Зори (Яровое)",
-                    travelTime = "~40 минут",
-                    pricePrimary = "38₽ город / 55₽ межгород",
-                    paymentMethods = "Нал. / Безнал.",
-                    color = Constants.DEFAULT_ROUTE_COLOR_GREEN
-                ),
-                createBusRoute(
-                    id = "102B_alt",
-                    routeNumber = "102B",
-                    name = "Автобус №102B",
-                    description = "Рынок (Славгород) — МСЧ-128 (Яровое)",
-                    travelTime = "~40 минут",
-                    pricePrimary = "38₽ город / 55₽ межгород",
-                    paymentMethods = "Наличный / Картой",
-                    color = "#FF2196F3"
-                ),
-                createBusRoute(
-                    id = "1",
-                    routeNumber = "1",
-                    name = "Автобус №1",
-                    description = "Маршрут вокзал — совхоз",
-                    travelTime = "~24 минуты",
-                    pricePrimary = "38₽ город",
-                    paymentMethods = "Нал. / Безнал.",
-                    color = Constants.DEFAULT_ROUTE_COLOR_ALT
-                ),
-                createBusRoute(
-                    id = "3",
-                    routeNumber = "3",
-                    name = "Автобус №3 Кольцевой",
-                    description = "Автовокзал Славгород — Радиозавод / Мясокомбинат",
-                    travelTime = "~25 минут",
-                    pricePrimary = "38₽ город",
-                    paymentMethods = "Наличный / Картой",
-                    color = "#FF2E7D32"
-                ),
-                createBusRoute(
-                    id = "4",
-                    routeNumber = "4",
-                    name = "Автобус №4 Пригородный",
-                    description = "Славгород — Пригородные маршруты",
-                    travelTime = "~20 минут",
-                    pricePrimary = "38₽ город",
-                    paymentMethods = "Наличный / Картой",
-                    color = "#FFF57C00"
-                )
-            )
-            
-            Timber.d("Created sample routes: ${sampleRoutes.size} routes")
-            sampleRoutes.forEach { route ->
-                Timber.d("Sample route: ${route.id} - ${route.name}")
-                if (route.id == "102B") {
-                    Timber.d("102B route details: id=${route.id}, routeNumber=${route.routeNumber}, name=${route.name}, isValid=${route.isValid()}")
-                }
-            }
-            
-            // Валидируем и кэшируем маршруты
-            val validRoutes = sampleRoutes.filter { route ->
-                val isValid = route.isValid()
-                if (!isValid) {
-                    loge("Invalid route found: ${route.id}")
-                }
-                isValid
-            }
-            
-            // Кэшируем валидные маршруты для быстрого доступа
-            validRoutes.forEach { route ->
-                routesCache[route.id] = route
-                if (route.id == "102B") {
-                    Timber.d("102B route cached successfully")
-                }
-            }
-            
-            _routes.value = validRoutes
-            Timber.d("Routes set to _routes: ${validRoutes.size} routes")
-            validRoutes.forEach { route ->
-                Timber.d("Route in _routes: ${route.id} - ${route.name}")
-                if (route.id == "102B") {
-                    Timber.d("102B route in final _routes list!")
-                }
-            }
-            
-            logd("Loaded ${validRoutes.size} valid routes")
-            isInitialized = true
+                // Приоритет 3: Если всё не удалось - возвращаем пустой список
+                Timber.w("All data sources failed - no routes loaded")
+                Timber.w("Please check: 1) Internet connection 2) assets/routes_data.json exists 3) GitHub repository accessible")
+                _routes.value = emptyList()
+                isInitialized = true
             
             } catch (e: Exception) {
                 loge("Error loading initial routes", e)

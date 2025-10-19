@@ -32,10 +32,13 @@ import kotlinx.coroutines.launch
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.model.BusSchedule
 import com.example.lets_go_slavgorod.ui.components.schedule.ScheduleList
+import com.example.lets_go_slavgorod.ui.model.createScheduleUiState
 import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.ScheduleViewModel
 import com.example.lets_go_slavgorod.utils.ScheduleUtils
 import com.example.lets_go_slavgorod.utils.ConditionalLogging
 import com.example.lets_go_slavgorod.utils.Constants
+import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -84,9 +87,11 @@ import java.util.Calendar
 fun ScheduleScreen(
     route: BusRoute?,
     onBackClick: () -> Unit,
-    viewModel: BusViewModel,
+    viewModel: BusViewModel, // Deprecated: Используется для ScheduleList (будет удалено в v3.0)
     onNotificationClick: ((String) -> Unit)? = null
 ) {
+    // Получаем ScheduleViewModel из Koin DI
+    val scheduleViewModel: ScheduleViewModel = koinViewModel()
     // Состояние загрузки и данных
     // Remember с зависимостью от route гарантирует сброс при смене маршрута
     var isLoading by remember(route) { mutableStateOf(true) }
@@ -128,9 +133,9 @@ fun ScheduleScreen(
             
             val startTime = System.currentTimeMillis()
             
-            // Загружаем расписание через BusViewModel
+            // Загружаем расписание через ScheduleViewModel
             // Логика загрузки: сначала пытаемся загрузить из JSON, потом fallback на hardcoded
-            val allSchedules = viewModel.getSchedulesForRoute(route.id)
+            val allSchedules = scheduleViewModel.getSchedulesForRoute(route.id)
             ConditionalLogging.debug("Schedule") { "Loaded ${allSchedules.size} schedules for route ${route.id}" }
             if (route.id == "102B") {
                 ConditionalLogging.debug("Schedule") { "102B schedules: ${allSchedules.map { "${it.departurePoint} - ${it.departureTime}" }}" }
@@ -225,7 +230,7 @@ fun ScheduleScreen(
                         try {
                             // Очищаем кэш расписания для этого маршрута
                             route.id.let { routeId ->
-                                viewModel.refreshScheduleForRoute(routeId)
+                                scheduleViewModel.refreshSchedule(routeId)
                             }
                             
                             // Небольшая задержка для анимации
@@ -240,28 +245,32 @@ fun ScheduleScreen(
                 },
                 modifier = Modifier.fillMaxSize()
             ) {
-                ScheduleList(
+                // Собираем все расписания в карту для ScheduleUiState
+                val schedulesByPoint = mutableMapOf<String, List<BusSchedule>>()
+                if (departurePoint1Name.isNotEmpty()) schedulesByPoint[departurePoint1Name] = schedulesSlavgorod
+                if (departurePoint2Name.isNotEmpty()) schedulesByPoint[departurePoint2Name] = schedulesYarovoe
+                if (departurePoint3Name.isNotEmpty()) schedulesByPoint[departurePoint3Name] = schedulesVokzal
+                if (departurePoint4Name.isNotEmpty()) schedulesByPoint[departurePoint4Name] = schedulesSovhoz
+                
+                val nextUpcomingIds = mutableMapOf<String, String?>()
+                if (departurePoint1Name.isNotEmpty()) nextUpcomingIds[departurePoint1Name] = nextUpcomingSlavgorodId
+                if (departurePoint2Name.isNotEmpty()) nextUpcomingIds[departurePoint2Name] = nextUpcomingYarovoeId
+                if (departurePoint3Name.isNotEmpty()) nextUpcomingIds[departurePoint3Name] = nextUpcomingVokzalId
+                if (departurePoint4Name.isNotEmpty()) nextUpcomingIds[departurePoint4Name] = nextUpcomingSovhozId
+                
+                val scheduleUiState = createScheduleUiState(
                     route = route,
-                    schedulesSlavgorod = schedulesSlavgorod,
-                    schedulesYarovoe = schedulesYarovoe,
-                    schedulesVokzal = schedulesVokzal,
-                    schedulesSovhoz = schedulesSovhoz,
-                    departurePoint1Name = departurePoint1Name,
-                    departurePoint2Name = departurePoint2Name,
-                    departurePoint3Name = departurePoint3Name,
-                    departurePoint4Name = departurePoint4Name,
-                    nextUpcomingSlavgorodId = nextUpcomingSlavgorodId,
-                    nextUpcomingYarovoeId = nextUpcomingYarovoeId,
-                    nextUpcomingVokzalId = nextUpcomingVokzalId,
-                    nextUpcomingSovhozId = nextUpcomingSovhozId,
+                    schedulesByPoint = schedulesByPoint,
+                    nextUpcomingIds = nextUpcomingIds
+                )
+                
+                ScheduleList(
+                    scheduleState = scheduleUiState,
                     viewModel = viewModel,
                     onBackClick = onBackClick,
                     onNotificationClick = if (onNotificationClick != null) {
                         { onNotificationClick(route.id) }
                     } else null,
-                    onScrollOffsetChange = { offset ->
-                        // Можно удалить, так как заголовок теперь скроллится естественным образом
-                    },
                     modifier = Modifier.fillMaxSize()
                 )
             }

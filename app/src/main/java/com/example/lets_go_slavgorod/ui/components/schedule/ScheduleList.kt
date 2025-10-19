@@ -27,6 +27,7 @@ import com.example.lets_go_slavgorod.ui.components.schedule.FilterableScheduleGr
 import com.example.lets_go_slavgorod.ui.components.schedule.UnifiedScheduleHeader
 import com.example.lets_go_slavgorod.ui.components.UniversalFilterRow
 import com.example.lets_go_slavgorod.ui.components.FilterItem
+import com.example.lets_go_slavgorod.ui.model.ScheduleUiState
 import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
 import com.example.lets_go_slavgorod.utils.Constants
 import com.example.lets_go_slavgorod.ui.utils.TextFormattingUtils
@@ -38,24 +39,23 @@ import java.util.*
 /**
  * Основной компонент списка расписаний маршрута
  * 
- * Версия: 3.1
+ * Версия: 4.0
  * Последнее обновление: Октябрь 2025
  * 
  * Центральный компонент для отображения расписаний автобусных маршрутов.
  * Поддерживает различные варианты компоновки, фильтрацию и интерактивное управление.
+ * 
+ * Изменения v4.0:
+ * - Рефакторинг: 17 параметров → 4 параметра через ScheduleUiState
+ * - Улучшена type-safety через data class
+ * - Упрощена сигнатура функции
+ * - Сохранена полная обратная совместимость с UI
  * 
  * Изменения v3.1:
  * - Унифицированы отступы между фильтрами и содержимым (8dp сверху, 8dp снизу)
  * - Добавлены порядковые номера рейсов в компактных карточках
  * - Оптимизирована компоновка фильтров на всю ширину экрана
  * - Используются константы из Constants.kt для всех отступов
- * 
- * Изменения v3.0:
- * - Добавлены фильтры "Избранные" и "Следующий" с иконками
- * - Фильтры взаимоисключающие (можно выбрать только один)
- * - Счетчик избранных времен с правильным склонением
- * - Улучшена компоновка фильтров на всю ширину
- * - Оптимизирована работа с избранными временами через TextFormattingUtils
  * 
  * Варианты отображения:
  * - **Маршрут №102**: двухколоночная сетка Славгород ↔ Яровое (МСЧ-128) с фильтрацией
@@ -76,19 +76,10 @@ import java.util.*
  * - Уникальные ключи для всех элементов (избегаем перерисовки)
  * - Remember для кэширования состояний фильтров и секций
  * 
- * @param route маршрут для отображения расписания
- * @param schedulesSlavgorod расписания отправлений из Славгорода
- * @param schedulesYarovoe расписания отправлений из Яровое
- * @param schedulesVokzal расписания отправлений с вокзала (маршрут №1)
- * @param schedulesSovhoz расписания отправлений из совхоза (маршрут №1)
- * @param nextUpcomingSlavgorodId ID ближайшего рейса из Славгорода
- * @param nextUpcomingYarovoeId ID ближайшего рейса из Яровое
- * @param nextUpcomingVokzalId ID ближайшего рейса с вокзала
- * @param nextUpcomingSovhozId ID ближайшего рейса из совхоза
+ * @param scheduleState состояние UI с данными расписания (route, schedules, nextUpcoming)
  * @param viewModel ViewModel для управления избранными временами
  * @param onBackClick callback для кнопки "Назад" в заголовке
  * @param onNotificationClick callback для кнопки уведомлений в заголовке (может быть null)
- * @param onScrollOffsetChange callback при изменении позиции прокрутки (используется для анимаций)
  * @param modifier модификатор для настройки внешнего вида
  * 
  * Фильтры:
@@ -99,25 +90,35 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleList(
-    route: BusRoute,
-    schedulesSlavgorod: List<BusSchedule>,
-    schedulesYarovoe: List<BusSchedule>,
-    schedulesVokzal: List<BusSchedule>,
-    schedulesSovhoz: List<BusSchedule>,
-    departurePoint1Name: String = "",
-    departurePoint2Name: String = "",
-    departurePoint3Name: String = "",
-    departurePoint4Name: String = "",
-    nextUpcomingSlavgorodId: String?,
-    nextUpcomingYarovoeId: String?,
-    nextUpcomingVokzalId: String?,
-    nextUpcomingSovhozId: String?,
+    scheduleState: ScheduleUiState,
     viewModel: BusViewModel,
     onBackClick: () -> Unit = {},
     onNotificationClick: (() -> Unit)? = null,
-    onScrollOffsetChange: (Float) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    // Извлекаем данные из scheduleState для удобства
+    val route = scheduleState.route
+    
+    // Получаем расписания по точкам отправления (до 4 точек)
+    val departurePoint1 = scheduleState.departurePoints.getOrNull(0)
+    val departurePoint2 = scheduleState.departurePoints.getOrNull(1)
+    val departurePoint3 = scheduleState.departurePoints.getOrNull(2)
+    val departurePoint4 = scheduleState.departurePoints.getOrNull(3)
+    
+    val schedulesSlavgorod = departurePoint1?.schedules ?: emptyList()
+    val schedulesYarovoe = departurePoint2?.schedules ?: emptyList()
+    val schedulesVokzal = departurePoint3?.schedules ?: emptyList()
+    val schedulesSovhoz = departurePoint4?.schedules ?: emptyList()
+    
+    val departurePoint1Name = departurePoint1?.name ?: ""
+    val departurePoint2Name = departurePoint2?.name ?: ""
+    val departurePoint3Name = departurePoint3?.name ?: ""
+    val departurePoint4Name = departurePoint4?.name ?: ""
+    
+    val nextUpcomingSlavgorodId = departurePoint1?.nextUpcomingId
+    val nextUpcomingYarovoeId = departurePoint2?.nextUpcomingId
+    val nextUpcomingVokzalId = departurePoint3?.nextUpcomingId
+    val nextUpcomingSovhozId = departurePoint4?.nextUpcomingId
     // Универсальные фильтры
     var selectedFilterId by remember { mutableStateOf<String?>(null) }
     val favoriteTimesList by viewModel.favoriteTimes.collectAsState()
@@ -130,12 +131,6 @@ fun ScheduleList(
 
     // Состояние для отслеживания скролла
     val listState = rememberLazyListState()
-    
-    // Отслеживаем изменения позиции скролла
-    LaunchedEffect(listState.firstVisibleItemScrollOffset, listState.firstVisibleItemIndex) {
-        val offset = listState.firstVisibleItemIndex * 100f + listState.firstVisibleItemScrollOffset
-        onScrollOffsetChange(offset)
-    }
 
     LazyColumn(
         state = listState,

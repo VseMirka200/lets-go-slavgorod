@@ -51,15 +51,16 @@ import androidx.navigation.NavController
 import com.example.lets_go_slavgorod.R
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.ui.components.SearchBar
-import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory
 import com.example.lets_go_slavgorod.ui.viewmodel.DisplaySettingsViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.RoutesViewModel
 import com.example.lets_go_slavgorod.utils.ConditionalLogging
 import com.example.lets_go_slavgorod.ui.viewmodel.RouteDisplayMode
 import com.example.lets_go_slavgorod.ui.components.BusRouteCard
 import com.example.lets_go_slavgorod.ui.theme.DesignTokens
 import timber.log.Timber
 import androidx.compose.runtime.LaunchedEffect
+import org.koin.androidx.compose.koinViewModel
 
 /**
  * Компонент состояния загрузки данных
@@ -359,16 +360,17 @@ fun RoutesListState(
  * - Использование remember для вычисляемых значений
  * 
  * @param navController контроллер навигации для переходов между экранами
- * @param viewModel ViewModel для управления данными маршрутов и состоянием
  * @param modifier модификатор для настройки внешнего вида
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavController,
-    viewModel: BusViewModel,
     modifier: Modifier = Modifier
 ) {
+    // Получаем ViewModel из Koin DI
+    val viewModel: RoutesViewModel = koinViewModel()
+    
     Timber.d("HomeScreen is being displayed")
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()

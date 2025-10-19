@@ -7,6 +7,11 @@ import androidx.multidex.MultiDex
 import androidx.multidex.MultiDexApplication
 import timber.log.Timber
 import com.example.lets_go_slavgorod.data.local.AppDatabase
+import com.example.lets_go_slavgorod.di.appModules
+import org.koin.android.ext.koin.androidContext
+import org.koin.android.ext.koin.androidLogger
+import org.koin.core.context.startKoin
+import org.koin.core.logger.Level
 import com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity
 import com.example.lets_go_slavgorod.data.local.UpdatePreferences
 import com.example.lets_go_slavgorod.data.local.NotificationPreferencesCache
@@ -139,7 +144,10 @@ class BusApplication : MultiDexApplication() {
         // 2. Logging - инициализируем Timber для всего приложения
         initializeLogging()
         
-        // 3. Notification channels - создаём каналы для уведомлений (требование Android 8+)
+        // 3. Koin - инициализируем Dependency Injection
+        initializeKoin()
+        
+        // 4. Notification channels - создаём каналы для уведомлений (требование Android 8+)
         NotificationHelper.createNotificationChannel(this)
         
         // 4. Фоновые задачи - запускаются асинхронно чтобы не блокировать UI
@@ -205,6 +213,32 @@ class BusApplication : MultiDexApplication() {
         }
         
         logd("Application onCreate() called")
+    }
+    
+    /**
+     * Инициализация Koin Dependency Injection
+     * 
+     * Настраивает Koin для автоматического инжекта зависимостей.
+     * Используется легковесный Koin вместо Hilt для:
+     * - Простоты настройки
+     * - Отсутствия проблем совместимости с KSP
+     * - Runtime DI без кодогенерации
+     */
+    private fun initializeKoin() {
+        startKoin {
+            // Логирование Koin (только в debug)
+            if (BuildConfig.DEBUG) {
+                androidLogger(Level.ERROR) // Только ошибки в логе
+            }
+            
+            // Контекст Android
+            androidContext(this@BusApplication)
+            
+            // Модули зависимостей
+            modules(appModules)
+        }
+        
+        logd("Koin DI initialized")
     }
     
     /**

@@ -1,5 +1,6 @@
 package com.example.lets_go_slavgorod.data.model
 
+import androidx.compose.runtime.Immutable
 import com.example.lets_go_slavgorod.utils.ValidationUtils
 import com.example.lets_go_slavgorod.utils.loge
 
@@ -35,6 +36,7 @@ import com.example.lets_go_slavgorod.utils.loge
  * @version 2.0
  * @since 1.0
  */
+@Immutable
 data class BusRoute(
     val id: String,                        // Уникальный ID маршрута
     val routeNumber: String,               // Номер маршрута (например, "1", "2А")
