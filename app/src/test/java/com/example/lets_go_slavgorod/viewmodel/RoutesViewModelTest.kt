@@ -2,12 +2,8 @@ package com.example.lets_go_slavgorod.viewmodel
 
 import android.app.Application
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.example.lets_go_slavgorod.data.model.BusRoute
-import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
+import androidx.test.core.app.ApplicationProvider
 import com.example.lets_go_slavgorod.ui.viewmodel.RoutesViewModel
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -20,6 +16,8 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -35,11 +33,14 @@ import kotlin.test.assertTrue
  * - Обработку ошибок
  * - Кэширование
  * 
+ * Упрощённые тесты без моков.
+ * 
  * @author VseMirka200
- * @version 1.0
+ * @version 2.0
  * @since 2.1
  */
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
 class RoutesViewModelTest {
     
     @get:Rule
@@ -53,9 +54,7 @@ class RoutesViewModelTest {
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        application = mockk(relaxed = true)
-        every { application.applicationContext } returns application
-        
+        application = ApplicationProvider.getApplicationContext()
         viewModel = RoutesViewModel(application)
     }
     

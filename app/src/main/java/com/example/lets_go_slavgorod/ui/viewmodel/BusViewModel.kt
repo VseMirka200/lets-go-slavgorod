@@ -47,21 +47,20 @@ import kotlinx.coroutines.launch
 /**
  * Состояние UI для избранных времен
  * 
+ * @param routes список маршрутов (legacy, не используется)
+ * @param isLoading флаг загрузки (legacy, не используется)
+ * @param error сообщение об ошибке
  * @param isAddingFavorite флаг добавления в избранное (показывает прогресс)
  * @param isRemovingFavorite флаг удаления из избранного (показывает прогресс)
- * @param error сообщение об ошибке (если есть)
  * 
  * @author VseMirka200
  * @version 2.0
  * @since 1.0
- * 
- * @deprecated Используйте FavoritesViewModel и его UiState
  */
-@Deprecated("Use FavoritesViewModel and FavoritesUiState")
 @Stable
 data class BusUiState(
-    val routes: List<BusRoute> = emptyList(), // Deprecated: use RoutesViewModel
-    val isLoading: Boolean = false,           // Deprecated: use RoutesViewModel
+    val routes: List<BusRoute> = emptyList(), // Legacy: use RoutesViewModel instead
+    val isLoading: Boolean = false,           // Legacy: use RoutesViewModel instead
     val error: String? = null,
     val isAddingFavorite: Boolean = false,
     val isRemovingFavorite: Boolean = false
@@ -116,19 +115,16 @@ class BusViewModel(application: Application) : AndroidViewModel(application) {
     //                              СОСТОЯНИЕ UI (LEGACY - для обратной совместимости)
     // =====================================================================================
     
-    /** @deprecated Используйте RoutesViewModel.uiState */
+    /** Legacy: используйте RoutesViewModel.uiState */
     private val _uiState = MutableStateFlow(BusUiState(isLoading = false))
-    @Deprecated("Use RoutesViewModel.uiState", ReplaceWith("routesViewModel.uiState"))
     val uiState: StateFlow<BusUiState> = _uiState.asStateFlow()
     
-    /** @deprecated Используйте RoutesViewModel.isRefreshing */
+    /** Legacy: используйте RoutesViewModel.isRefreshing */
     private val _isRefreshing = MutableStateFlow(false)
-    @Deprecated("Use RoutesViewModel.isRefreshing", ReplaceWith("routesViewModel.isRefreshing"))
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
     
-    /** @deprecated Используйте RoutesViewModel.searchQuery */
+    /** Legacy: используйте RoutesViewModel.searchQuery */
     private val _searchQuery = MutableStateFlow("")
-    @Deprecated("Use RoutesViewModel.searchQuery", ReplaceWith("routesViewModel.searchQuery"))
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
     // =====================================================================================
@@ -170,10 +166,10 @@ class BusViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * Принудительно обновляет расписание для конкретного маршрута
      * 
+     * Legacy: используйте ScheduleViewModel.refreshSchedule()
+     * 
      * @param routeId ID маршрута для обновления
-     * @deprecated Используйте ScheduleViewModel.refreshSchedule()
      */
-    @Deprecated("Use ScheduleViewModel.refreshSchedule()", ReplaceWith("scheduleViewModel.refreshSchedule(routeId)"))
     fun refreshScheduleForRoute(routeId: String) {
         viewModelScope.launch {
             try {

@@ -7,8 +7,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import androidx.core.net.toUri
-import timber.log.Timber
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -31,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -40,31 +39,31 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.lets_go_slavgorod.data.local.AppDatabase
-import com.example.lets_go_slavgorod.data.model.FavoriteTime
+import com.example.lets_go_slavgorod.data.local.DisclaimerManager
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
 import com.example.lets_go_slavgorod.notifications.AlarmScheduler
-import com.example.lets_go_slavgorod.utils.toFavoriteTime
-import com.example.lets_go_slavgorod.ui.components.UpdateDialogManager
 import com.example.lets_go_slavgorod.ui.components.DisclaimerDialog
+import com.example.lets_go_slavgorod.ui.components.UpdateDialogManager
 import com.example.lets_go_slavgorod.ui.navigation.Screen
-import com.example.lets_go_slavgorod.data.local.DisclaimerManager
 import com.example.lets_go_slavgorod.ui.screens.HomeScreen
 import com.example.lets_go_slavgorod.ui.screens.RouteNotificationSettingsScreen
 import com.example.lets_go_slavgorod.ui.screens.ScheduleScreen
 import com.example.lets_go_slavgorod.ui.screens.SettingsScreen
+import com.example.lets_go_slavgorod.ui.screens.settings.GlobalNotificationSettingsScreen
 import com.example.lets_go_slavgorod.ui.theme.lets_go_slavgorodTheme
-import com.example.lets_go_slavgorod.ui.viewmodel.AppTheme
 import com.example.lets_go_slavgorod.ui.viewmodel.AndroidViewModelFactory
+import com.example.lets_go_slavgorod.ui.viewmodel.AppTheme
 import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationSettingsViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.ThemeViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.ThemeViewModelFactory
 import com.example.lets_go_slavgorod.ui.viewmodel.UpdateSettingsViewModel
+import com.example.lets_go_slavgorod.utils.toFavoriteTime
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import timber.log.Timber
 
 /**
  * Главная активность приложения "Let's Go Slavgorod"
@@ -615,6 +614,15 @@ fun AppNavHost(
                     navController.popBackStack()
                 }
             }
+        }
+        
+        composable(
+            route = "settings/notifications"
+        ) {
+            GlobalNotificationSettingsScreen(
+                notificationSettingsViewModel = notificationSettingsViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
     }

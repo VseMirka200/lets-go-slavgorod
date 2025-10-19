@@ -2,9 +2,8 @@ package com.example.lets_go_slavgorod.viewmodel
 
 import android.app.Application
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.test.core.app.ApplicationProvider
 import com.example.lets_go_slavgorod.ui.viewmodel.ScheduleViewModel
-import io.mockk.every
-import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -16,6 +15,8 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -27,11 +28,14 @@ import kotlin.test.assertTrue
  * - Обновление расписания
  * - Кэширование
  * 
+ * Упрощённые тесты без моков.
+ * 
  * @author VseMirka200
- * @version 1.0
+ * @version 2.0
  * @since 2.1
  */
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
 class ScheduleViewModelTest {
     
     @get:Rule
@@ -45,9 +49,7 @@ class ScheduleViewModelTest {
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        application = mockk(relaxed = true)
-        every { application.applicationContext } returns application
-        
+        application = ApplicationProvider.getApplicationContext()
         viewModel = ScheduleViewModel(application)
     }
     
