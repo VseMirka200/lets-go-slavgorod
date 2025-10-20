@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.lets_go_slavgorod.data.model.BusRoute
+import com.example.lets_go_slavgorod.ui.utils.TextFormattingUtils
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationMode
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationSettingsViewModel
 import java.time.DayOfWeek
@@ -201,7 +202,7 @@ fun RouteNotificationSettingsScreen(
                                 text = if (selectedDays.isEmpty()) {
                                     "Не выбрано"
                                 } else {
-                                    "${selectedDays.size} ${getDaysWord(selectedDays.size)}"
+                                    "${selectedDays.size} ${TextFormattingUtils.getDaysWord(selectedDays.size)}"
                                 },
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = if (selectedDays.isEmpty()) {
@@ -250,25 +251,6 @@ fun RouteNotificationSettingsScreen(
             },
             onDismiss = { showDaysDialog = false }
         )
-    }
-}
-
-/**
- * Склонение слова "день" для русского языка
- * 
- * Возвращает правильную форму слова в зависимости от числа:
- * - 1, 21, 31... -> "день"
- * - 2-4, 22-24... -> "дня"
- * - 5-20, 25-30... -> "дней"
- * 
- * @param count количество дней
- * @return правильно склоненное слово
- */
-private fun getDaysWord(count: Int): String {
-    return when {
-        count % 10 == 1 && count % 100 != 11 -> "день"
-        count % 10 in 2..4 && (count % 100 < 10 || count % 100 >= 20) -> "дня"
-        else -> "дней"
     }
 }
 
