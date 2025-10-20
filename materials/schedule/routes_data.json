@@ -1,6 +1,6 @@
 {
-  "version": "16",
-  "last_updated": "2025-10-19",
+  "version": "17",
+  "last_updated": "2025-10-20",
   "routes": [
     {
       "id": "102",
@@ -48,7 +48,6 @@
         {"id": "102_slav_34", "stopName": "Рынок (Славгород)", "departureTime": "19:20", "departurePoint": "Рынок (Славгород)"},
         {"id": "102_slav_35", "stopName": "Рынок (Славгород)", "departureTime": "20:00", "departurePoint": "Рынок (Славгород)"},
         {"id": "102_slav_36", "stopName": "Рынок (Славгород)", "departureTime": "20:30", "departurePoint": "Рынок (Славгород)"},
-        {"id": "102_slav_37", "stopName": "Рынок (Славгород)", "departureTime": "21:00", "departurePoint": "Рынок (Славгород)"},
         {"id": "102_yar_1", "stopName": "МСЧ-128 (Яровое)", "departureTime": "07:00", "departurePoint": "МСЧ-128 (Яровое)"},
         {"id": "102_yar_2", "stopName": "МСЧ-128 (Яровое)", "departureTime": "07:20", "departurePoint": "МСЧ-128 (Яровое)"},
         {"id": "102_yar_3", "stopName": "МСЧ-128 (Яровое)", "departureTime": "07:35", "departurePoint": "МСЧ-128 (Яровое)"},
