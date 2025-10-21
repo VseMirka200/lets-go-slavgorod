@@ -1,5 +1,5 @@
 # Поехали! Славгород
-![](https://github.com/VseMirka200/lets-go-slavgorod/blob/main/materials/banner/banner1600x600.png)
+![](https://github.com/VseMirka200/lets-go-slavgorod/blob/main/materials/banner/banner1200x700.png)
 
 ---
 
