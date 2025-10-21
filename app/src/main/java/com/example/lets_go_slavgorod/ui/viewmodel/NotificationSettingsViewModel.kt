@@ -4,6 +4,7 @@ import android.app.Application
 import timber.log.Timber
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
@@ -12,6 +13,8 @@ import com.example.lets_go_slavgorod.data.local.AppDatabase
 import com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity
 import com.example.lets_go_slavgorod.data.local.NotificationPreferencesCache
 import com.example.lets_go_slavgorod.data.model.FavoriteTime
+import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
+import com.example.lets_go_slavgorod.utils.toFavoriteTime
 import com.example.lets_go_slavgorod.notifications.AlarmScheduler
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -95,7 +98,7 @@ class NotificationSettingsViewModel(application: Application) : AndroidViewModel
      * @see NotificationMode
      */
     val currentNotificationMode: StateFlow<NotificationMode> =
-        getApplication<Application>().dataStore.data
+        getApplication<Application>().applicationContext.dataStore.data
             .map { preferences ->
                 val modeName = preferences[NOTIFICATION_MODE_KEY] ?: NotificationMode.ALL_DAYS.name
                 try {
@@ -107,7 +110,7 @@ class NotificationSettingsViewModel(application: Application) : AndroidViewModel
             }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
+                started = SharingStarted.WhileSubscribed(com.example.lets_go_slavgorod.utils.Constants.STATE_FLOW_TIMEOUT_MS),
                 initialValue = NotificationMode.ALL_DAYS
             )
 
@@ -121,7 +124,7 @@ class NotificationSettingsViewModel(application: Application) : AndroidViewModel
      * @return Set из DayOfWeek, пустой если дни не выбраны
      */
     val selectedNotificationDays: StateFlow<Set<DayOfWeek>> =
-        getApplication<Application>().dataStore.data
+        getApplication<Application>().applicationContext.dataStore.data
             .map { preferences ->
                 val dayNames = preferences[SELECTED_DAYS_KEY] ?: emptySet()
                 dayNames.mapNotNull { dayName ->
@@ -135,7 +138,7 @@ class NotificationSettingsViewModel(application: Application) : AndroidViewModel
             }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
+                started = SharingStarted.WhileSubscribed(com.example.lets_go_slavgorod.utils.Constants.STATE_FLOW_TIMEOUT_MS),
                 initialValue = emptySet()
             )
 
@@ -149,7 +152,7 @@ class NotificationSettingsViewModel(application: Application) : AndroidViewModel
      * @return StateFlow с режимом уведомлений для маршрута
      */
     fun getRouteNotificationMode(routeId: String): StateFlow<NotificationMode> =
-        getApplication<Application>().dataStore.data
+        getApplication<Application>().applicationContext.dataStore.data
             .map { preferences ->
                 val modeName = preferences[stringPreferencesKey("${ROUTE_NOTIFICATION_MODE_KEY.name}$routeId")]
                     ?: currentNotificationMode.value.name
@@ -161,7 +164,7 @@ class NotificationSettingsViewModel(application: Application) : AndroidViewModel
             }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
+                started = SharingStarted.WhileSubscribed(com.example.lets_go_slavgorod.utils.Constants.STATE_FLOW_TIMEOUT_MS),
                 initialValue = currentNotificationMode.value
             )
 
@@ -175,7 +178,7 @@ class NotificationSettingsViewModel(application: Application) : AndroidViewModel
      * @return StateFlow с набором DayOfWeek для маршрута
      */
     fun getRouteSelectedDays(routeId: String): StateFlow<Set<DayOfWeek>> =
-        getApplication<Application>().dataStore.data
+        getApplication<Application>().applicationContext.dataStore.data
             .map { preferences ->
                 val dayNames = preferences[stringSetPreferencesKey("${ROUTE_SELECTED_DAYS_KEY.name}$routeId")]
                     ?: selectedNotificationDays.value.map { it.name }.toSet()
@@ -189,37 +192,55 @@ class NotificationSettingsViewModel(application: Application) : AndroidViewModel
             }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
+                started = SharingStarted.WhileSubscribed(com.example.lets_go_slavgorod.utils.Constants.STATE_FLOW_TIMEOUT_MS),
                 initialValue = selectedNotificationDays.value
             )
 
     /**
-     * Устанавливает режим уведомлений для конкретного маршрута
+     * Общий метод для сохранения настроек уведомлений
      * 
-     * Сохраняет настройку в DataStore и автоматически обновляет все активные будильники
-     * для маршрута в соответствии с новым режимом. Если режим не SELECTED_DAYS,
-     * очищает сохраненные дни для маршрута.
+     * Централизованная логика для всех операций сохранения настроек:
+     * - Сохранение в DataStore
+     * - Обновление кэша
+     * - Перепланирование будильников
+     * 
+     * @param operation описание операции для логирования
+     * @param saveAction блок кода для сохранения в DataStore
+     */
+    private suspend fun saveNotificationSettings(
+        operation: String,
+        saveAction: suspend (preferences: androidx.datastore.preferences.core.MutablePreferences) -> Unit
+    ) {
+        try {
+            getApplication<Application>().applicationContext.dataStore.edit { settings ->
+                saveAction(settings)
+            }
+            Timber.d(operation)
+            
+            // ВАЖНО: Обновляем кэш перед обновлением будильников
+            NotificationPreferencesCache.updateCache(getApplication())
+            
+            updateAllActiveAlarms()
+        } catch (e: Exception) {
+            Timber.e(e, "Failed: $operation")
+        }
+    }
+    
+    /**
+     * Устанавливает режим уведомлений для конкретного маршрута
      * 
      * @param routeId идентификатор маршрута
      * @param mode новый режим уведомлений
      */
     fun setRouteNotificationMode(routeId: String, mode: NotificationMode) {
         viewModelScope.launch {
-            try {
-                getApplication<Application>().dataStore.edit { settings ->
-                    settings[stringPreferencesKey("${ROUTE_NOTIFICATION_MODE_KEY.name}$routeId")] = mode.name
-                    if (mode != NotificationMode.SELECTED_DAYS) {
-                        settings.remove(stringSetPreferencesKey("${ROUTE_SELECTED_DAYS_KEY.name}$routeId"))
-                    }
+            saveNotificationSettings("Route $routeId notification mode set to: ${mode.name}") { settings ->
+                settings[stringPreferencesKey("${ROUTE_NOTIFICATION_MODE_KEY.name}$routeId")] = mode.name
+                if (mode != NotificationMode.SELECTED_DAYS) {
+                    val key: androidx.datastore.preferences.core.Preferences.Key<Set<String>> = 
+                        stringSetPreferencesKey("${ROUTE_SELECTED_DAYS_KEY.name}$routeId")
+                    (settings as MutableMap<androidx.datastore.preferences.core.Preferences.Key<*>, Any>).remove(key)
                 }
-                Timber.d("Route $routeId notification mode set to: ${mode.name}")
-                
-                // ВАЖНО: Обновляем кэш перед обновлением будильников
-                NotificationPreferencesCache.updateCache(getApplication())
-                
-                updateAllActiveAlarms()
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to save route notification mode")
             }
         }
     }
@@ -227,27 +248,14 @@ class NotificationSettingsViewModel(application: Application) : AndroidViewModel
     /**
      * Устанавливает выбранные дни недели для уведомлений конкретного маршрута
      * 
-     * Сохраняет дни в DataStore и автоматически обновляет все активные будильники.
-     * Используется когда режим уведомлений для маршрута установлен в SELECTED_DAYS.
-     * 
      * @param routeId идентификатор маршрута
      * @param days набор дней недели для уведомлений
      */
     fun setRouteSelectedDays(routeId: String, days: Set<DayOfWeek>) {
         viewModelScope.launch {
-            try {
-                val dayNames = days.map { it.name }.toSet()
-                getApplication<Application>().dataStore.edit { settings ->
-                    settings[stringSetPreferencesKey("${ROUTE_SELECTED_DAYS_KEY.name}$routeId")] = dayNames
-                }
-                Timber.d("Route $routeId selected days saved: $dayNames")
-                
-                // ВАЖНО: Обновляем кэш перед обновлением будильников
-                NotificationPreferencesCache.updateCache(getApplication())
-                
-                updateAllActiveAlarms()
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to save route selected days")
+            val dayNames = days.map { it.name }.toSet()
+            saveNotificationSettings("Route $routeId selected days saved: $dayNames") { settings ->
+                settings[stringSetPreferencesKey("${ROUTE_SELECTED_DAYS_KEY.name}$routeId")] = dayNames
             }
         }
     }
@@ -255,29 +263,15 @@ class NotificationSettingsViewModel(application: Application) : AndroidViewModel
     /**
      * Устанавливает глобальный режим уведомлений для всех маршрутов
      * 
-     * Применяется ко всем маршрутам, у которых не установлен индивидуальный режим.
-     * Сохраняет настройку в DataStore и обновляет все активные будильники.
-     * Если режим не SELECTED_DAYS, очищает глобальные выбранные дни.
-     * 
      * @param mode новый глобальный режим уведомлений
      */
     fun setGlobalNotificationMode(mode: NotificationMode) {
         viewModelScope.launch {
-            try {
-                getApplication<Application>().dataStore.edit { settings ->
-                    settings[NOTIFICATION_MODE_KEY] = mode.name
-                    if (mode != NotificationMode.SELECTED_DAYS) {
-                        settings.remove(SELECTED_DAYS_KEY)
-                    }
+            saveNotificationSettings("Global notification mode set to: ${mode.name}") { settings ->
+                settings[NOTIFICATION_MODE_KEY] = mode.name
+                if (mode != NotificationMode.SELECTED_DAYS) {
+                    (settings as MutableMap<androidx.datastore.preferences.core.Preferences.Key<*>, Any>).remove(SELECTED_DAYS_KEY)
                 }
-                Timber.d("Global notification mode set to: ${mode.name}")
-                
-                // ВАЖНО: Обновляем кэш перед обновлением будильников
-                NotificationPreferencesCache.updateCache(getApplication())
-                
-                updateAllActiveAlarms()
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to save global notification mode")
             }
         }
     }
@@ -285,27 +279,13 @@ class NotificationSettingsViewModel(application: Application) : AndroidViewModel
     /**
      * Устанавливает глобальные выбранные дни недели для уведомлений
      * 
-     * Применяется ко всем маршрутам, у которых не установлены индивидуальные дни.
-     * Используется когда глобальный режим установлен в SELECTED_DAYS.
-     * Автоматически обновляет все активные будильники.
-     * 
      * @param days набор дней недели для уведомлений
      */
     fun setGlobalSelectedDays(days: Set<DayOfWeek>) {
         viewModelScope.launch {
-            try {
-                val dayNames = days.map { it.name }.toSet()
-                getApplication<Application>().dataStore.edit { settings ->
-                    settings[SELECTED_DAYS_KEY] = dayNames
-                }
-                Timber.d("Global selected days saved: $dayNames")
-                
-                // ВАЖНО: Обновляем кэш перед обновлением будильников
-                NotificationPreferencesCache.updateCache(getApplication())
-                
-                updateAllActiveAlarms()
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to save global selected days")
+            val dayNames = days.map { it.name }.toSet()
+            saveNotificationSettings("Global selected days saved: $dayNames") { settings ->
+                settings[SELECTED_DAYS_KEY] = dayNames
             }
         }
     }
@@ -331,25 +311,13 @@ class NotificationSettingsViewModel(application: Application) : AndroidViewModel
                 
                 val database = AppDatabase.getDatabase(getApplication())
                 val favoriteTimeDao = database.favoriteTimeDao()
+                val repository = BusRouteRepository(getApplication())
                 
-                val favoriteTimeEntities = favoriteTimeDao.getAllFavoriteTimes().firstOrNull() ?: emptyList()
+                val favoriteTimeEntities: List<FavoriteTimeEntity> = favoriteTimeDao.getAllFavoriteTimes().firstOrNull() ?: emptyList()
                 
-                val activeFavoriteTimes = favoriteTimeEntities
-                    .filter { it.isActive }
-                    .map { entity: FavoriteTimeEntity ->
-                        FavoriteTime(
-                            id = entity.id,
-                            routeId = entity.routeId,
-                            routeNumber = "N/A",
-                            routeName = "Маршрут",
-                            stopName = entity.stopName,
-                            departureTime = entity.departureTime,
-                            dayOfWeek = entity.dayOfWeek,
-                            departurePoint = entity.departurePoint,
-                            addedDate = entity.addedDate,
-                            isActive = entity.isActive
-                        )
-                    }
+                val activeFavoriteTimes: List<FavoriteTime> = favoriteTimeEntities
+                    .filter { entity: FavoriteTimeEntity -> entity.isActive }
+                    .map { entity: FavoriteTimeEntity -> entity.toFavoriteTime(repository) }
                 
                 AlarmScheduler.updateAllAlarmsBasedOnSettings(getApplication(), activeFavoriteTimes)
                 Timber.d("Updated ${activeFavoriteTimes.size} active alarms")

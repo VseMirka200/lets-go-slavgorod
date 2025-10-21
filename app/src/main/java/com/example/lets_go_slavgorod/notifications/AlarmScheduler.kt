@@ -1,6 +1,5 @@
 package com.example.lets_go_slavgorod.notifications
 
-import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
@@ -9,14 +8,11 @@ import android.os.Build
 import android.provider.Settings
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.core.stringSetPreferencesKey
-import com.example.lets_go_slavgorod.data.local.dataStore
 import com.example.lets_go_slavgorod.data.local.NotificationPreferencesCache
 import com.example.lets_go_slavgorod.data.model.FavoriteTime
+import com.example.lets_go_slavgorod.notifications.AlarmScheduler.cancelAlarm
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationMode
-import com.example.lets_go_slavgorod.ui.viewmodel.QuietMode
 import com.example.lets_go_slavgorod.utils.Constants
-import kotlinx.coroutines.flow.first
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.time.DayOfWeek
@@ -90,22 +86,36 @@ object AlarmScheduler {
      * 
      * Создает точное уведомление с учетом всех пользовательских настроек:
      * - Режим уведомлений (будни/выходные/выбранные дни)
-     * - Тихой режим и его расписание
+     * - Тихий режим и его расписание
      * - Системные разрешения на уведомления
      * - Время опережения (5 минут до отправления)
      * 
-     * Уведомление планируется на следующий подходящий день недели.
-     * Если время уже прошло сегодня, планируется на следующий подходящий день.
+     * Алгоритм планирования:
+     * 1. Получает AlarmManager из системы
+     * 2. Вычисляет следующее время отправления согласно режиму уведомлений
+     * 3. Вычитает 5 минут для опережающего уведомления
+     * 4. Проверяет что время в будущем
+     * 5. Создает PendingIntent с данными маршрута
+     * 6. Планирует будильник учитывая версию Android
+     * 
+     * Особенности работы:
+     * - На Android S+ (API 31+) требуется разрешение SCHEDULE_EXACT_ALARM
+     * - На Android M-R (API 23-30) использует setExactAndAllowWhileIdle
+     * - При отсутствии разрешений планирует приблизительный будильник с окном ±1 минута
+     * - Проверка shouldSendNotification откладывается до срабатывания в AlarmReceiver
      * 
      * @param context контекст приложения для доступа к системным сервисам
-     * @param favoriteTime избранное время отправления с метаданными
+     * @param favoriteTime избранное время отправления с метаданными (ID, время, маршрут и т.д.)
      * 
-     * @see cancelAlarm для отмены уведомления
-     * @see updateAllAlarms для обновления всех уведомлений
+     * @see cancelAlarm для отмены запланированного уведомления
+     * @see updateAllAlarmsBasedOnSettings для обновления всех уведомлений
+     * @see AlarmReceiver.onReceive для обработки срабатывания будильника
      */
     fun scheduleAlarm(context: Context, favoriteTime: FavoriteTime) {
-        // Не проверяем shouldSendNotification здесь, потому что нужно планировать
-        // уведомления заранее. Проверка будет в AlarmReceiver при срабатывании.
+        // Проверка shouldSendNotification НЕ выполняется здесь преднамеренно:
+        // - Будильники планируются заранее (могут быть на несколько дней вперед)
+        // - Настройки пользователя могут измениться между планированием и срабатыванием
+        // - Актуальная проверка выполняется в AlarmReceiver.onReceive() в момент срабатывания
         
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
         if (alarmManager == null) {
@@ -123,7 +133,6 @@ object AlarmScheduler {
 
         if (triggerAtMillis <= System.currentTimeMillis()) {
             Timber.w(
-                "AlarmScheduler",
                 "Alarm time for ${favoriteTime.id} (Route ${favoriteTime.routeNumber} at ${favoriteTime.departureTime}) " +
                         "is in the past or too soon (${formatMillis(triggerAtMillis)}). Not scheduling."
             )
@@ -158,10 +167,9 @@ object AlarmScheduler {
         }
 
         Timber.d(
-            "AlarmScheduler",
-            "%snull", "%snull", "Data for Intent: favoriteId='${favoriteTime.id}', " +
+            "Data for Intent: favoriteId='${favoriteTime.id}', " +
                     "routeInfo='$routeInfoForNotification', " +
-                    "departureTimeInfo='$departureTimeInfoForNotification', "
+                    "departureTimeInfo='$departureTimeInfoForNotification'"
         )
 
         val intent = Intent(context.applicationContext, AlarmReceiver::class.java).apply {
@@ -196,7 +204,6 @@ object AlarmScheduler {
                         Timber.d("Exact alarm scheduled successfully for ID ${favoriteTime.id} at ${formatMillis(triggerAtMillis)}")
                     } else {
                         Timber.w(
-                            "AlarmScheduler",
                             "Exact alarms NOT PERMITTED for ID ${favoriteTime.id}. Scheduling inexact alarm (setWindow)." +
                                     " User may need to grant permission in settings: ${Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM}"
                         )
@@ -211,7 +218,6 @@ object AlarmScheduler {
                         pendingIntent
                     )
                     Timber.d(
-                        "AlarmScheduler",
                         "Alarm (setExactAndAllowWhileIdle) scheduled for ID ${favoriteTime.id} at ${
                             formatMillis(triggerAtMillis)
                         } on Android M-R"
@@ -226,6 +232,27 @@ object AlarmScheduler {
         }
     }
 
+    /**
+     * Отменяет запланированное уведомление для указанного избранного времени
+     * 
+     * Использует тот же requestCode и action что были при создании будильника
+     * для точной идентификации и отмены. Если будильник не найден (уже отменен
+     * или никогда не был создан), операция завершается безопасно.
+     * 
+     * Алгоритм отмены:
+     * 1. Получает AlarmManager из системы
+     * 2. Создает Intent с тем же action что при планировании
+     * 3. Вычисляет тот же requestCode из ID избранного времени
+     * 4. Получает PendingIntent с FLAG_NO_CREATE (не создавать новый)
+     * 5. Если найден - отменяет через AlarmManager
+     * 6. Логирует результат операции
+     * 
+     * @param context контекст приложения для доступа к системным сервисам
+     * @param favoriteTimeId уникальный идентификатор избранного времени
+     * 
+     * @see scheduleAlarm для планирования уведомления
+     * @see updateAllAlarmsBasedOnSettings для массовой отмены и перепланирования
+     */
     fun cancelAlarm(context: Context, favoriteTimeId: String) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
         if (alarmManager == null) {
@@ -259,6 +286,33 @@ object AlarmScheduler {
         }
     }
 
+    /**
+     * Вычисляет время следующего отправления в миллисекундах с учетом режима уведомлений
+     * 
+     * Определяет когда должно сработать следующее уведомление исходя из:
+     * - Времени отправления (HH:mm)
+     * - Дня недели из favoriteTime
+     * - Режима уведомлений (ALL_DAYS/WEEKDAYS/SELECTED_DAYS)
+     * - Выбранных дней недели пользователем
+     * 
+     * Алгоритм:
+     * 1. Парсит и валидирует время отправления (HH:mm)
+     * 2. Валидирует день недели (1-7, где 1=воскресенье)
+     * 3. Создает базовый Calendar с указанным временем на сегодня
+     * 4. В зависимости от режима уведомлений:
+     *    - ALL_DAYS: берет следующее вхождение этого времени
+     *    - WEEKDAYS: ищет ближайший будний день (пн-пт)
+     *    - SELECTED_DAYS: ищет ближайший выбранный день
+     * 5. Возвращает timestamp в миллисекундах или -1 при ошибке
+     * 
+     * Ограничения:
+     * - Поиск ограничен 14 днями вперед (2 недели)
+     * - Если подходящий день не найден, возвращает -1
+     * 
+     * @param context контекст для доступа к кэшу настроек
+     * @param favoriteTime данные избранного времени с расписанием
+     * @return timestamp следующего отправления в миллисекундах или -1 при ошибке
+     */
     private fun calculateNextDepartureTimeInMillis(context: Context, favoriteTime: FavoriteTime): Long {
         if (favoriteTime.departureTime.isBlank()) {
             Timber.e("Departure time is blank for ID ${favoriteTime.id}")
@@ -285,93 +339,72 @@ object AlarmScheduler {
             return -1L
         }
 
-        val targetDayOfWeek = favoriteTime.dayOfWeek
-        if (targetDayOfWeek !in Calendar.SUNDAY..Calendar.SATURDAY) {
-            Timber.e("Invalid dayOfWeek: $targetDayOfWeek for ID ${favoriteTime.id}. Expected ${Calendar.SUNDAY}-${Calendar.SATURDAY}.")
-            return -1L
-        }
-
+        // Используем текущий часовой пояс устройства
         val now = Calendar.getInstance()
         val nextDepartureBase = Calendar.getInstance().apply {
+            // Важно: сохраняем текущий часовой пояс
+            timeZone = now.timeZone
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }
+        
+        Timber.d("Calculating departure time for ${favoriteTime.id} in timezone: ${now.timeZone.id}")
 
-        // Получаем режим уведомлений из кэша (без runBlocking)
+        // Получаем режим уведомлений и создаем соответствующую стратегию
         val notificationMode = NotificationPreferencesCache.getNotificationMode(favoriteTime.routeId)
-
-        // Получаем выбранные дни из кэша
-        val selectedDays = if (notificationMode == NotificationMode.SELECTED_DAYS) {
-            NotificationPreferencesCache.getSelectedDays(favoriteTime.routeId)
-        } else {
-            emptySet()
-        }
-
-        when (notificationMode) {
-            NotificationMode.ALL_DAYS -> {
-                // Планируем на каждый день в указанное время
-                val nextDeparture = (nextDepartureBase.clone() as Calendar).apply {
-                    if (!after(now)) {
-                        add(Calendar.DAY_OF_YEAR, 1)
-                    }
-                }
-                Timber.d("Calculated next departure for ${favoriteTime.id} (${favoriteTime.departureTime}, ALL_DAYS): ${formatMillis(nextDeparture.timeInMillis)}")
-                return nextDeparture.timeInMillis
-            }
-            NotificationMode.WEEKDAYS -> {
-                // Планируем только на будние дни (пн-пт)
-                for (i in 0..14) {  // Проверяем 2 недели вперед
-                    val candidateDeparture = (nextDepartureBase.clone() as Calendar).apply {
-                        add(Calendar.DAY_OF_YEAR, i)
-                    }
-                    val candidateDay = candidateDeparture.get(Calendar.DAY_OF_WEEK)
-                    val isWeekday = candidateDay in Calendar.MONDAY..Calendar.FRIDAY
-                    
-                    if (isWeekday && candidateDeparture.after(now)) {
-                        Timber.d("Calculated next departure for ${favoriteTime.id} (${favoriteTime.departureTime}, WEEKDAYS): ${formatMillis(candidateDeparture.timeInMillis)} (found after $i day iterations)")
-                        return candidateDeparture.timeInMillis
-                    }
-                }
-            }
+        
+        val strategy: DepartureTimeStrategy = when (notificationMode) {
+            NotificationMode.ALL_DAYS -> AllDaysStrategy()
+            NotificationMode.WEEKDAYS -> WeekdaysStrategy()
             NotificationMode.SELECTED_DAYS -> {
-                // Планируем только на выбранные дни
-                for (i in 0..14) {  // Проверяем 2 недели вперед
-                    val candidateDeparture = (nextDepartureBase.clone() as Calendar).apply {
-                        add(Calendar.DAY_OF_YEAR, i)
-                    }
-                    val candidateDay = candidateDeparture.get(Calendar.DAY_OF_WEEK)
-                    val candidateDayOfWeek = when (candidateDay) {
-                        Calendar.SUNDAY -> DayOfWeek.SUNDAY
-                        Calendar.MONDAY -> DayOfWeek.MONDAY
-                        Calendar.TUESDAY -> DayOfWeek.TUESDAY
-                        Calendar.WEDNESDAY -> DayOfWeek.WEDNESDAY
-                        Calendar.THURSDAY -> DayOfWeek.THURSDAY
-                        Calendar.FRIDAY -> DayOfWeek.FRIDAY
-                        Calendar.SATURDAY -> DayOfWeek.SATURDAY
-                        else -> null
-                    }
-                    val isSelectedDay = candidateDayOfWeek != null && candidateDayOfWeek in selectedDays
-                    
-                    if (isSelectedDay && candidateDeparture.after(now)) {
-                        Timber.d("Calculated next departure for ${favoriteTime.id} (${favoriteTime.departureTime}, SELECTED_DAYS): ${formatMillis(candidateDeparture.timeInMillis)} (found after $i day iterations)")
-                        return candidateDeparture.timeInMillis
-                    }
-                }
+                val selectedDays = NotificationPreferencesCache.getSelectedDays(favoriteTime.routeId)
+                SelectedDaysStrategy(selectedDays)
             }
-            NotificationMode.DISABLED -> {
-                Timber.d("Notifications disabled, not scheduling for ${favoriteTime.id}")
-                return -1L
-            }
+            NotificationMode.DISABLED -> DisabledStrategy()
         }
-
-        Timber.e("Could not find a suitable future departure day within a week for ${favoriteTime.id}")
-        return -1L
+        
+        // Используем стратегию для вычисления времени
+        val nextTimeMillis = strategy.calculateNextTime(nextDepartureBase, now)
+        
+        if (nextTimeMillis == -1L) {
+            Timber.e("Strategy ${strategy::class.simpleName} failed to find suitable time for ${favoriteTime.id}")
+        } else {
+            Timber.d("Calculated next departure for ${favoriteTime.id} using ${strategy::class.simpleName}: ${formatMillis(nextTimeMillis)}")
+        }
+        
+        return nextTimeMillis
     }
 
     /**
      * Обновляет все активные уведомления в соответствии с текущими настройками
+     * 
+     * Вызывается при изменении пользовательских настроек уведомлений:
+     * - Изменение режима уведомлений (ALL_DAYS -> WEEKDAYS и т.д.)
+     * - Изменение выбранных дней недели
+     * - Включение/отключение уведомлений
+     * - Изменение тихого режима
+     * 
+     * Алгоритм обновления:
+     * 1. Для каждого избранного времени:
+     *    a) Отменяет существующий будильник
+     *    b) Получает актуальный режим уведомлений из кэша
+     *    c) Если уведомления не отключены - планирует новый будильник
+     *    d) Логирует результат операции
+     * 2. Обрабатывает ошибки индивидуально для каждого элемента
+     * 
+     * Безопасность:
+     * - Ошибки при обновлении одного элемента не влияют на остальные
+     * - Все операции логируются для отладки
+     * - Используется кэш настроек для избежания блокировки потока
+     * 
+     * @param context контекст для доступа к системным сервисам и настройкам
+     * @param favoriteTimes список всех избранных времен для обновления
+     * 
+     * @see NotificationPreferencesCache.getNotificationMode для получения режима
+     * @see scheduleAlarm для планирования отдельного уведомления
+     * @see cancelAlarm для отмены уведомления
      */
     fun updateAllAlarmsBasedOnSettings(context: Context, favoriteTimes: List<FavoriteTime>) {
         Timber.d("Updating all alarms based on current notification settings")
@@ -396,18 +429,48 @@ object AlarmScheduler {
     }
 
     /**
-     * Проверяет и обновляет уведомления при изменении настроек
+     * Проверяет и обновляет уведомление для одного избранного времени
+     * 
+     * Упрощенная версия updateAllAlarmsBasedOnSettings для одного элемента.
+     * Проверяет текущие настройки и либо планирует, либо отменяет уведомление.
+     * 
+     * Используется когда:
+     * - Добавляется новое избранное время
+     * - Изменяются настройки уведомлений для конкретного маршрута
+     * - Требуется быстрое обновление без полного пересканирования
+     * 
+     * ВАЖНО: НЕ проверяет shouldSendNotification, так как планирование
+     * должно происходить независимо от текущего дня - scheduleAlarm 
+     * сам найдет следующий подходящий день согласно режиму.
+     * 
+     * @param context контекст для доступа к системным сервисам
+     * @param favoriteTime избранное время для проверки и обновления
+     * 
+     * @see scheduleAlarm для планирования уведомления
+     * @see cancelAlarm для отмены уведомления
      */
     fun checkAndUpdateNotifications(context: Context, favoriteTime: FavoriteTime) {
-        if (shouldSendNotification(context, favoriteTime.routeId)) {
+        // Проверяем только режим уведомлений (не текущий день!)
+        val notificationMode = NotificationPreferencesCache.getNotificationMode(favoriteTime.routeId)
+        
+        if (notificationMode != NotificationMode.DISABLED) {
             scheduleAlarm(context, favoriteTime)
-            Timber.d("Notification scheduled for ${favoriteTime.id}")
+            Timber.d("Notification scheduled for ${favoriteTime.id} (mode: $notificationMode)")
         } else {
             cancelAlarm(context, favoriteTime.id)
-            Timber.d("Notification cancelled for ${favoriteTime.id} due to settings")
+            Timber.d("Notification cancelled for ${favoriteTime.id} - DISABLED mode")
         }
     }
 
+    /**
+     * Форматирует timestamp в читаемую строку для логирования
+     * 
+     * Используется для отладки и логирования времен срабатывания будильников.
+     * Преобразует миллисекунды Unix timestamp в формат "yyyy-MM-dd HH:mm:ss".
+     * 
+     * @param millis timestamp в миллисекундах (Unix time)
+     * @return отформатированная строка даты и времени или сообщение об ошибке
+     */
     private fun formatMillis(millis: Long): String {
         return try {
             if (millis <= 0) return "Invalid or Past Millis"

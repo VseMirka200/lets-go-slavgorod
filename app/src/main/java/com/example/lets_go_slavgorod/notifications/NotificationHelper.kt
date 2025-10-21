@@ -43,6 +43,10 @@ object NotificationHelper {
     private const val NOTIFICATION_ID_BASE = 1000
     // ID уведомления об обновлении
     private const val UPDATE_NOTIFICATION_ID = 9999
+    // ID уведомления об обновлении расписания
+    private const val SCHEDULE_UPDATE_NOTIFICATION_ID = 9998
+    // Группа для уведомлений об отправлении
+    private const val NOTIFICATION_GROUP_DEPARTURE = "bus_departure_group"
 
     /**
      * Создает канал уведомлений для Android 8.0+
@@ -89,7 +93,6 @@ object NotificationHelper {
      * @param favoriteTimeId ID избранного времени
      * @param routeInfo информация о маршруте
      * @param departureTimeInfo время отправления
-     * @param destinationInfo информация о пункте назначения (не используется)
      * @param departurePointInfo информация о точке отправления
      */
     fun showDepartureNotification(
@@ -136,6 +139,9 @@ object NotificationHelper {
 
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            // Deep Link: передаем данные для открытия конкретного маршрута
+            putExtra("OPEN_FAVORITE_ID", favoriteTimeId)
+            putExtra("FROM_NOTIFICATION", true)
         }
 
         val uniqueRequestId = (NOTIFICATION_ID_BASE.toString() + favoriteTimeId).hashCode()
@@ -194,16 +200,28 @@ object NotificationHelper {
             .setContentIntent(pendingIntent)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setGroup(NOTIFICATION_GROUP_DEPARTURE)
+            .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_ALL)
             .build()
 
         val notificationManager = NotificationManagerCompat.from(context)
 
+        // Проверка разрешений
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 Timber.w("POST_NOTIFICATIONS permission not granted for favoriteTimeId: $favoriteTimeId. Notification will not be shown on Android 13+.")
                 return
             }
         }
+        
+        // Проверка, включены ли уведомления в системе
+        if (!notificationManager.areNotificationsEnabled()) {
+            Timber.w("Notifications are disabled in system settings for favoriteTimeId: $favoriteTimeId")
+            return
+        }
+        
+        // Отменяем предыдущее уведомление с тем же ID (если есть)
+        notificationManager.cancel(uniqueRequestId)
 
         notificationManager.notify(uniqueRequestId, notification)
 
@@ -284,5 +302,79 @@ object NotificationHelper {
         notificationManager.notify(UPDATE_NOTIFICATION_ID, notification)
 
         Timber.i("Update notification shown for version $versionName")
+    }
+    
+    /**
+     * Отображает уведомление о доступности обновления расписания
+     * 
+     * Создает уведомление которое информирует пользователя о том,
+     * что доступна новая версия расписания автобусов на GitHub.
+     * 
+     * @param context контекст приложения
+     * @param dataVersion версия данных (опционально)
+     */
+    fun showScheduleUpdateNotification(
+        context: Context,
+        dataVersion: String? = null
+    ) {
+        // Создаем Intent для открытия настроек (Управление данными)
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            // Можно добавить параметр для автоматического открытия экрана обновления
+            putExtra("open_data_management", true)
+        }
+        
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            SCHEDULE_UPDATE_NOTIFICATION_ID,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val smallIconResId = R.drawable.ic_launcher_foreground
+        val title = "Доступно обновление расписания"
+        val contentText = if (dataVersion != null) {
+            "Доступна версия $dataVersion расписания автобусов. Потяните экран вниз для обновления."
+        } else {
+            "Доступно новое расписание автобусов. Потяните экран вниз или откройте настройки для обновления."
+        }
+
+        val largeIcon = try {
+            android.graphics.BitmapFactory.decodeResource(context.resources, R.drawable.ic_launcher_foreground)
+        } catch (e: Exception) {
+            Timber.w("Failed to load large icon for schedule update notification: ${e.message}")
+            null
+        }
+
+        val notification = NotificationCompat.Builder(context, UPDATE_CHANNEL_ID)
+            .setSmallIcon(smallIconResId)
+            .apply {
+                largeIcon?.let { setLargeIcon(it) }
+            }
+            .setContentTitle(title)
+            .setContentText(contentText)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText(contentText)
+            )
+            .build()
+
+        val notificationManager = NotificationManagerCompat.from(context)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                Timber.w("POST_NOTIFICATIONS permission not granted for schedule update notification")
+                return
+            }
+        }
+
+        notificationManager.notify(SCHEDULE_UPDATE_NOTIFICATION_ID, notification)
+
+        Timber.i("Schedule update notification shown" + if (dataVersion != null) " for version $dataVersion" else "")
     }
 }

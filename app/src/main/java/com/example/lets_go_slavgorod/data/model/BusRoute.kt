@@ -1,5 +1,6 @@
 package com.example.lets_go_slavgorod.data.model
 
+import androidx.compose.runtime.Immutable
 import com.example.lets_go_slavgorod.utils.ValidationUtils
 import com.example.lets_go_slavgorod.utils.loge
 
@@ -35,6 +36,7 @@ import com.example.lets_go_slavgorod.utils.loge
  * @version 2.0
  * @since 1.0
  */
+@Immutable
 data class BusRoute(
     val id: String,                        // Уникальный ID маршрута
     val routeNumber: String,               // Номер маршрута (например, "1", "2А")
@@ -107,30 +109,4 @@ data class BusRoute(
         )
     }
     
-    /**
-     * Проверяет, является ли маршрут межгородским
-     * 
-     * Межгородские маршруты имеют дополнительную цену (priceSecondary)
-     * и обычно более длительное время в пути.
-     * 
-     * @return true если маршрут межгородский
-     */
-    fun isIntercity(): Boolean {
-        return priceSecondary != null && priceSecondary.isNotBlank()
-    }
-    
-    /**
-     * Получает полную стоимость проезда в виде строки
-     * 
-     * Объединяет основную и дополнительную цену в читаемый формат.
-     * 
-     * @return строка с полной стоимостью проезда
-     */
-    fun getFullPrice(): String {
-        return when {
-            pricePrimary != null && priceSecondary != null -> "$pricePrimary / $priceSecondary"
-            pricePrimary != null -> pricePrimary
-            else -> "Цена не указана"
-        }
-    }
 }

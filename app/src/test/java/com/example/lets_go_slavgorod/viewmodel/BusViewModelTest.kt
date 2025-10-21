@@ -3,7 +3,6 @@ package com.example.lets_go_slavgorod.viewmodel
 import android.app.Application
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.example.lets_go_slavgorod.data.model.BusRoute
-import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
 import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -17,7 +16,6 @@ import org.mockito.Mockito.*
 import org.mockito.MockitoAnnotations
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -114,8 +112,7 @@ class BusViewModelTest {
                 travelTime = "~40 минут",
                 pricePrimary = "38₽",
                 paymentMethods = "Нал./Безнал.",
-                color = "#FF6B6B",
-                schedules = emptyList()
+                color = "#FF6B6BFF"
             )
         )
         val routesState = com.example.lets_go_slavgorod.ui.viewmodel.BusUiState(routes = testRoutes)
@@ -126,4 +123,3 @@ class BusViewModelTest {
         assertFalse(routesState.isLoading)
     }
 }
-

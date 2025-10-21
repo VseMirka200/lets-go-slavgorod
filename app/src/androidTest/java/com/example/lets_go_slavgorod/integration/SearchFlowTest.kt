@@ -5,7 +5,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
-import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.RoutesViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -18,20 +18,22 @@ import org.junit.Assert.*
  * 
  * Тестируют полный цикл поиска маршрутов через ViewModel и Repository.
  * 
+ * Обновлено для использования RoutesViewModel вместо BusViewModel.
+ * 
  * @author VseMirka200
- * @version 1.0
+ * @version 2.0
  */
 @RunWith(AndroidJUnit4::class)
 class SearchFlowTest {
     
-    private lateinit var viewModel: BusViewModel
+    private lateinit var viewModel: RoutesViewModel
     private lateinit var repository: BusRouteRepository
     private lateinit var context: Context
     
     @Before
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
-        viewModel = BusViewModel(context as Application)
+        viewModel = RoutesViewModel(context as Application)
         repository = BusRouteRepository(context)
     }
     

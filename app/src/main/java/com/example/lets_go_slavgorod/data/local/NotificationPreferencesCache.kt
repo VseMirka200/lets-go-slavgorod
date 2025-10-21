@@ -123,7 +123,54 @@ object NotificationPreferencesCache {
             // Обновляем настройку вибрации
             vibrationEnabled = preferences[androidx.datastore.preferences.core.booleanPreferencesKey("vibration_enabled")] ?: true
             
+            // ИСПРАВЛЕНИЕ: Загружаем индивидуальные настройки для каждого маршрута
+            val tempRouteModes = mutableMapOf<String, NotificationMode>()
+            val tempRouteDays = mutableMapOf<String, Set<DayOfWeek>>()
+            
+            // Проходим по всем ключам в preferences и ищем настройки маршрутов
+            preferences.asMap().forEach { (key, value) ->
+                val keyName = key.name
+                
+                // Загружаем режим уведомлений для конкретного маршрута
+                if (keyName.startsWith("route_notification_mode_")) {
+                    val routeId = keyName.removePrefix("route_notification_mode_")
+                    val modeString = value as? String
+                    if (modeString != null) {
+                        try {
+                            tempRouteModes[routeId] = NotificationMode.valueOf(modeString)
+                            Timber.d("Loaded route mode: $routeId -> $modeString")
+                        } catch (e: IllegalArgumentException) {
+                            Timber.w("Invalid NotificationMode for route $routeId: $modeString")
+                        }
+                    }
+                }
+                
+                // Загружаем выбранные дни для конкретного маршрута
+                if (keyName.startsWith("route_selected_days_")) {
+                    val routeId = keyName.removePrefix("route_selected_days_")
+                    @Suppress("UNCHECKED_CAST")
+                    val dayNamesSet = value as? Set<String>
+                    if (dayNamesSet != null) {
+                        val days = dayNamesSet.mapNotNull { dayName ->
+                            try {
+                                DayOfWeek.valueOf(dayName)
+                            } catch (e: IllegalArgumentException) {
+                                Timber.w("Invalid DayOfWeek for route $routeId: $dayName")
+                                null
+                            }
+                        }.toSet()
+                        tempRouteDays[routeId] = days
+                        Timber.d("Loaded route days: $routeId -> $days")
+                    }
+                }
+            }
+            
+            // Атомарно обновляем мапы (для потокобезопасности)
+            routeNotificationModes = tempRouteModes
+            routeSelectedDays = tempRouteDays
+            
             Timber.d("NotificationPreferencesCache updated: quietMode=$quietMode, notificationMode=$notificationMode, vibration=$vibrationEnabled")
+            Timber.d("Route-specific settings: ${routeNotificationModes.size} modes, ${routeSelectedDays.size} day sets")
         } catch (e: Exception) {
             Timber.e(e, "Error updating notification preferences cache")
         }
@@ -157,11 +204,15 @@ object NotificationPreferencesCache {
      * @return режим уведомлений для маршрута или глобальный
      */
     fun getNotificationMode(routeId: String? = null): NotificationMode {
-        return if (routeId != null && routeNotificationModes.containsKey(routeId)) {
-            routeNotificationModes[routeId] ?: notificationMode
+        val mode = if (routeId != null && routeNotificationModes.containsKey(routeId)) {
+            val customMode = routeNotificationModes[routeId] ?: notificationMode
+            Timber.d("getNotificationMode($routeId): using CUSTOM mode = $customMode")
+            customMode
         } else {
+            Timber.d("getNotificationMode($routeId): using GLOBAL mode = $notificationMode")
             notificationMode
         }
+        return mode
     }
     
     /**
@@ -174,11 +225,15 @@ object NotificationPreferencesCache {
      * @return набор дней недели когда должны отправляться уведомления
      */
     fun getSelectedDays(routeId: String? = null): Set<DayOfWeek> {
-        return if (routeId != null && routeSelectedDays.containsKey(routeId)) {
-            routeSelectedDays[routeId] ?: selectedDays
+        val days = if (routeId != null && routeSelectedDays.containsKey(routeId)) {
+            val customDays = routeSelectedDays[routeId] ?: selectedDays
+            Timber.d("getSelectedDays($routeId): using CUSTOM days = $customDays")
+            customDays
         } else {
+            Timber.d("getSelectedDays($routeId): using GLOBAL days = $selectedDays")
             selectedDays
         }
+        return days
     }
     
     /**
@@ -241,7 +296,9 @@ object NotificationPreferencesCache {
                         java.util.Calendar.SATURDAY -> DayOfWeek.SATURDAY
                         else -> null
                     }
-                    currentDayOfWeek != null && currentDayOfWeek in days
+                    val shouldSend = currentDayOfWeek != null && currentDayOfWeek in days
+                    Timber.d("shouldSendNotification SELECTED_DAYS: routeId=$routeId, today=$currentDayOfWeek, selectedDays=$days -> $shouldSend")
+                    shouldSend
                 }
             }
         } catch (e: Exception) {

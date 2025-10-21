@@ -8,6 +8,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.model.BusSchedule
 import com.example.lets_go_slavgorod.ui.components.schedule.ScheduleList
+import com.example.lets_go_slavgorod.ui.model.ScheduleUiState
+import com.example.lets_go_slavgorod.ui.model.DeparturePointSchedules
 import com.example.lets_go_slavgorod.ui.theme.lets_go_slavgorodTheme
 import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
 import org.junit.Before
@@ -57,50 +59,55 @@ class ScheduleScreenTest {
         BusSchedule(
             id = "102_1",
             routeId = "102",
+            stopName = "Рынок (Славгород)",
             departureTime = "08:30",
-            arrivalTime = "09:10",
-            departurePoint = "Рынок (Славгород)",
-            arrivalPoint = "Ст. Зори (Яровое)",
-            isWorkingDay = true
+            dayOfWeek = 2, // Понедельник
+            departurePoint = "Рынок (Славгород)"
         ),
         BusSchedule(
             id = "102_2",
             routeId = "102",
+            stopName = "Рынок (Славгород)",
             departureTime = "10:00",
-            arrivalTime = "10:40",
-            departurePoint = "Рынок (Славгород)",
-            arrivalPoint = "Ст. Зори (Яровое)",
-            isWorkingDay = true
+            dayOfWeek = 2, // Понедельник
+            departurePoint = "Рынок (Славгород)"
         ),
         BusSchedule(
             id = "102_3",
             routeId = "102",
+            stopName = "Ст. Зори (Яровое)",
             departureTime = "14:30",
-            arrivalTime = "15:10",
-            departurePoint = "Ст. Зори (Яровое)",
-            arrivalPoint = "Рынок (Славгород)",
-            isWorkingDay = true
+            dayOfWeek = 2, // Понедельник
+            departurePoint = "Ст. Зори (Яровое)"
         )
     )
     
     @Test
     fun scheduleList_displaysRouteInformation() {
+        // Создаём ScheduleUiState с тестовыми данными
+        val scheduleState = ScheduleUiState(
+            route = testRoute,
+            departurePoints = listOf(
+                DeparturePointSchedules(
+                    name = "Рынок (Славгород)",
+                    schedules = testSchedules.take(2),
+                    nextUpcomingId = null
+                ),
+                DeparturePointSchedules(
+                    name = "Ст. Зори (Яровое)",
+                    schedules = testSchedules.drop(2),
+                    nextUpcomingId = null
+                )
+            )
+        )
+        
         composeTestRule.setContent {
             lets_go_slavgorodTheme {
                 ScheduleList(
-                    route = testRoute,
-                    schedulesSlavgorod = testSchedules.take(2),
-                    schedulesYarovoe = testSchedules.drop(2),
-                    schedulesVokzal = emptyList(),
-                    schedulesSovhoz = emptyList(),
-                    nextUpcomingSlavgorodId = null,
-                    nextUpcomingYarovoeId = null,
-                    nextUpcomingVokzalId = null,
-                    nextUpcomingSovhozId = null,
+                    scheduleState = scheduleState,
+                    viewModel = viewModel,
                     onBackClick = {},
-                    onNotificationClick = {},
-                    onScrollOffsetChange = {},
-                    viewModel = viewModel
+                    onNotificationClick = {}
                 )
             }
         }
@@ -113,22 +120,23 @@ class ScheduleScreenTest {
     
     @Test
     fun scheduleList_displaysFilterButtons() {
+        val scheduleState = ScheduleUiState(
+            route = testRoute,
+            departurePoints = listOf(
+                DeparturePointSchedules(
+                    name = "Рынок (Славгород)",
+                    schedules = testSchedules
+                )
+            )
+        )
+        
         composeTestRule.setContent {
             lets_go_slavgorodTheme {
                 ScheduleList(
-                    route = testRoute,
-                    schedulesSlavgorod = testSchedules,
-                    schedulesYarovoe = emptyList(),
-                    schedulesVokzal = emptyList(),
-                    schedulesSovhoz = emptyList(),
-                    nextUpcomingSlavgorodId = null,
-                    nextUpcomingYarovoeId = null,
-                    nextUpcomingVokzalId = null,
-                    nextUpcomingSovhozId = null,
+                    scheduleState = scheduleState,
+                    viewModel = viewModel,
                     onBackClick = {},
-                    onNotificationClick = {},
-                    onScrollOffsetChange = {},
-                    viewModel = viewModel
+                    onNotificationClick = {}
                 )
             }
         }
@@ -145,22 +153,23 @@ class ScheduleScreenTest {
     
     @Test
     fun scheduleList_filterButtonsAreClickable() {
+        val scheduleState = ScheduleUiState(
+            route = testRoute,
+            departurePoints = listOf(
+                DeparturePointSchedules(
+                    name = "Рынок (Славгород)",
+                    schedules = testSchedules
+                )
+            )
+        )
+        
         composeTestRule.setContent {
             lets_go_slavgorodTheme {
                 ScheduleList(
-                    route = testRoute,
-                    schedulesSlavgorod = testSchedules,
-                    schedulesYarovoe = emptyList(),
-                    schedulesVokzal = emptyList(),
-                    schedulesSovhoz = emptyList(),
-                    nextUpcomingSlavgorodId = null,
-                    nextUpcomingYarovoeId = null,
-                    nextUpcomingVokzalId = null,
-                    nextUpcomingSovhozId = null,
+                    scheduleState = scheduleState,
+                    viewModel = viewModel,
                     onBackClick = {},
-                    onNotificationClick = {},
-                    onScrollOffsetChange = {},
-                    viewModel = viewModel
+                    onNotificationClick = {}
                 )
             }
         }
@@ -180,22 +189,23 @@ class ScheduleScreenTest {
     
     @Test
     fun scheduleList_displaysScheduleTimes() {
+        val scheduleState = ScheduleUiState(
+            route = testRoute,
+            departurePoints = listOf(
+                DeparturePointSchedules(
+                    name = "Рынок (Славгород)",
+                    schedules = testSchedules.take(2)
+                )
+            )
+        )
+        
         composeTestRule.setContent {
             lets_go_slavgorodTheme {
                 ScheduleList(
-                    route = testRoute,
-                    schedulesSlavgorod = testSchedules.take(2),
-                    schedulesYarovoe = emptyList(),
-                    schedulesVokzal = emptyList(),
-                    schedulesSovhoz = emptyList(),
-                    nextUpcomingSlavgorodId = null,
-                    nextUpcomingYarovoeId = null,
-                    nextUpcomingVokzalId = null,
-                    nextUpcomingSovhozId = null,
+                    scheduleState = scheduleState,
+                    viewModel = viewModel,
                     onBackClick = {},
-                    onNotificationClick = {},
-                    onScrollOffsetChange = {},
-                    viewModel = viewModel
+                    onNotificationClick = {}
                 )
             }
         }
@@ -212,22 +222,23 @@ class ScheduleScreenTest {
     
     @Test
     fun scheduleList_displaysBackButton() {
+        val scheduleState = ScheduleUiState(
+            route = testRoute,
+            departurePoints = listOf(
+                DeparturePointSchedules(
+                    name = "Рынок (Славгород)",
+                    schedules = testSchedules
+                )
+            )
+        )
+        
         composeTestRule.setContent {
             lets_go_slavgorodTheme {
                 ScheduleList(
-                    route = testRoute,
-                    schedulesSlavgorod = testSchedules,
-                    schedulesYarovoe = emptyList(),
-                    schedulesVokzal = emptyList(),
-                    schedulesSovhoz = emptyList(),
-                    nextUpcomingSlavgorodId = null,
-                    nextUpcomingYarovoeId = null,
-                    nextUpcomingVokzalId = null,
-                    nextUpcomingSovhozId = null,
+                    scheduleState = scheduleState,
+                    viewModel = viewModel,
                     onBackClick = {},
-                    onNotificationClick = {},
-                    onScrollOffsetChange = {},
-                    viewModel = viewModel
+                    onNotificationClick = {}
                 )
             }
         }
@@ -241,22 +252,23 @@ class ScheduleScreenTest {
     
     @Test
     fun scheduleList_displaysNotificationButton() {
+        val scheduleState = ScheduleUiState(
+            route = testRoute,
+            departurePoints = listOf(
+                DeparturePointSchedules(
+                    name = "Рынок (Славгород)",
+                    schedules = testSchedules
+                )
+            )
+        )
+        
         composeTestRule.setContent {
             lets_go_slavgorodTheme {
                 ScheduleList(
-                    route = testRoute,
-                    schedulesSlavgorod = testSchedules,
-                    schedulesYarovoe = emptyList(),
-                    schedulesVokzal = emptyList(),
-                    schedulesSovhoz = emptyList(),
-                    nextUpcomingSlavgorodId = null,
-                    nextUpcomingYarovoeId = null,
-                    nextUpcomingVokzalId = null,
-                    nextUpcomingSovhozId = null,
+                    scheduleState = scheduleState,
+                    viewModel = viewModel,
                     onBackClick = {},
-                    onNotificationClick = {},
-                    onScrollOffsetChange = {},
-                    viewModel = viewModel
+                    onNotificationClick = {}
                 )
             }
         }

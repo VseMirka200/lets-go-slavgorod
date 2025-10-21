@@ -72,7 +72,7 @@ class FavoriteFlowTest {
             departureTime = "08:00",
             stopName = "Рынок (Славгород)",
             departurePoint = "Рынок (Славгород)",
-            dayOfWeek = "Будни",
+            dayOfWeek = 2, // Понедельник (будни)
             addedDate = System.currentTimeMillis(),
             isActive = true
         )
@@ -82,7 +82,7 @@ class FavoriteFlowTest {
         
         // Assert
         val favorites = database.favoriteTimeDao().getAllFavoriteTimes().first()
-        assertTrue(favorites.any { it.id == scheduleId })
+        assertTrue(favorites.any { it.id == scheduleId && it.isActive })
         assertEquals(1, favorites.size)
     }
     
@@ -98,7 +98,7 @@ class FavoriteFlowTest {
             departureTime = "08:00",
             stopName = "Рынок (Славгород)",
             departurePoint = "Рынок (Славгород)",
-            dayOfWeek = "Будни",
+            dayOfWeek = 2, // Понедельник
             addedDate = System.currentTimeMillis(),
             isActive = true
         )
@@ -125,7 +125,7 @@ class FavoriteFlowTest {
             departureTime = "08:00",
             stopName = "Рынок (Славгород)",
             departurePoint = "Рынок (Славгород)",
-            dayOfWeek = "Будни",
+            dayOfWeek = 2, // Понедельник
             addedDate = System.currentTimeMillis(),
             isActive = true
         )
@@ -135,8 +135,9 @@ class FavoriteFlowTest {
         database.favoriteTimeDao().updateFavoriteTime(favoriteEntity.copy(isActive = false))
         
         // Assert
-        val favorite = database.favoriteTimeDao().getFavoriteTimeById(scheduleId).first().first()
-        assertFalse(favorite.isActive)
+        val favorite = database.favoriteTimeDao().getFavoriteTimeById(scheduleId).first()
+        assertNotNull(favorite)
+        assertFalse(favorite!!.isActive)
     }
     
     @Test
@@ -151,7 +152,7 @@ class FavoriteFlowTest {
                 departureTime = "08:00",
                 stopName = "Рынок (Славгород)",
                 departurePoint = "Рынок (Славгород)",
-                dayOfWeek = "Будни",
+                dayOfWeek = 2, // Понедельник (будни)
                 addedDate = System.currentTimeMillis(),
                 isActive = true
             ),
@@ -163,7 +164,7 @@ class FavoriteFlowTest {
                 departureTime = "09:00",
                 stopName = "Рынок (Славгород)",
                 departurePoint = "Рынок (Славгород)",
-                dayOfWeek = "Будни",
+                dayOfWeek = 2, // Понедельник (будни)
                 addedDate = System.currentTimeMillis(),
                 isActive = true
             )
@@ -175,8 +176,8 @@ class FavoriteFlowTest {
         // Assert
         val savedFavorites = database.favoriteTimeDao().getAllFavoriteTimes().first()
         assertEquals(2, savedFavorites.size)
-        assertTrue(savedFavorites.any { it.routeId == "102" })
-        assertTrue(savedFavorites.any { it.routeId == "102B" })
+        assertTrue(savedFavorites.any { it.routeId == "102" && it.isActive })
+        assertTrue(savedFavorites.any { it.routeId == "102B" && it.isActive })
     }
 }
 

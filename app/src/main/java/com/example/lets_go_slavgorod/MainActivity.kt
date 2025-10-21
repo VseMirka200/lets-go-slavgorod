@@ -7,8 +7,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import androidx.core.net.toUri
-import timber.log.Timber
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -31,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -40,27 +39,31 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.lets_go_slavgorod.data.local.AppDatabase
-import com.example.lets_go_slavgorod.data.model.FavoriteTime
-import com.example.lets_go_slavgorod.notifications.AlarmScheduler
-import com.example.lets_go_slavgorod.ui.components.UpdateDialogManager
-import com.example.lets_go_slavgorod.ui.components.DisclaimerDialog
-import com.example.lets_go_slavgorod.ui.navigation.Screen
 import com.example.lets_go_slavgorod.data.local.DisclaimerManager
+import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
+import com.example.lets_go_slavgorod.notifications.AlarmScheduler
+import com.example.lets_go_slavgorod.ui.components.DisclaimerDialog
+import com.example.lets_go_slavgorod.ui.components.UpdateDialogManager
+import com.example.lets_go_slavgorod.ui.navigation.Screen
 import com.example.lets_go_slavgorod.ui.screens.HomeScreen
 import com.example.lets_go_slavgorod.ui.screens.RouteNotificationSettingsScreen
 import com.example.lets_go_slavgorod.ui.screens.ScheduleScreen
 import com.example.lets_go_slavgorod.ui.screens.SettingsScreen
+import com.example.lets_go_slavgorod.ui.screens.settings.GlobalNotificationSettingsScreen
 import com.example.lets_go_slavgorod.ui.theme.lets_go_slavgorodTheme
-import com.example.lets_go_slavgorod.ui.viewmodel.AppTheme
 import com.example.lets_go_slavgorod.ui.viewmodel.AndroidViewModelFactory
+import com.example.lets_go_slavgorod.ui.viewmodel.AppTheme
 import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationSettingsViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.ThemeViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.ThemeViewModelFactory
 import com.example.lets_go_slavgorod.ui.viewmodel.UpdateSettingsViewModel
+import com.example.lets_go_slavgorod.utils.toFavoriteTime
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
+import timber.log.Timber
 
 /**
  * Главная активность приложения "Let's Go Slavgorod"
@@ -107,8 +110,15 @@ class MainActivity : ComponentActivity() {
             }
         }
     
+    /** RouteId для навигации из уведомления (использует Mutex для thread-safety) */
+    private var pendingNavigationRouteId: String? = null
+    private val navigationMutex = kotlinx.coroutines.sync.Mutex()
+    
+    /** Состояние показа диалога об отключенных уведомлениях */
+    private var shouldShowNotificationDisabledDialog: Boolean = false
+    
     /** Состояние показа диалога с предупреждением */
-    private var showDisclaimerDialog by mutableStateOf(false)
+    private var shouldShowDisclaimerDialog: Boolean = false
 
     /**
      * Запрашивает разрешение на отправку уведомлений
@@ -122,10 +132,12 @@ class MainActivity : ComponentActivity() {
             Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU -> {
                 // For older versions, check exact alarm permission
                 checkExactAlarmPermission()
+                checkNotificationsEnabled()
             }
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED -> {
                 Timber.d("Notification permission already granted.")
                 checkExactAlarmPermission()
+                checkNotificationsEnabled()
             }
             shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
                 Timber.i("Showing rationale for notification permission. Launching permission request again.")
@@ -135,6 +147,19 @@ class MainActivity : ComponentActivity() {
                 Timber.d("Requesting notification permission.")
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
+        }
+    }
+    
+    /**
+     * Проверяет, включены ли уведомления в системе
+     * 
+     * Если уведомления отключены, показывает диалог пользователю
+     */
+    private fun checkNotificationsEnabled() {
+        val notificationManager = androidx.core.app.NotificationManagerCompat.from(this)
+        if (!notificationManager.areNotificationsEnabled()) {
+            Timber.w("Notifications are disabled in system settings")
+            shouldShowNotificationDisabledDialog = true
         }
     }
 
@@ -168,25 +193,13 @@ class MainActivity : ComponentActivity() {
             
             val database = AppDatabase.getDatabase(this)
             val favoriteTimeDao = database.favoriteTimeDao()
+            val repository = BusRouteRepository(this)
             
             val favoriteTimeEntities = favoriteTimeDao.getAllFavoriteTimes().firstOrNull() ?: emptyList()
             
             val activeFavoriteTimes = favoriteTimeEntities
-                .filter { entity -> entity.isActive }
-                .map { entity ->
-                    FavoriteTime(
-                        id = entity.id,
-                        routeId = entity.routeId,
-                        routeNumber = "N/A",
-                        routeName = "Маршрут",
-                        stopName = entity.stopName,
-                        departureTime = entity.departureTime,
-                        dayOfWeek = entity.dayOfWeek,
-                        departurePoint = entity.departurePoint,
-                        addedDate = entity.addedDate,
-                        isActive = entity.isActive
-                    )
-                }
+                .filter { entity: com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity -> entity.isActive }
+                .map { entity: com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity -> entity.toFavoriteTime(repository) }
             
             AlarmScheduler.updateAllAlarmsBasedOnSettings(this, activeFavoriteTimes)
             Timber.d("Restored ${activeFavoriteTimes.size} active notifications")
@@ -230,7 +243,27 @@ class MainActivity : ComponentActivity() {
         
         // Быстрая инициализация UI
         setContent {
-            BusScheduleApp(themeViewModel = themeViewModel)
+            BusScheduleApp(
+                themeViewModel = themeViewModel,
+                initialPendingNavigationRouteId = pendingNavigationRouteId,
+                onNavigationHandled = { pendingNavigationRouteId = null },
+                initialShowNotificationDisabledDialog = shouldShowNotificationDisabledDialog,
+                onNotificationDialogDismiss = { shouldShowNotificationDisabledDialog = false },
+                initialShowDisclaimerDialog = shouldShowDisclaimerDialog,
+                onDisclaimerAccept = { 
+                    lifecycleScope.launch {
+                        DisclaimerManager.markDisclaimerAccepted(this@MainActivity)
+                        shouldShowDisclaimerDialog = false
+                    }
+                },
+                onDisclaimerDontShowAgain = {
+                    lifecycleScope.launch {
+                        DisclaimerManager.markDisclaimerDontShowAgain(this@MainActivity)
+                        shouldShowDisclaimerDialog = false
+                    }
+                },
+                onDisclaimerDismiss = { shouldShowDisclaimerDialog = false }
+            )
         }
         
         // =====================================================================================
@@ -241,12 +274,56 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             // Проверяем, нужно ли показать диалог с предупреждением
             if (DisclaimerManager.shouldShowDisclaimer(this@MainActivity)) {
-                showDisclaimerDialog = true
+                shouldShowDisclaimerDialog = true
             }
             
             askNotificationPermission()
             // Восстанавливаем уведомления после перезапуска приложения
             restoreNotifications()
+        }
+        
+        // Обработка Deep Link из уведомления
+        handleNotificationIntent(intent)
+    }
+    
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleNotificationIntent(intent)
+    }
+    
+    /**
+     * Обрабатывает Intent из уведомления для навигации к конкретному избранному времени
+     */
+    private fun handleNotificationIntent(intent: Intent?) {
+        intent?.let {
+            val fromNotification = it.getBooleanExtra("FROM_NOTIFICATION", false)
+            val favoriteId = it.getStringExtra("OPEN_FAVORITE_ID")
+            
+            if (fromNotification && favoriteId != null) {
+                Timber.d("Opening from notification: favoriteId=$favoriteId")
+                
+                // Получаем routeId из базы данных асинхронно
+                lifecycleScope.launch {
+                    navigationMutex.withLock {
+                        try {
+                            val database = AppDatabase.getDatabase(this@MainActivity)
+                            val favoriteEntity = database.favoriteTimeDao()
+                                .getAllFavoriteTimes()
+                                .firstOrNull()
+                                ?.find { entity -> entity.id == favoriteId }
+                            
+                            if (favoriteEntity != null) {
+                                pendingNavigationRouteId = favoriteEntity.routeId
+                                Timber.d("Set pending navigation to route: ${favoriteEntity.routeId}")
+                            } else {
+                                Timber.w("FavoriteTime not found for id: $favoriteId")
+                            }
+                        } catch (e: Exception) {
+                            Timber.e(e, "Error loading favorite time from notification")
+                        }
+                    }
+                }
+            }
         }
     }
     
@@ -298,15 +375,37 @@ class MainActivity : ComponentActivity() {
  * - Настройки уведомлений доступны из расписания каждого маршрута
  * 
  * @param themeViewModel ViewModel для управления темой
+ * @param initialPendingNavigationRouteId Начальное значение ID маршрута для навигации из уведомления
+ * @param onNavigationHandled Callback для сброса состояния навигации
+ * @param initialShowNotificationDisabledDialog Начальное состояние показа диалога об отключенных уведомлениях
+ * @param onNotificationDialogDismiss Callback для закрытия диалога об уведомлениях
+ * @param initialShowDisclaimerDialog Начальное состояние показа диалога disclaimer
+ * @param onDisclaimerAccept Callback при принятии disclaimer
+ * @param onDisclaimerDontShowAgain Callback при выборе "больше не показывать"
+ * @param onDisclaimerDismiss Callback при закрытии disclaimer
  */
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BusScheduleApp(themeViewModel: ThemeViewModel) {
+fun BusScheduleApp(
+    themeViewModel: ThemeViewModel,
+    initialPendingNavigationRouteId: String?,
+    onNavigationHandled: () -> Unit,
+    initialShowNotificationDisabledDialog: Boolean,
+    onNotificationDialogDismiss: () -> Unit,
+    initialShowDisclaimerDialog: Boolean,
+    onDisclaimerAccept: () -> Unit,
+    onDisclaimerDontShowAgain: () -> Unit,
+    onDisclaimerDismiss: () -> Unit
+) {
     val navController = rememberNavController()
     val localContext = LocalContext.current
-    var showDisclaimer by remember { mutableStateOf(false) }
     val application = localContext.applicationContext as Application
+    
+    // Локальные состояния для управления диалогами и навигацией
+    var pendingNavigationRouteId by remember { mutableStateOf(initialPendingNavigationRouteId) }
+    var showNotificationDisabledDialog by remember { mutableStateOf(initialShowNotificationDisabledDialog) }
+    var showDisclaimerDialog by remember { mutableStateOf(initialShowDisclaimerDialog) }
     
     // ViewModels с generic фабриками
     val busViewModel: BusViewModel = viewModel(
@@ -328,18 +427,12 @@ fun BusScheduleApp(themeViewModel: ThemeViewModel) {
         AppTheme.DARK -> true
     }
     
-    // Проверяем, нужно ли показать диалог с предупреждением
-    val coroutineScope = rememberCoroutineScope()
-    LaunchedEffect(Unit) {
-        if (DisclaimerManager.shouldShowDisclaimer(localContext)) {
-            showDisclaimer = true
-        }
-    }
-
     // Данные о доступном обновлении
     val availableUpdateVersion by updateSettingsViewModel.availableUpdateVersion.collectAsState(initial = null)
     val availableUpdateUrl by updateSettingsViewModel.availableUpdateUrl.collectAsState(initial = null)
     val availableUpdateNotes by updateSettingsViewModel.availableUpdateNotes.collectAsState(initial = null)
+    
+    val coroutineScope = rememberCoroutineScope()
 
     lets_go_slavgorodTheme(darkTheme = useDarkTheme) {
         Scaffold(
@@ -373,21 +466,46 @@ fun BusScheduleApp(themeViewModel: ThemeViewModel) {
                 }
             )
             
-            // Диалог с предупреждением о неофициальном статусе приложения
-            if (showDisclaimer) {
-                DisclaimerDialog(
-                    onDismiss = { showDisclaimer = false },
-                    onAccept = {
-                        coroutineScope.launch {
-                            DisclaimerManager.markDisclaimerAccepted(localContext)
-                            showDisclaimer = false
+            // Навигация из уведомления
+            LaunchedEffect(pendingNavigationRouteId) {
+                pendingNavigationRouteId?.let { routeId ->
+                    Timber.d("Navigating to route from notification: $routeId")
+                    try {
+                        navController.navigate("schedule/$routeId") {
+                            launchSingleTop = true
                         }
+                        pendingNavigationRouteId = null
+                        onNavigationHandled() // Сбрасываем в Activity
+                    } catch (e: Exception) {
+                        Timber.e(e, "Navigation error from notification")
+                    }
+                }
+            }
+            
+            // Диалог с предупреждением о неофициальном статусе приложения
+            if (showDisclaimerDialog) {
+                DisclaimerDialog(
+                    onDismiss = { 
+                        showDisclaimerDialog = false
+                        onDisclaimerDismiss()
+                    },
+                    onAccept = {
+                        showDisclaimerDialog = false
+                        onDisclaimerAccept()
                     },
                     onDontShowAgain = {
-                        coroutineScope.launch {
-                            DisclaimerManager.markDisclaimerDontShowAgain(localContext)
-                            showDisclaimer = false
-                        }
+                        showDisclaimerDialog = false
+                        onDisclaimerDontShowAgain()
+                    }
+                )
+            }
+            
+            // Диалог об отключенных уведомлениях
+            if (showNotificationDisabledDialog) {
+                com.example.lets_go_slavgorod.ui.components.NotificationDisabledDialog(
+                    onDismiss = { 
+                        showNotificationDisabledDialog = false
+                        onNotificationDialogDismiss()
                     }
                 )
             }
@@ -435,8 +553,7 @@ fun AppNavHost(
             route = Screen.Home.route
         ) {
             HomeScreen(
-                navController = navController,
-                viewModel = busViewModel
+                navController = navController
             )
         }
 
@@ -497,6 +614,15 @@ fun AppNavHost(
                     navController.popBackStack()
                 }
             }
+        }
+        
+        composable(
+            route = "settings/notifications"
+        ) {
+            GlobalNotificationSettingsScreen(
+                notificationSettingsViewModel = notificationSettingsViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
     }

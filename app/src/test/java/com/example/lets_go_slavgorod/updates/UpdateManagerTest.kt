@@ -1,16 +1,15 @@
 package com.example.lets_go_slavgorod.updates
 
 import android.content.Context
-import androidx.test.core.app.ApplicationProvider
-import com.example.lets_go_slavgorod.updates.UpdateManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -148,7 +147,7 @@ class UpdateManagerTest {
         // Then
         assertTrue(successResult.success)
         assertNotNull(successResult.update)
-        assertEquals("2.0", successResult.update?.versionName)
+        assertEquals("2.0", successResult.update.versionName)
         
         assertFalse(errorResult.success)
         assertNull(errorResult.update)

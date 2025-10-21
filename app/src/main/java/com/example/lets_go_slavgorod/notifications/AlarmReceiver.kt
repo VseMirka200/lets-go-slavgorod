@@ -42,6 +42,9 @@ import timber.log.Timber
 class AlarmReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
+        // goAsync() предотвращает завершение BroadcastReceiver пока не завершится асинхронная работа
+        val pendingResult = goAsync()
+        
         Timber.d("Alarm received: ${intent.action}")
         
         // Получаем данные из Intent
@@ -82,16 +85,16 @@ class AlarmReceiver : BroadcastReceiver() {
             }
             
             // ВАЖНО: Перепланируем уведомление на следующий раз
-            rescheduleNotification(context, favoriteId)
+            rescheduleNotification(context, favoriteId, pendingResult)
         } else {
             Timber.w("No favoriteId found in alarm intent")
+            pendingResult.finish()  // Завершаем BroadcastReceiver
         }
     }
     
     // Перепланирование уведомления на следующий день
-    private fun rescheduleNotification(context: Context, favoriteId: String) {
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-        scope.launch {
+    private fun rescheduleNotification(context: Context, favoriteId: String, pendingResult: PendingResult) {
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
                 val database = AppDatabase.getDatabase(context)
                 val favoriteTimeDao = database.favoriteTimeDao()
@@ -112,6 +115,9 @@ class AlarmReceiver : BroadcastReceiver() {
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Error rescheduling notification for $favoriteId")
+            } finally {
+                // ВАЖНО: Сигнализируем что BroadcastReceiver завершил работу
+                pendingResult.finish()
             }
         }
     }

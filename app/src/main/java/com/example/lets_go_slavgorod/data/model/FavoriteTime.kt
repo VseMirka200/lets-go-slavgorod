@@ -1,5 +1,7 @@
 package com.example.lets_go_slavgorod.data.model
 
+import androidx.compose.runtime.Immutable
+
 /**
  * Модель избранного времени отправления автобуса
  * 
@@ -28,6 +30,7 @@ package com.example.lets_go_slavgorod.data.model
  * @version 2.0
  * @since 1.0
  */
+@Immutable
 data class FavoriteTime(
     val id: String,                     // Уникальный ID
     val routeId: String,                // ID маршрута

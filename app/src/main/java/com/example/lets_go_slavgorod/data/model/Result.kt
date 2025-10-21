@@ -72,22 +72,6 @@ sealed class Result<out T> {
         else -> null
     }
     
-    /**
-     * Получение данных или значение по умолчанию
-     */
-    fun getOrDefault(defaultValue: @UnsafeVariance T): @UnsafeVariance T = when (this) {
-        is Success -> data
-        else -> defaultValue
-    }
-    
-    /**
-     * Получение данных или выброс исключения
-     */
-    fun getOrThrow(): T = when (this) {
-        is Success -> data
-        is Error -> throw exception
-        is Loading -> throw IllegalStateException("Cannot get data while loading")
-    }
     
     /**
      * Выполнение действия при успехе
@@ -122,55 +106,5 @@ sealed class Result<out T> {
         is Loading -> Loading(progress)
     }
     
-    /**
-     * Трансформация с возможной ошибкой
-     */
-    inline fun <R> flatMap(transform: (T) -> Result<R>): Result<R> = when (this) {
-        is Success -> try {
-            transform(data)
-        } catch (e: Exception) {
-            Error(e)
-        }
-        is Error -> Error(exception, message)
-        is Loading -> Loading(progress)
-    }
-}
-
-/**
- * Вспомогательные функции для создания Result
- */
-
-/**
- * Создает успешный Result
- */
-fun <T> successOf(data: T): Result<T> = Result.Success(data)
-
-/**
- * Создает Result с ошибкой
- */
-fun errorOf(exception: Throwable, message: String? = null): Result<Nothing> =
-    Result.Error(exception, message)
-
-/**
- * Создает Result загрузки
- */
-fun loadingOf(progress: Float? = null): Result<Nothing> = Result.Loading(progress)
-
-/**
- * Выполняет блок кода и оборачивает результат в Result
- */
-inline fun <T> resultOf(block: () -> T): Result<T> = try {
-    Result.Success(block())
-} catch (e: Exception) {
-    Result.Error(e)
-}
-
-/**
- * Выполняет suspend блок кода и оборачивает результат в Result
- */
-suspend inline fun <T> suspendResultOf(crossinline block: suspend () -> T): Result<T> = try {
-    Result.Success(block())
-} catch (e: Exception) {
-    Result.Error(e)
 }
 

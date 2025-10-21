@@ -184,27 +184,43 @@ fun RouteNotificationSettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { showDaysDialog = true }
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Дни недели",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                        )
-                        Text(
-                            text = if (selectedDays.isEmpty()) {
-                                "Не выбрано"
-                            } else {
-                                "${selectedDays.size} ${getDaysWord(selectedDays.size)}"
-                            },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showDaysDialog = true }
+                                .padding(vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Дни недели",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                            )
+                            Text(
+                                text = if (selectedDays.isEmpty()) {
+                                    "Не выбрано"
+                                } else {
+                                    "${selectedDays.size} ${getDaysWord(selectedDays.size)}"
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (selectedDays.isEmpty()) {
+                                    MaterialTheme.colorScheme.error
+                                } else {
+                                    MaterialTheme.colorScheme.primary
+                                }
+                            )
+                        }
+                        
+                        // Предупреждение если дни не выбраны
+                        if (selectedDays.isEmpty()) {
+                            Text(
+                                text = "⚠️ Уведомления не будут приходить, пока не выбраны дни",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -350,6 +366,7 @@ private fun DaysSelectionDialog(
     onDismiss: () -> Unit
 ) {
     var tempSelectedDays by remember { mutableStateOf(selectedDays) }
+    var showError by remember { mutableStateOf(false) }
     
     val dayOptions = listOf(
         DayOfWeek.MONDAY to "Понедельник",
@@ -374,6 +391,15 @@ private fun DaysSelectionDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
+                if (showError) {
+                    Text(
+                        text = "Выберите хотя бы один день",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+                
                 dayOptions.forEach { (day, label) ->
                     Row(
                         modifier = Modifier
@@ -410,7 +436,12 @@ private fun DaysSelectionDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    onDaysSelected(tempSelectedDays)
+                    if (tempSelectedDays.isEmpty()) {
+                        showError = true
+                    } else {
+                        showError = false
+                        onDaysSelected(tempSelectedDays)
+                    }
                 }
             ) {
                 Text("Применить")

@@ -16,18 +16,3 @@ class AppErrorException(
     val appError: AppError
 ) : Exception(appError.getUserMessage())
 
-/**
- * Extension функция для создания Result.Error из AppError
- * Generic функция для совместимости с любым типом Result<T>
- */
-fun <T> AppError.toResultError(): Result<T> {
-    return Result.Error(AppErrorException(this))
-}
-
-/**
- * Extension функция для извлечения AppError из Result.Error
- */
-fun Result.Error.getAppError(): AppError? {
-    return (exception as? AppErrorException)?.appError
-}
-

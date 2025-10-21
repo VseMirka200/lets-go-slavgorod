@@ -153,34 +153,3 @@ object ErrorHandler {
     }
 }
 
-/**
- * Extension для Result для извлечения пользовательского сообщения
- */
-fun <T> AppResult<T>.getUserMessage(): String {
-    return when (this) {
-        is com.example.lets_go_slavgorod.data.model.Result.Success -> "Успешно"
-        is com.example.lets_go_slavgorod.data.model.Result.Error -> ErrorHandler.getUserMessage(this.exception, "")
-        is com.example.lets_go_slavgorod.data.model.Result.Loading -> "Загрузка..."
-    }
-}
-
-/**
- * Extension для Result для извлечения данных или null
- */
-fun <T> AppResult<T>.getDataOrNull(): T? {
-    return when (this) {
-        is com.example.lets_go_slavgorod.data.model.Result.Success -> this.data
-        else -> null
-    }
-}
-
-/**
- * Extension для Result для извлечения ошибки как AppError или null
- */
-fun <T> AppResult<T>.getAppErrorOrNull(): AppError? {
-    return when (this) {
-        is com.example.lets_go_slavgorod.data.model.Result.Error -> ErrorHandler.handle(this.exception, "")
-        else -> null
-    }
-}
-

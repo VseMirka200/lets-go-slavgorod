@@ -1,5 +1,6 @@
 package com.example.lets_go_slavgorod.data.model
 
+import androidx.compose.runtime.Immutable
 import com.example.lets_go_slavgorod.utils.ValidationUtils
 import com.example.lets_go_slavgorod.utils.loge
 
@@ -29,6 +30,7 @@ import com.example.lets_go_slavgorod.utils.loge
  * @version 2.0
  * @since 1.0
  */
+@Immutable
 data class BusSchedule(
     val id: String,                     // Уникальный ID расписания
     val routeId: String,                // ID маршрута
@@ -40,7 +42,19 @@ data class BusSchedule(
     val departurePoint: String          // Пункт отправления
 ) {
     
-    // Валидация данных расписания
+    /**
+     * Валидация данных расписания
+     * 
+     * Проверяет корректность всех критически важных полей:
+     * - ID расписания и маршрута (не пустые, валидный формат)
+     * - Название остановки (минимум 2 символа)
+     * - Время отправления (формат HH:mm, валидные часы 0-23, минуты 0-59)
+     * - День недели (1-7 согласно Calendar.DAY_OF_WEEK)
+     * - Пункт отправления (не пустой)
+     * 
+     * @return true если все данные валидны, false если обнаружены ошибки
+     * @see ValidationUtils для деталей валидации каждого поля
+     */
     fun isValid(): Boolean {
         return try {
             val validations = listOf(

@@ -30,6 +30,8 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.Info
+import com.example.lets_go_slavgorod.ui.components.FeedbackTypeDialog
+import com.example.lets_go_slavgorod.ui.components.FeedbackType
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PhoneAndroid
@@ -56,6 +58,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -231,11 +234,12 @@ fun SettingsScreen(
     var showResetSettingsDialog by remember { mutableStateOf(false) }
     var showClearCacheDialog by remember { mutableStateOf(false) }
     var cacheCleared by remember { mutableStateOf(false) }
+    var showFeedbackDialog by remember { mutableStateOf(false) }
     
     // Информация о приложении
     val developerName = stringResource(id = R.string.developer_name)
     val developerVkUrl = stringResource(id = R.string.developer_vk_url)
-    val telegramUrl = stringResource(id = R.string.feedback_telegram_url)
+    val feedbackEmail = stringResource(id = R.string.feedback_email)
     val appVersion = Constants.APP_VERSION
     
     // Состояния сворачивания разделов (по умолчанию все свернуты)
@@ -632,7 +636,7 @@ fun SettingsScreen(
                         verticalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
                         Text(
-                            text = "Есть вопросы или предложения? Заполните форму обратной связи!",
+                            text = "Есть вопросы или предложения? Напишите нам на почту!",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -641,19 +645,7 @@ fun SettingsScreen(
 
                         // Кнопка обратной связи
                         Button(
-                            onClick = {
-                                try {
-                                    val intent = Intent(Intent.ACTION_VIEW, telegramUrl.toUri())
-                                    context.startActivity(intent)
-                                } catch (e: Exception) {
-                                    Timber.e(e, "Could not open feedback form")
-                                    android.widget.Toast.makeText(
-                                        context,
-                                        context.getString(R.string.error_open_feedback_form),
-                                        android.widget.Toast.LENGTH_LONG
-                                    ).show()
-                                }
-                            },
+                            onClick = { showFeedbackDialog = true },
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(
@@ -662,7 +654,7 @@ fun SettingsScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(Modifier.width(8.dp))
-                            Text("Обратная связь")
+                            Text("Написать на почту")
                         }
 
                         Spacer(Modifier.height(8.dp))
@@ -722,7 +714,7 @@ fun SettingsScreen(
                             // Кнопка "Поддержать"
                             OutlinedButton(
                                 onClick = {
-                                    val intent = Intent(Intent.ACTION_VIEW, "https://donatty.com/vv-olyushin".toUri())
+                                    val intent = Intent(Intent.ACTION_VIEW, "https://pay.cloudtips.ru/p/1fa22ea5".toUri())
                                     try {
                                         context.startActivity(intent)
                                     } catch (e: Exception) {
@@ -937,6 +929,49 @@ fun SettingsScreen(
                     }
                 ) {
                     Text("Очистить")
+                }
+            }
+        )
+    }
+    
+    // Диалог выбора типа обратной связи
+    if (showFeedbackDialog) {
+        FeedbackTypeDialog(
+            onDismiss = { showFeedbackDialog = false },
+            onTypeSelected = { feedbackType ->
+                showFeedbackDialog = false
+                
+                try {
+                    // Информация об устройстве для удобства отладки
+                    val deviceInfo = """
+                        
+                        
+                        ---
+                        Версия приложения: $appVersion
+                        Устройство: ${Build.MANUFACTURER} ${Build.MODEL}
+                        Android: ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})
+                    """.trimIndent()
+                    
+                    // Создаем уникальную метку на основе модели устройства
+                    val deviceLabel = "${Build.MANUFACTURER} ${Build.MODEL}".take(20)
+                    
+                    // Формируем тему письма: [ТИП] [Приложение] Устройство
+                    val subject = "${feedbackType.emailPrefix} [Поехали! Славгород] $deviceLabel"
+                    
+                    val intent = Intent(Intent.ACTION_SENDTO).apply {
+                        data = "mailto:".toUri()
+                        putExtra(Intent.EXTRA_EMAIL, arrayOf(feedbackEmail))
+                        putExtra(Intent.EXTRA_SUBJECT, subject)
+                        putExtra(Intent.EXTRA_TEXT, deviceInfo)
+                    }
+                    context.startActivity(intent)
+                } catch (e: Exception) {
+                    Timber.e(e, "Could not open email app")
+                    android.widget.Toast.makeText(
+                        context,
+                        context.getString(R.string.error_open_email),
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
                 }
             }
         )
@@ -2112,18 +2147,12 @@ private fun ScheduleUpdateCard(
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
-                        Column {
-                            Text(
-                                text = "Расписание успешно обновлено",
-                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                            Text(
-                                text = "Приложение перезапустится автоматически...",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                            )
-                        }
+                        Text(
+                            text = "Расписание успешно обновлено",
+                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
                         Spacer(Modifier.weight(1f))
                         IconButton(
                             onClick = onClearStatus,

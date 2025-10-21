@@ -73,6 +73,7 @@ fun CompactScheduleCard(
     onFavoriteClick: () -> Unit,
     isNextUpcoming: Boolean = false,
     orderNumber: Int? = null,
+    showDayLabel: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     // Оптимизация: кэшируем значения для избежания перекомпозиций
@@ -99,12 +100,12 @@ fun CompactScheduleCard(
                 .fillMaxWidth()
                 .padding(Constants.SCHEDULE_CARD_PADDING.dp)
         ) {
-            // Порядковый номер слева по центру вертикали
+            // Порядковый номер слева по центру вертикали (размер как у звездочки)
             if (orderNumber != null) {
                 Text(
                     text = "$orderNumber.",
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 14.sp
+                        fontSize = Constants.FAVORITE_ICON_SIZE.sp  // Такой же размер как у звездочки
                     ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                     fontWeight = FontWeight.Medium,
@@ -139,6 +140,23 @@ fun CompactScheduleCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
                     )
+                }
+                
+                // Отображение метки дня (для маршрута 3)
+                if (showDayLabel && schedule.notes != null) {
+                    val dayLabel = when {
+                        schedule.notes.contains("будни", ignoreCase = true) -> "будни"
+                        schedule.notes.contains("суббота", ignoreCase = true) -> "суббота"
+                        schedule.notes.contains("выходные", ignoreCase = true) -> "выходные"
+                        else -> null
+                    }
+                    dayLabel?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
                 }
             }
             

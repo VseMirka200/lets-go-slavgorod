@@ -16,11 +16,15 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,15 +51,16 @@ import androidx.navigation.NavController
 import com.example.lets_go_slavgorod.R
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.ui.components.SearchBar
-import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory
 import com.example.lets_go_slavgorod.ui.viewmodel.DisplaySettingsViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.RoutesViewModel
 import com.example.lets_go_slavgorod.utils.ConditionalLogging
 import com.example.lets_go_slavgorod.ui.viewmodel.RouteDisplayMode
 import com.example.lets_go_slavgorod.ui.components.BusRouteCard
 import com.example.lets_go_slavgorod.ui.theme.DesignTokens
 import timber.log.Timber
 import androidx.compose.runtime.LaunchedEffect
+import org.koin.androidx.compose.koinViewModel
 
 /**
  * Компонент состояния загрузки данных
@@ -216,6 +221,30 @@ fun EmptyState(searchQuery: String) {
 }
 
 /**
+ * Выполняет навигацию к экрану расписания маршрута
+ * 
+ * Централизованная функция для навигации с единообразной обработкой ошибок
+ * и конфигурацией параметров навигации (launchSingleTop, restoreState, saveState).
+ * 
+ * @param navController контроллер навигации
+ * @param route маршрут для перехода к расписанию
+ */
+private fun navigateToSchedule(navController: NavController, route: BusRoute) {
+    try {
+        ConditionalLogging.debug("Navigation") { "Route clicked: ${route.id} - ${route.name}" }
+        navController.navigate("schedule/${route.id}") {
+            launchSingleTop = true
+            restoreState = true
+            popUpTo("home") {
+                saveState = true
+            }
+        }
+    } catch (e: Exception) {
+        ConditionalLogging.error("Navigation", e) { "Navigation error for route: ${route.id}" }
+    }
+}
+
+/**
  * Компонент отображения списка маршрутов
  * 
  * Поддерживает два режима отображения:
@@ -224,9 +253,10 @@ fun EmptyState(searchQuery: String) {
  * 
  * Особенности:
  * - Адаптивная сетка с оптимизированными отступами
- * - Клик на карточку -> переход к расписанию маршрута
+ * - Клик на карточку -> переход к расписанию маршрута (через navigateToSchedule)
  * - Сохранение и восстановление состояния при навигации
  * - Минимизация перекомпозиций через key и contentType
+ * - Единообразная обработка навигации и ошибок
  * 
  * @param routes список маршрутов для отображения
  * @param navController контроллер навигации для перехода к расписанию
@@ -265,26 +295,11 @@ fun RoutesListState(
                     key = { route -> route.id },
                     contentType = { BusRoute::class }
                 ) { route ->
-                    // Оптимизированная карточка маршрута с минимальными перекомпозициями
                     BusRouteCard(
                         route = route,
                         isGridMode = true,
                         gridColumns = gridColumns,
-                        onClick = {
-                            // Быстрая навигация без задержек
-                            try {
-                                ConditionalLogging.debug("Navigation") { "Route clicked: ${route.id} - ${route.name}" }
-                                navController.navigate("schedule/${route.id}") {
-                                    launchSingleTop = true
-                                    restoreState = true
-                                    popUpTo("home") {
-                                        saveState = true
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                ConditionalLogging.error("Navigation", e) { "Navigation error for route: ${route.id}" }
-                            }
-                        }
+                        onClick = { navigateToSchedule(navController, route) }
                     )
                 }
             }
@@ -305,20 +320,7 @@ fun RoutesListState(
                     BusRouteCard(
                         route = route,
                         isGridMode = false,
-                        onClick = {
-                            try {
-                                Timber.d("Route clicked: ${route.id} - ${route.name}")
-                                navController.navigate("schedule/${route.id}") {
-                                    launchSingleTop = true
-                                    restoreState = true
-                                    popUpTo("home") {
-                                        saveState = true
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                Timber.e(e, "Navigation error for route: ${route.id}")
-                            }
-                        }
+                        onClick = { navigateToSchedule(navController, route) }
                     )
                 }
             }
@@ -358,16 +360,17 @@ fun RoutesListState(
  * - Использование remember для вычисляемых значений
  * 
  * @param navController контроллер навигации для переходов между экранами
- * @param viewModel ViewModel для управления данными маршрутов и состоянием
  * @param modifier модификатор для настройки внешнего вида
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavController,
-    viewModel: BusViewModel,
     modifier: Modifier = Modifier
 ) {
+    // Получаем ViewModel из Koin DI
+    val viewModel: RoutesViewModel = koinViewModel()
+    
     Timber.d("HomeScreen is being displayed")
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
@@ -388,6 +391,18 @@ fun HomeScreen(
         }
     }
 
+    // Pull-to-Refresh state
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
+    
+    // DataManagement ViewModel для проверки обновлений
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val dataManagementViewModel: com.example.lets_go_slavgorod.ui.viewmodel.DataManagementViewModel = viewModel(
+        factory = com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory.create(context) { 
+            com.example.lets_go_slavgorod.ui.viewmodel.DataManagementViewModel(it) 
+        }
+    )
+    val scheduleUpdateAvailable by dataManagementViewModel.scheduleUpdateAvailable.collectAsState()
+    
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -400,16 +415,27 @@ fun HomeScreen(
                     )
                 },
                 actions = {
+                    // Иконка настроек с Badge при доступности обновления
                     IconButton(onClick = { 
                         navController.navigate("settings") {
                             launchSingleTop = true
                         }
                     }) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Настройки",
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+                        BadgedBox(
+                            badge = {
+                                if (scheduleUpdateAvailable) {
+                                    Badge(
+                                        containerColor = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Настройки",
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -433,14 +459,21 @@ fun HomeScreen(
                 onSearch = { /* Действие при поиске, если нужно */ },
             )
 
-            when {
-                uiState.isLoading -> LoadingState()
-                uiState.error != null -> ErrorState(errorMessage = uiState.error!!)
-                uiState.routes.isEmpty() -> EmptyState(searchQuery = searchQuery)
-                else -> RoutesListState(
-                    routes = uiState.routes,
-                    navController = navController
-                )
+            // Pull-to-Refresh для обновления маршрутов
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { viewModel.refresh() },
+                modifier = Modifier.fillMaxSize()
+            ) {
+                when {
+                    uiState.isLoading -> LoadingState()
+                    uiState.error != null -> ErrorState(errorMessage = uiState.error!!)
+                    uiState.routes.isEmpty() -> EmptyState(searchQuery = searchQuery)
+                    else -> RoutesListState(
+                        routes = uiState.routes,
+                        navController = navController
+                    )
+                }
             }
         }
     }

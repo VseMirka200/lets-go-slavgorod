@@ -64,7 +64,7 @@ class ThemeViewModel(private val dataStore: DataStore<Preferences>) : ViewModel(
         }
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000L),
+            started = SharingStarted.WhileSubscribed(com.example.lets_go_slavgorod.utils.Constants.STATE_FLOW_TIMEOUT_MS),
             initialValue = AppTheme.SYSTEM
         )
 
