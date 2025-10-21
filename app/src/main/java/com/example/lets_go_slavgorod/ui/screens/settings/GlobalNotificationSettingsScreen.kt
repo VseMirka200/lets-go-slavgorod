@@ -1,6 +1,7 @@
 package com.example.lets_go_slavgorod.ui.screens.settings
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -38,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.lets_go_slavgorod.ui.utils.TextFormattingUtils
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationMode
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationSettingsViewModel
 import java.time.DayOfWeek
@@ -72,6 +75,9 @@ import java.time.DayOfWeek
  * - Подсказка о том, что это настройки "по умолчанию"
  * - Пояснение что индивидуальные настройки маршрутов имеют приоритет
  * - Ссылка на настройки конкретного маршрута (через экран расписания)
+ * 
+ * Дизайн v4.0:
+ * - Отключена анимация касания (ripple effect) для всех кликабельных элементов
  * 
  * @param notificationSettingsViewModel ViewModel для управления настройками
  * @param onNavigateBack callback для возврата назад
@@ -180,10 +186,16 @@ fun GlobalNotificationSettingsScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { showModeDialog = true },
+                    // Кликабельность без ripple эффекта
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null // Отключена анимация касания
+                    ) { showModeDialog = true },
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Row(
                     modifier = Modifier
@@ -225,17 +237,23 @@ fun GlobalNotificationSettingsScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { showDaysDialog = true },
+                        // Кликабельность без ripple эффекта
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null // Отключена анимация касания
+                        ) { showDaysDialog = true },
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
                             text = if (globalSelectedDays.isEmpty()) {
                                 "Дни не выбраны"
                             } else {
-                                "${globalSelectedDays.size} ${getDaysWord(globalSelectedDays.size)}"
+                                "${globalSelectedDays.size} ${TextFormattingUtils.getDaysWord(globalSelectedDays.size)}"
                             },
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Medium
@@ -282,7 +300,8 @@ fun GlobalNotificationSettingsScreen(
         }
     }
     
-    // Диалог выбора режима
+    // Диалог выбора режима уведомлений
+    // Отключена анимация касания (indication = null) для чистого вида
     if (showModeDialog) {
         AlertDialog(
             onDismissRequest = { showModeDialog = false },
@@ -293,7 +312,11 @@ fun GlobalNotificationSettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
+                                // Кликабельность без ripple эффекта
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null // Отключена анимация касания
+                                ) {
                                     notificationSettingsViewModel.setGlobalNotificationMode(mode)
                                     showModeDialog = false
                                 }
@@ -325,7 +348,8 @@ fun GlobalNotificationSettingsScreen(
         )
     }
     
-    // Диалог выбора дней
+    // Диалог выбора дней недели для уведомлений
+    // Временное состояние для изменений до подтверждения
     if (showDaysDialog) {
         var tempSelectedDays by remember { mutableStateOf(globalSelectedDays) }
         
@@ -338,7 +362,12 @@ fun GlobalNotificationSettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
+                                // Кликабельность без ripple эффекта для чистого вида
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null // Отключена анимация касания
+                                ) {
+                                    // Переключение выбора дня (добавление/удаление из списка)
                                     tempSelectedDays = if (day in tempSelectedDays) {
                                         tempSelectedDays - day
                                     } else {
@@ -386,15 +415,3 @@ fun GlobalNotificationSettingsScreen(
         )
     }
 }
-
-/**
- * Склонение слова "день"
- */
-private fun getDaysWord(count: Int): String {
-    return when {
-        count % 10 == 1 && count % 100 != 11 -> "день"
-        count % 10 in 2..4 && count % 100 !in 12..14 -> "дня"
-        else -> "дней"
-    }
-}
-

@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -70,6 +72,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -86,16 +89,26 @@ import com.example.lets_go_slavgorod.ui.viewmodel.UpdateMode
 import com.example.lets_go_slavgorod.ui.viewmodel.UpdateSettingsViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.VibrationSettingsViewModel
 import com.example.lets_go_slavgorod.utils.Constants
+import com.example.lets_go_slavgorod.ui.utils.TextFormattingUtils
 import timber.log.Timber
 
 /**
  * Экран настроек приложения
  * 
- * Версия: 3.0
+ * Версия: 4.0
  * Последнее обновление: Октябрь 2025
  * 
  * Централизованный экран для управления всеми настройками приложения.
  * Доступен из главного экрана через иконку настроек в шапке.
+ * 
+ * Изменения v4.0:
+ * - Обновлен дизайн заголовков разделов (современный стиль Material You)
+ * - Убраны декоративные полоски из заголовков разделов
+ * - Отключена анимация касания (ripple effect) для всех кликабельных элементов
+ * - Уменьшены отступы между разделами (8dp вместо 16dp/24dp)
+ * - Карточки настроек имеют фон surfaceVariant для визуального разделения
+ * - Легкий elevation (1dp) для выделения карточек
+ * - Закругление углов 12dp для современного вида
  * 
  * Изменения v3.0:
  * - Все разделы теперь сворачиваемые (по умолчанию свернуты)
@@ -156,7 +169,7 @@ import timber.log.Timber
  * @param updateSettingsViewModel ViewModel для настроек обновлений (опционально)
  * 
  * @author VseMirka200
- * @version 3.0
+ * @version 4.0
  * @since 1.0
  */
 @RequiresApi(Build.VERSION_CODES.O)
@@ -247,7 +260,6 @@ fun SettingsScreen(
     var isDisplaySectionExpanded by remember { mutableStateOf(false) }
     var isUpdateSectionExpanded by remember { mutableStateOf(false) }
     var isNotificationSectionExpanded by remember { mutableStateOf(false) }
-    var isVibrationSectionExpanded by remember { mutableStateOf(false) }
     var isDataSectionExpanded by remember { mutableStateOf(false) }
     var isAboutSectionExpanded by remember { mutableStateOf(false) }
 
@@ -289,27 +301,11 @@ fun SettingsScreen(
         ) {
             Spacer(Modifier.height(16.dp))
             // Заголовок секции "Настройка темы"
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { isThemeSectionExpanded = !isThemeSectionExpanded }
-                    .padding(bottom = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-            Text(
-                text = "Настройка темы",
-                style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Icon(
-                    imageVector = if (isThemeSectionExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                    contentDescription = if (isThemeSectionExpanded) "Свернуть" else "Развернуть",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
+            ModernSectionHeader(
+                title = "Настройка темы",
+                isExpanded = isThemeSectionExpanded,
+                onClick = { isThemeSectionExpanded = !isThemeSectionExpanded }
+            )
             
             if (isThemeSectionExpanded) {
             ThemeSettingsCard(
@@ -323,30 +319,14 @@ fun SettingsScreen(
             )
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(8.dp))
 
             // Заголовок секции "Отображение"
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { isDisplaySectionExpanded = !isDisplaySectionExpanded }
-                    .padding(bottom = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-            Text(
-                text = "Настройка отображения",
-                style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Icon(
-                    imageVector = if (isDisplaySectionExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                    contentDescription = if (isDisplaySectionExpanded) "Свернуть" else "Развернуть",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
+            ModernSectionHeader(
+                title = "Настройка отображения",
+                isExpanded = isDisplaySectionExpanded,
+                onClick = { isDisplaySectionExpanded = !isDisplaySectionExpanded }
+            )
             
             if (isDisplaySectionExpanded) {
             DisplaySettingsCard(
@@ -367,30 +347,14 @@ fun SettingsScreen(
             )
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(8.dp))
             
             // Заголовок секции "Обновления"
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { isUpdateSectionExpanded = !isUpdateSectionExpanded }
-                    .padding(bottom = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-            Text(
-                text = "Настройка обновлений",
-                style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Icon(
-                    imageVector = if (isUpdateSectionExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                    contentDescription = if (isUpdateSectionExpanded) "Свернуть" else "Развернуть",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
+            ModernSectionHeader(
+                title = "Настройка обновлений",
+                isExpanded = isUpdateSectionExpanded,
+                onClick = { isUpdateSectionExpanded = !isUpdateSectionExpanded }
+            )
             
             if (isUpdateSectionExpanded) {
             UpdateSettingsCard(
@@ -429,30 +393,14 @@ fun SettingsScreen(
             )
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(8.dp))
 
             // Заголовок секции "Уведомления"
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { isNotificationSectionExpanded = !isNotificationSectionExpanded }
-                    .padding(bottom = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-            Text(
-                text = "Настройка уведомлений",
-                style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Icon(
-                    imageVector = if (isNotificationSectionExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                    contentDescription = if (isNotificationSectionExpanded) "Свернуть" else "Развернуть",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
+            ModernSectionHeader(
+                title = "Настройка уведомлений",
+                isExpanded = isNotificationSectionExpanded,
+                onClick = { isNotificationSectionExpanded = !isNotificationSectionExpanded }
+            )
             
             if (isNotificationSectionExpanded) {
             QuietModeSettingsCard(
@@ -466,7 +414,7 @@ fun SettingsScreen(
                 }
             )
                 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(12.dp))
                 
                 // Карточка настройки вибрации (оптимизация: collect один раз)
                 val vibrationEnabled by vibrationSettingsViewModel.vibrationEnabled.collectAsState()
@@ -478,30 +426,14 @@ fun SettingsScreen(
                 )
             }
             
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(8.dp))
 
             // Заголовок секции "Управление данными"
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { isDataSectionExpanded = !isDataSectionExpanded }
-                    .padding(bottom = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Управление данными",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Icon(
-                    imageVector = if (isDataSectionExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                    contentDescription = if (isDataSectionExpanded) "Свернуть" else "Развернуть",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
+            ModernSectionHeader(
+                title = "Управление данными",
+                isExpanded = isDataSectionExpanded,
+                onClick = { isDataSectionExpanded = !isDataSectionExpanded }
+            )
             
             if (isDataSectionExpanded) {
                 // Оптимизация: collect один раз для каждого состояния
@@ -525,7 +457,7 @@ fun SettingsScreen(
                     }
                 )
                 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(16.dp))
 
                 // Заголовок подсекции "Сброс настроек"
             Text(
@@ -549,36 +481,24 @@ fun SettingsScreen(
             )
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(8.dp))
             
             // Заголовок секции "О приложении"
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { isAboutSectionExpanded = !isAboutSectionExpanded }
-                    .padding(bottom = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-            Text(
-                text = "О приложении",
-                style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Icon(
-                    imageVector = if (isAboutSectionExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                    contentDescription = if (isAboutSectionExpanded) "Свернуть" else "Развернуть",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
+            ModernSectionHeader(
+                title = "О приложении",
+                isExpanded = isAboutSectionExpanded,
+                onClick = { isAboutSectionExpanded = !isAboutSectionExpanded }
+            )
             
             if (isAboutSectionExpanded) {
                 // Информация о приложении
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
@@ -605,7 +525,10 @@ fun SettingsScreen(
                                     textDecoration = TextDecoration.Underline
                 ),
                 color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.clickable {
+                                modifier = Modifier.clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) {
                                     try {
                                         val intent = Intent(Intent.ACTION_VIEW, developerVkUrl.toUri())
                                         context.startActivity(intent)
@@ -629,7 +552,11 @@ fun SettingsScreen(
                 // Обратная связь
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
@@ -692,7 +619,11 @@ fun SettingsScreen(
                 // Поддержка разработчика
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
@@ -987,6 +918,12 @@ fun SettingsScreen(
  * 
  * При клике на настройку открывается модальный диалог выбора.
  * 
+ * Дизайн v4.0:
+ * - Фон surfaceVariant для визуального выделения
+ * - Легкий elevation (1dp) для разделения от фона
+ * - Закругление 12dp для современного вида
+ * - Отключена анимация касания (ripple effect)
+ * 
  * @param currentDisplayMode текущий режим отображения
  * @param currentGridColumns текущее количество колонок
  * @param showDisplayModeDropdown флаг отображения диалога режима
@@ -1014,7 +951,11 @@ private fun DisplaySettingsCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -1046,13 +987,16 @@ private fun DisplaySettingsCard(
                     )
                 }
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .clickable { onShowDisplayModeDropdownChange(true) }
-                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier
+                                .padding(start = 8.dp)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) { onShowDisplayModeDropdownChange(true) }
+                        ) {
                         Text(
                             text = displayModeOptions.find { it.first == currentDisplayMode }?.second ?: "Клетка",
                             style = MaterialTheme.typography.bodyMedium,
@@ -1086,7 +1030,10 @@ private fun DisplaySettingsCard(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             modifier = Modifier
                                 .padding(start = 8.dp)
-                                .clickable { onShowColumnsDropdownChange(true) }
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) { onShowColumnsDropdownChange(true) }
                         ) {
                             Text(
                                 text = columnsOptions.find { it.first == currentGridColumns }?.second ?: "2 колонки",
@@ -1138,6 +1085,12 @@ private fun DisplaySettingsCard(
  * - Светлая
  * - Темная
  * 
+ * Дизайн v4.0:
+ * - Фон surfaceVariant для визуального выделения
+ * - Легкий elevation (1dp) для разделения от фона
+ * - Закругление 12dp для современного вида
+ * - Отключена анимация касания (ripple effect)
+ * 
  * @param currentAppTheme текущая выбранная тема
  * @param showThemeDropdown флаг отображения модального диалога
  * @param onShowThemeDropdownChange callback изменения флага диалога
@@ -1145,7 +1098,7 @@ private fun DisplaySettingsCard(
  * @param onThemeSelected callback выбора темы
  */
 @Composable
-fun ThemeSettingsCard(
+private fun ThemeSettingsCard(
     currentAppTheme: AppTheme,
     showThemeDropdown: Boolean,
     onShowThemeDropdownChange: (Boolean) -> Unit,
@@ -1154,13 +1107,20 @@ fun ThemeSettingsCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onShowThemeDropdownChange(true) }
-                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) { onShowThemeDropdownChange(true) }
+                .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -1213,6 +1173,12 @@ fun ThemeSettingsCard(
  * - Отображение статуса и результатов
  * - Управление доступными обновлениями
  * 
+ * Дизайн v4.0:
+ * - Фон surfaceVariant для визуального выделения
+ * - Легкий elevation (1dp) для разделения от фона
+ * - Закругление 12dp для современного вида
+ * - Отключена анимация касания (ripple effect)
+ * 
  * @param currentUpdateMode текущий режим обновлений
  * @param showUpdateModeDropdown флаг отображения выпадающего меню
  * @param onShowUpdateModeDropdownChange callback для изменения состояния меню
@@ -1231,7 +1197,7 @@ fun ThemeSettingsCard(
  * @param onDownloadUpdate callback для скачивания обновления
  */
 @Composable
-fun UpdateSettingsCard(
+private fun UpdateSettingsCard(
     currentUpdateMode: UpdateMode,
     showUpdateModeDropdown: Boolean,
     onShowUpdateModeDropdownChange: (Boolean) -> Unit,
@@ -1251,7 +1217,11 @@ fun UpdateSettingsCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
         Column(
             modifier = Modifier.padding(0.dp)
@@ -1285,7 +1255,10 @@ fun UpdateSettingsCard(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                             modifier = Modifier
                                 .padding(start = 8.dp)
-                                .clickable { onShowUpdateModeDropdownChange(true) }
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) { onShowUpdateModeDropdownChange(true) }
                     ) {
                         Text(
                             text = when (currentUpdateMode) {
@@ -1577,6 +1550,12 @@ private fun formatLastCheckTime(timestamp: Long): String {
  * Примечание: Индивидуальные настройки маршрутов настраиваются
  * через экран расписания (кнопка уведомлений в шапке).
  * 
+ * Дизайн v4.0:
+ * - Фон surfaceVariant для визуального выделения
+ * - Легкий elevation (1dp) для разделения от фона
+ * - Закругление 12dp для современного вида
+ * - Отключена анимация касания (ripple effect)
+ * 
  * @param currentQuietMode текущий режим тихого режима
  * @param showQuietModeDropdown флаг отображения модального диалога
  * @param onShowQuietModeDropdownChange callback изменения флага диалога
@@ -1597,7 +1576,11 @@ private fun QuietModeSettingsCard(
     var showDaysDialog by remember { mutableStateOf(false) }
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -1625,13 +1608,16 @@ private fun QuietModeSettingsCard(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier.clickable { onShowQuietModeDropdownChange(true) }
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { onShowQuietModeDropdownChange(true) }
                     ) {
                         Text(
                             text = when (currentQuietMode) {
                                 QuietMode.DISABLED -> "Отключены"
                                 QuietMode.ENABLED -> "Включены"
-                                QuietMode.CUSTOM_DAYS -> "Временно: $customDays ${getDaysWord(customDays)}"
+                                QuietMode.CUSTOM_DAYS -> "Временно: $customDays ${TextFormattingUtils.getDaysWord(customDays)}"
                             },
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary
@@ -1656,7 +1642,7 @@ private fun QuietModeSettingsCard(
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = stringResource(R.string.quiet_mode_info, customDays, getDaysWord(customDays)),
+                        text = stringResource(R.string.quiet_mode_info, customDays, TextFormattingUtils.getDaysWord(customDays)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1721,15 +1707,6 @@ private fun QuietModeSettingsCard(
     }
 }
 
-// Склонение слова "день"
-private fun getDaysWord(count: Int): String {
-    return when {
-        count % 10 == 1 && count % 100 != 11 -> "день"
-        count % 10 in 2..4 && (count % 100 < 10 || count % 100 >= 20) -> "дня"
-        else -> "дней"
-    }
-}
-
 /**
  * Универсальный модальный диалог выбора опций
  * 
@@ -1741,6 +1718,9 @@ private fun getDaysWord(count: Int): String {
  * - Клик на всю строку для выбора
  * - Автоматическое закрытие после выбора (управляется извне)
  * - Кнопка "Закрыть" для отмены
+ * 
+ * Дизайн v4.0:
+ * - Отключена анимация касания (ripple effect) на строках выбора
  * 
  * @param title заголовок диалога
  * @param options список текстовых вариантов для выбора
@@ -1773,7 +1753,10 @@ private fun ModalSelectionDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onOptionSelected(index) }
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { onOptionSelected(index) }
                             .padding(vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -1878,6 +1861,12 @@ private fun CustomDaysDialog(
  * - Избранные времена отправления
  * - Индивидуальные настройки уведомлений маршрутов
  * 
+ * Дизайн v4.0:
+ * - Фон errorContainer с прозрачностью для визуального предупреждения
+ * - Легкий elevation (1dp) для разделения от фона
+ * - Закругление 12dp для современного вида
+ * - Отключена анимация касания (ripple effect)
+ * 
  * @param onResetSettings callback для запуска сброса настроек
  */
 @Composable
@@ -1887,6 +1876,7 @@ private fun ResetSettingsCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
         )
@@ -1894,7 +1884,10 @@ private fun ResetSettingsCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onResetSettings() }
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) { onResetSettings() }
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -1948,6 +1941,12 @@ private fun ResetSettingsCard(
  * - Настройки приложения
  * - Избранные времена
  * 
+ * Дизайн v4.0:
+ * - Динамический фон: errorContainer (до очистки) / primaryContainer (после очистки)
+ * - Легкий elevation (1dp) для разделения от фона
+ * - Закругление 12dp для современного вида
+ * - Отключена анимация касания (ripple effect)
+ * 
  * @param onClearCache callback для очистки кэша
  * @param cacheCleared флаг успешной очистки кэша
  */
@@ -1959,6 +1958,7 @@ private fun ClearCacheCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (cacheCleared) {
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
@@ -1970,7 +1970,11 @@ private fun ClearCacheCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(enabled = !cacheCleared) { onClearCache() }
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    enabled = !cacheCleared
+                ) { onClearCache() }
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -2035,6 +2039,11 @@ private fun ClearCacheCard(
  * Позволяет пользователю вручную обновить расписание автобусов
  * из удалённого JSON файла на GitHub.
  * 
+ * Дизайн v4.0:
+ * - Фон surfaceVariant для визуального выделения
+ * - Легкий elevation (1dp) для разделения от фона
+ * - Закругление 12dp для современного вида
+ * 
  * @param isRefreshing флаг процесса обновления
  * @param refreshError сообщение об ошибке обновления
  * @param refreshSuccess флаг успешного обновления
@@ -2055,7 +2064,11 @@ private fun ScheduleUpdateCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -2216,6 +2229,11 @@ private fun ScheduleUpdateCard(
  * Позволяет пользователю включать/выключать вибрацию устройства
  * при получении уведомлений о предстоящем отправлении автобуса.
  * 
+ * Дизайн v4.0:
+ * - Фон surfaceVariant для визуального выделения
+ * - Легкий elevation (1dp) для разделения от фона
+ * - Закругление 12dp для современного вида
+ * 
  * @param vibrationEnabled текущее состояние настройки вибрации
  * @param onVibrationToggle callback для изменения настройки
  */
@@ -2226,12 +2244,16 @@ private fun VibrationSettingsCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -2262,6 +2284,76 @@ private fun VibrationSettingsCard(
             Switch(
                 checked = vibrationEnabled,
                 onCheckedChange = onVibrationToggle
+            )
+        }
+    }
+}
+
+/**
+ * Современный заголовок секции настроек
+ * 
+ * Минималистичный дизайн в стиле Material You.
+ * Используется для визуального разделения секций настроек.
+ * 
+ * Особенности дизайна:
+ * - Фон primaryContainer с прозрачностью 40%
+ * - Закругление углов 16dp
+ * - Нулевой elevation для единого вида с фоном
+ * - Убрана анимация касания (indication = null)
+ * - Uppercase текст с увеличенным letterSpacing (2sp)
+ * - Иконка стрелки (expand/collapse) справа
+ * 
+ * @param title название секции (автоматически переводится в uppercase)
+ * @param isExpanded состояние секции (развернута/свернута)
+ * @param onClick callback для переключения состояния секции
+ */
+@Composable
+private fun ModernSectionHeader(
+    title: String,
+    isExpanded: Boolean,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 12.dp)
+            // Кликабельность без анимации касания для минималистичного вида
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null, // Отключена анимация ripple
+                onClick = onClick
+            ),
+        colors = CardDefaults.cardColors(
+            // Слегка видимый фон для выделения заголовка секции
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), // Без тени для единого вида
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Название секции в uppercase для выразительности
+            Text(
+                text = title.uppercase(),
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontSize = 15.sp
+                ),
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.primary,
+                letterSpacing = 2.sp // Увеличенное расстояние между буквами
+            )
+            
+            // Иконка стрелки показывает состояние секции (развернута/свернута)
+            Icon(
+                imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                contentDescription = if (isExpanded) "Свернуть" else "Развернуть",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
             )
         }
     }

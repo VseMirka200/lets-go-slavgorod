@@ -177,4 +177,3 @@ class RoutesViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 }
-
