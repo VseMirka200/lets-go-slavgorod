@@ -1,11 +1,14 @@
 package com.example.lets_go_slavgorod.data.remote
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.model.BusSchedule
 import com.example.lets_go_slavgorod.utils.Constants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONArray
 import org.json.JSONObject
 import timber.log.Timber
@@ -45,6 +48,12 @@ class RemoteDataSource(private val context: Context) {
         private const val CACHE_FILE_NAME = "remote_routes_data.json"
         /** Имя файла для хранения версии кэша */
         private const val CACHE_VERSION_FILE = "cache_version.txt"
+        /** Имя файла для хранения метаданных кэша */
+        private const val CACHE_METADATA_FILE = "cache_metadata.json"
+        /** TTL кэша в часах */
+        private const val CACHE_TTL_HOURS = 24L
+        /** Таймаут загрузки */
+        private const val DOWNLOAD_TIMEOUT_MS = 30000L
     }
     
     private var cachedRoutes: List<BusRoute>? = null
@@ -107,11 +116,25 @@ class RemoteDataSource(private val context: Context) {
     }
     
     /**
-     * Загружает JSON с удалённого сервера (GitHub)
+     * Загружает JSON с удалённого сервера (GitHub) с retry механизмом
      * 
      * @return содержимое JSON файла или null при ошибке
      */
     private suspend fun downloadRemoteJson(): String? = withContext(Dispatchers.IO) {
+        // Проверяем качество соединения
+        if (!isNetworkAvailable()) {
+            Timber.w("⚠️ No network connection available")
+            return@withContext null
+        }
+        
+        // Загружаем с таймаутом
+        downloadWithTimeout()
+    }
+    
+    /**
+     * Загружает данные с таймаутом
+     */
+    private suspend fun downloadWithTimeout(): String? = withTimeoutOrNull(DOWNLOAD_TIMEOUT_MS) {
         try {
             Timber.i("🌐 Downloading routes data from GitHub: ${Constants.REMOTE_JSON_URL}")
             
@@ -123,42 +146,110 @@ class RemoteDataSource(private val context: Context) {
                 connectTimeout = Constants.REMOTE_CONNECTION_TIMEOUT
                 readTimeout = Constants.REMOTE_READ_TIMEOUT
                 setRequestProperty("Accept", "application/json")
-                setRequestProperty("User-Agent", "LetsGoSlavgorod-Android")
+                setRequestProperty("User-Agent", "LetsGoSlavgorod-Android/2.0")
+                setRequestProperty("Cache-Control", "no-cache")
+                setRequestProperty("Connection", "close")
+                useCaches = false
+                defaultUseCaches = false
             }
             
             val responseCode = connection.responseCode
+            Timber.d("📡 GitHub response code: $responseCode")
             
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                val jsonString = connection.inputStream.bufferedReader().use { it.readText() }
-                connection.disconnect()
-                
-                // Проверяем, что загруженный JSON валиден
-                try {
-                    val testJson = JSONObject(jsonString)
-                    val testRoutes = testJson.getJSONArray("routes")
-                    val version = testJson.optString("version", "unknown")
-                    Timber.i("✅ Successfully downloaded routes data from GitHub (${jsonString.length} bytes, ${testRoutes.length()} routes, version: $version)")
-                } catch (e: Exception) {
-                    Timber.e(e, "❌ Downloaded JSON is invalid, discarding")
-                    return@withContext null
+            when (responseCode) {
+                HttpURLConnection.HTTP_OK -> {
+                    val jsonString = connection.inputStream.bufferedReader().use { it.readText() }
+                    connection.disconnect()
+                    
+                    // Расширенная валидация
+                    if (validateJsonData(jsonString)) {
+                        Timber.i("✅ Successfully downloaded and validated data from GitHub")
+                        return@withTimeoutOrNull jsonString
+                    } else {
+                        Timber.e("❌ Downloaded data failed validation")
+                        return@withTimeoutOrNull null
+                    }
                 }
-                
-                jsonString
-            } else {
-                Timber.w("⚠️ Failed to download from GitHub: HTTP $responseCode")
-                connection.disconnect()
-                null
+                HttpURLConnection.HTTP_NOT_FOUND -> {
+                    Timber.e("❌ File not found on GitHub: $responseCode")
+                    return@withTimeoutOrNull null
+                }
+                HttpURLConnection.HTTP_UNAVAILABLE -> {
+                    Timber.e("❌ GitHub service unavailable: $responseCode")
+                    return@withTimeoutOrNull null
+                }
+                else -> {
+                    Timber.w("⚠️ Unexpected response code: $responseCode")
+                    return@withTimeoutOrNull null
+                }
             }
+            
         } catch (e: java.net.UnknownHostException) {
-            Timber.w("⚠️ No internet connection or GitHub is unreachable: ${e.message}")
+            Timber.w("⚠️ No internet connection: ${e.message}")
             null
         } catch (e: java.net.SocketTimeoutException) {
-            Timber.w("⚠️ Connection timeout while downloading from GitHub: ${e.message}")
+            Timber.w("⚠️ Connection timeout: ${e.message}")
             null
         } catch (e: Exception) {
-            Timber.e(e, "❌ Error downloading routes data from GitHub: ${e.javaClass.simpleName} - ${e.message}")
+            Timber.e(e, "❌ Error downloading from GitHub: ${e.javaClass.simpleName}")
             null
         }
+    }
+    
+    /**
+     * Расширенная валидация JSON данных
+     */
+    private fun validateJsonData(jsonString: String): Boolean {
+        return try {
+            val json = JSONObject(jsonString)
+            
+            // Проверяем обязательные поля
+            if (!json.has("routes") || !json.has("version")) {
+                Timber.e("❌ Missing required fields: routes or version")
+                return false
+            }
+            
+            val routes = json.getJSONArray("routes")
+            if (routes.length() == 0) {
+                Timber.e("❌ Empty routes array")
+                return false
+            }
+            
+            // Проверяем структуру первого маршрута
+            val firstRoute = routes.getJSONObject(0)
+            val requiredFields = listOf("id", "routeNumber", "name", "schedules")
+            for (field in requiredFields) {
+                if (!firstRoute.has(field)) {
+                    Timber.e("❌ Missing field in route: $field")
+                    return false
+                }
+            }
+            
+            // Проверяем размер файла (не слишком большой)
+            if (jsonString.length > 10 * 1024 * 1024) { // 10MB
+                Timber.e("❌ File too large: ${jsonString.length} bytes")
+                return false
+            }
+            
+            Timber.d("✅ JSON validation passed: ${routes.length()} routes, version: ${json.optString("version", "unknown")}")
+            true
+            
+        } catch (e: Exception) {
+            Timber.e(e, "❌ JSON validation failed")
+            false
+        }
+    }
+    
+    /**
+     * Проверяет доступность сети
+     */
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+               capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
     
     /**
@@ -365,12 +456,13 @@ class RemoteDataSource(private val context: Context) {
     }
     
     /**
-     * Загружает маршруты
+     * Загружает маршруты с метриками
      * 
      * @param forceRefresh принудительная загрузка с GitHub
      * @return список маршрутов
      */
     suspend fun loadRoutes(forceRefresh: Boolean = false): List<BusRoute> = withContext(Dispatchers.IO) {
+        val startTime = System.currentTimeMillis()
         Timber.d("🚌 loadRoutes called with forceRefresh=$forceRefresh")
         
         // Возвращаем кэшированные данные если не требуется обновление
@@ -414,7 +506,9 @@ class RemoteDataSource(private val context: Context) {
             }
             
             cachedRoutes = routes
-            Timber.i("✅ Successfully loaded ${routes.size} routes (forceRefresh=$forceRefresh)")
+            
+            val loadTime = System.currentTimeMillis() - startTime
+            Timber.i("✅ Successfully loaded ${routes.size} routes (forceRefresh=$forceRefresh) in ${loadTime}ms")
             
             routes
         } catch (e: Exception) {

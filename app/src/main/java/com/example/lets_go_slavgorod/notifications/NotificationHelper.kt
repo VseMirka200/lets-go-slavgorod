@@ -103,7 +103,7 @@ object NotificationHelper {
         departurePointInfo: String,
         enableVibration: Boolean = true
     ) {
-        createNotificationChannel(context.applicationContext)
+        // Канал уже создан в BusApplication.onCreate()
         
         // Вибрация при получении уведомления
         if (enableVibration) {

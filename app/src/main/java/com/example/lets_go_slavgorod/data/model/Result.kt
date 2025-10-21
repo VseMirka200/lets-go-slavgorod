@@ -108,3 +108,10 @@ sealed class Result<out T> {
     
 }
 
+/**
+ * Extension функция для преобразования AppError в Result.Error
+ */
+fun AppError.toResultError(): Result.Error {
+    return Result.Error(AppErrorException(this), this.getUserMessage())
+}
+

@@ -129,16 +129,20 @@ class BusApplication : MultiDexApplication() {
         
         // Фоновые задачи
         applicationScope.launch {
-            // Обновляем кэш настроек уведомлений (чтобы избежать runBlocking)
-            NotificationPreferencesCache.updateCache(this@BusApplication)
-            
-            // Восстанавливаем запланированные уведомления
-            rescheduleAlarmsOnStartup()
-            
-            // Маршруты загружаются автоматически при инициализации репозитория
-            
-            // Запускаем автоматическую проверку обновлений
-            startAutomaticUpdateCheck()
+            try {
+                // Обновляем кэш настроек уведомлений (чтобы избежать runBlocking)
+                NotificationPreferencesCache.updateCache(this@BusApplication)
+                
+                // Восстанавливаем запланированные уведомления
+                rescheduleAlarmsOnStartup()
+                
+                // Маршруты загружаются автоматически при инициализации репозитория
+                
+                // Запускаем автоматическую проверку обновлений
+                startAutomaticUpdateCheck()
+            } catch (e: Exception) {
+                loge("Error during app initialization: ${e.message}")
+            }
         }
         
         // Добавляем наблюдатель за жизненным циклом процесса

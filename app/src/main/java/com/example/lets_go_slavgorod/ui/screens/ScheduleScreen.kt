@@ -35,10 +35,11 @@ import com.example.lets_go_slavgorod.ui.components.schedule.ScheduleList
 import com.example.lets_go_slavgorod.ui.model.createScheduleUiState
 import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.ScheduleViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.ViewModelFactory
 import com.example.lets_go_slavgorod.utils.ScheduleUtils
 import com.example.lets_go_slavgorod.utils.ConditionalLogging
 import com.example.lets_go_slavgorod.utils.Constants
-import org.koin.androidx.compose.koinViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -90,8 +91,11 @@ fun ScheduleScreen(
     viewModel: BusViewModel, // Deprecated: Используется для ScheduleList (будет удалено в v3.0)
     onNotificationClick: ((String) -> Unit)? = null
 ) {
-    // Получаем ScheduleViewModel из Koin DI
-    val scheduleViewModel: ScheduleViewModel = koinViewModel()
+    // Получаем ScheduleViewModel с фабрикой
+    val appContext = androidx.compose.ui.platform.LocalContext.current
+    val scheduleViewModel: ScheduleViewModel = viewModel(
+        factory = ViewModelFactory(appContext.applicationContext as android.app.Application)
+    )
     // Состояние загрузки и данных
     // Remember с зависимостью от route гарантирует сброс при смене маршрута
     var isLoading by remember(route) { mutableStateOf(true) }

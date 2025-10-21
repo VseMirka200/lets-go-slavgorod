@@ -54,13 +54,14 @@ import com.example.lets_go_slavgorod.ui.components.SearchBar
 import com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory
 import com.example.lets_go_slavgorod.ui.viewmodel.DisplaySettingsViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.RoutesViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.ViewModelFactory
 import com.example.lets_go_slavgorod.utils.ConditionalLogging
 import com.example.lets_go_slavgorod.ui.viewmodel.RouteDisplayMode
 import com.example.lets_go_slavgorod.ui.components.BusRouteCard
 import com.example.lets_go_slavgorod.ui.theme.DesignTokens
 import timber.log.Timber
 import androidx.compose.runtime.LaunchedEffect
-import org.koin.androidx.compose.koinViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 /**
  * Компонент состояния загрузки данных
@@ -368,8 +369,11 @@ fun HomeScreen(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    // Получаем ViewModel из Koin DI
-    val viewModel: RoutesViewModel = koinViewModel()
+    // Получаем ViewModel с фабрикой
+    val appContext = androidx.compose.ui.platform.LocalContext.current
+    val viewModel: RoutesViewModel = viewModel(
+        factory = ViewModelFactory(appContext.applicationContext as android.app.Application)
+    )
     
     Timber.d("HomeScreen is being displayed")
     val uiState by viewModel.uiState.collectAsState()
