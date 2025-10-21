@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.ui.screens.settings
+﻿package com.example.lets_go_slavgorod.ui.screens.settings
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.lets_go_slavgorod.ui.navigation.Screen
 import com.example.lets_go_slavgorod.ui.components.SettingsTopBar
-import com.example.lets_go_slavgorod.utils.Constants
+import com.example.lets_go_slavgorod.core.Constants
 
 /**
  * Главный экран настроек со списком всех разделов
@@ -132,7 +132,7 @@ private fun SettingsItem(
             ) {
                 Icon(
                     imageVector = icon,
-                    contentDescription = null,
+                    contentDescription = title,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
@@ -155,7 +155,7 @@ private fun SettingsItem(
             
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
+                contentDescription = "Перейти",
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

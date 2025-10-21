@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.ui.screens.settings
+﻿package com.example.lets_go_slavgorod.ui.screens.settings
 
 import android.content.Intent
 import androidx.compose.foundation.clickable
@@ -24,7 +24,7 @@ import androidx.core.net.toUri
 import com.example.lets_go_slavgorod.R
 import com.example.lets_go_slavgorod.ui.components.FeedbackTypeDialog
 import com.example.lets_go_slavgorod.ui.components.SettingsTopBar
-import com.example.lets_go_slavgorod.utils.Constants
+import com.example.lets_go_slavgorod.core.Constants
 import timber.log.Timber
 
 /**
@@ -166,7 +166,7 @@ fun AboutScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Feedback,
-                            contentDescription = null,
+                            contentDescription = "Обратная связь",
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(Modifier.width(8.dp))
@@ -234,7 +234,7 @@ fun AboutScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Favorite,
-                                contentDescription = null,
+                                contentDescription = "Поддержать",
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(Modifier.width(4.dp))
@@ -255,7 +255,7 @@ fun AboutScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Star,
-                                contentDescription = null,
+                                contentDescription = "Оценить",
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(Modifier.width(4.dp))

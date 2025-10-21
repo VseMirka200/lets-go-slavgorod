@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.lets_go_slavgorod.data.model.BusRoute
+import timber.log.Timber
 
 /**
  * Объединенный заголовок экрана расписания маршрута
@@ -135,13 +136,20 @@ fun UnifiedScheduleHeader(
                 
                 // Кнопка уведомлений
                 if (onNotificationClick != null) {
-                    IconButton(onClick = onNotificationClick) {
+                    IconButton(
+                        onClick = {
+                            Timber.d("Notification button clicked for route: ${route?.id}")
+                            onNotificationClick()
+                        }
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Notifications,
                             contentDescription = "Настройки уведомлений",
                             tint = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
+                } else {
+                    Timber.w("Notification button hidden: onNotificationClick is null")
                 }
             }
             

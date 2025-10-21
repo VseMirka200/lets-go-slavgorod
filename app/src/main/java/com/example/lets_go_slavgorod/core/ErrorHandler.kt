@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.utils
+package com.example.lets_go_slavgorod.core
 
 import android.database.SQLException
 import android.database.sqlite.SQLiteException

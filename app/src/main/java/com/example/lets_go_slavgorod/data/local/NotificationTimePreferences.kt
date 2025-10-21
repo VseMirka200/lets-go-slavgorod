@@ -1,13 +1,14 @@
-package com.example.lets_go_slavgorod.data.local
+﻿package com.example.lets_go_slavgorod.data.local
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
-import com.example.lets_go_slavgorod.notifications.AlarmScheduler
-import com.example.lets_go_slavgorod.utils.Constants
-import com.example.lets_go_slavgorod.utils.toFavoriteTime
+import com.example.lets_go_slavgorod.domain.notification.AlarmScheduler
+import com.example.lets_go_slavgorod.core.Constants
+import com.example.lets_go_slavgorod.core.toFavoriteTime
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
@@ -77,19 +78,46 @@ class NotificationTimePreferences(private val context: Context) {
      * @param minutes время в минутах (null = использовать глобальное)
      */
     suspend fun setLeadTimeForRoute(routeId: String, minutes: Int?) {
+        Timber.d("═══════════════════════════════════════════════════")
+        Timber.d("💾 SAVING LEAD TIME")
+        Timber.d("   Route: $routeId")
+        Timber.d("   Minutes: $minutes")
+        
+        val key = routeLeadTimeKey(routeId)
+        Timber.d("   Key: ${key.name}")
+        
         context.dataStore.edit { preferences ->
             if (minutes == null) {
                 // Удаляем индивидуальную настройку, используем глобальную
-                preferences.remove(routeLeadTimeKey(routeId))
-                Timber.d("✅ Removed custom lead time for route $routeId (will use global)")
+                preferences.remove(key)
+                Timber.d("   ✓ Removed custom lead time (will use global)")
             } else {
-                preferences[routeLeadTimeKey(routeId)] = minutes
-                Timber.d("✅ Set lead time for route $routeId to $minutes minutes")
+                preferences[key] = minutes
+                Timber.d("   ✓ Written to DataStore: ${key.name} = $minutes")
             }
         }
         
+        // Проверка
+        val verification = context.dataStore.data.firstOrNull()
+        val savedValue = verification?.get(key)
+        Timber.d("   VERIFICATION: Read back = $savedValue")
+        
+        if (minutes != null && savedValue == minutes) {
+            Timber.d("   ✅ SUCCESS: Lead time verified in DataStore!")
+        } else if (minutes == null && savedValue == null) {
+            Timber.d("   ✅ SUCCESS: Custom lead time removed!")
+        } else {
+            Timber.e("   ❌ ERROR: Data mismatch! Expected: $minutes, Got: $savedValue")
+        }
+        
+        // Обновляем кэш настроек
+        NotificationPreferencesCache.updateCache(context)
+        Timber.d("   ✓ Updated NotificationPreferencesCache")
+        
         // Обновляем все активные уведомления с новым временем
         updateAllAlarmsAfterTimeChange()
+        
+        Timber.d("═══════════════════════════════════════════════════")
     }
     
     /**
@@ -134,5 +162,6 @@ class NotificationTimePreferences(private val context: Context) {
         }
     }
 }
+
 
 

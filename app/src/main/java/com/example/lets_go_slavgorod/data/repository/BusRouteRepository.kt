@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.data.repository
+﻿package com.example.lets_go_slavgorod.data.repository
 
 import android.content.Context
 import timber.log.Timber
@@ -6,13 +6,13 @@ import com.example.lets_go_slavgorod.data.local.JsonDataSource
 import com.example.lets_go_slavgorod.data.remote.RemoteDataSource
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.model.BusSchedule
-import com.example.lets_go_slavgorod.utils.Constants
-import com.example.lets_go_slavgorod.utils.ScheduleUtils
-import com.example.lets_go_slavgorod.utils.createBusRoute
-import com.example.lets_go_slavgorod.utils.logd
-import com.example.lets_go_slavgorod.utils.loge
-import com.example.lets_go_slavgorod.utils.search
-import com.example.lets_go_slavgorod.utils.NetworkMonitor
+import com.example.lets_go_slavgorod.core.Constants
+import com.example.lets_go_slavgorod.domain.util.ScheduleUtils
+import com.example.lets_go_slavgorod.core.createBusRoute
+import com.example.lets_go_slavgorod.core.logd
+import com.example.lets_go_slavgorod.core.loge
+import com.example.lets_go_slavgorod.core.search
+import com.example.lets_go_slavgorod.data.network.NetworkMonitor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

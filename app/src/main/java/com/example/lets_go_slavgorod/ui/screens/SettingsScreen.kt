@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.ui.screens
+﻿package com.example.lets_go_slavgorod.ui.screens
 
 import android.content.Intent
 import android.os.Build
@@ -77,7 +77,7 @@ import com.example.lets_go_slavgorod.R
 import com.example.lets_go_slavgorod.data.local.NotificationTimePreferences
 import com.example.lets_go_slavgorod.ui.components.FeedbackTypeDialog
 import com.example.lets_go_slavgorod.ui.components.NotificationTimeSelector
-import com.example.lets_go_slavgorod.ui.utils.TextFormattingUtils
+import com.example.lets_go_slavgorod.ui.util.TextFormattingUtils
 import com.example.lets_go_slavgorod.ui.viewmodel.AppTheme
 import com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory
 import com.example.lets_go_slavgorod.ui.viewmodel.DataManagementViewModel
@@ -89,7 +89,7 @@ import com.example.lets_go_slavgorod.ui.viewmodel.ThemeViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.UpdateMode
 import com.example.lets_go_slavgorod.ui.viewmodel.UpdateSettingsViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.VibrationSettingsViewModel
-import com.example.lets_go_slavgorod.utils.Constants
+import com.example.lets_go_slavgorod.core.Constants
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -626,7 +626,7 @@ fun SettingsScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Feedback,
-                                contentDescription = null,
+                                contentDescription = "Обратная связь",
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(Modifier.width(8.dp))
@@ -703,7 +703,7 @@ fun SettingsScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Favorite,
-                                    contentDescription = null,
+                                    contentDescription = "Избранное",
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(Modifier.width(4.dp))
@@ -724,7 +724,7 @@ fun SettingsScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Star,
-                                    contentDescription = null,
+                                    contentDescription = "Звезда рейтинга",
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(Modifier.width(4.dp))
@@ -1683,7 +1683,7 @@ private fun QuietModeSettingsCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Info,
-                        contentDescription = null,
+                        contentDescription = "Информация о тихом режиме",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)
                     )
@@ -1707,7 +1707,7 @@ private fun QuietModeSettingsCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Info,
-                        contentDescription = null,
+                        contentDescription = "Информация о статусе уведомлений",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)
                     )
@@ -2181,7 +2181,7 @@ private fun ScheduleUpdateCard(
                 } else {
                     Icon(
                         imageVector = Icons.Default.Download,
-                        contentDescription = null,
+                        contentDescription = "Загрузить обновление",
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(Modifier.width(8.dp))
@@ -2203,7 +2203,7 @@ private fun ScheduleUpdateCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
-                            contentDescription = null,
+                            contentDescription = "Успех",
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
@@ -2242,7 +2242,7 @@ private fun ScheduleUpdateCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Error,
-                            contentDescription = null,
+                            contentDescription = "Ошибка",
                             tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.size(20.dp)
                         )

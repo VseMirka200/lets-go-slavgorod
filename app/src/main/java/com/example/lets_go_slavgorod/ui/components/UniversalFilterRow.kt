@@ -60,7 +60,7 @@ fun UniversalFilterRow(
                         filter.icon?.let { icon ->
                             Icon(
                                 imageVector = icon,
-                                contentDescription = null,
+                                contentDescription = filter.label,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))

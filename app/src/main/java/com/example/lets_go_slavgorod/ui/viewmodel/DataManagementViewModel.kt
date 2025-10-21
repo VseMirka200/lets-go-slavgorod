@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lets_go_slavgorod.core.Constants
 import com.example.lets_go_slavgorod.data.local.dataStore
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
 import com.example.lets_go_slavgorod.ui.viewmodel.themeDataStore
@@ -236,7 +237,7 @@ class DataManagementViewModel(private val context: Context) : ViewModel() {
                 Timber.d("=== All settings cleared, restarting app ===")
                 
                 // Даем время на завершение всех операций
-                kotlinx.coroutines.delay(com.example.lets_go_slavgorod.utils.Constants.DATA_OPERATION_COMPLETION_DELAY_MS)
+                kotlinx.coroutines.delay(Constants.DATA_OPERATION_COMPLETION_DELAY_MS)
                 
                 // Перезапускаем приложение
                 withContext(Dispatchers.Main) {

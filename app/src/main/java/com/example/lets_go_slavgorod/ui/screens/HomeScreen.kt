@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.ui.screens
+﻿package com.example.lets_go_slavgorod.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,7 +55,7 @@ import com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory
 import com.example.lets_go_slavgorod.ui.viewmodel.DisplaySettingsViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.RoutesViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.ViewModelFactory
-import com.example.lets_go_slavgorod.utils.ConditionalLogging
+import com.example.lets_go_slavgorod.core.ConditionalLogging
 import com.example.lets_go_slavgorod.ui.viewmodel.RouteDisplayMode
 import com.example.lets_go_slavgorod.ui.components.BusRouteCard
 import com.example.lets_go_slavgorod.ui.theme.DesignTokens
@@ -206,7 +206,7 @@ fun EmptyState(searchQuery: String) {
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Info,
-                        contentDescription = null,
+                        contentDescription = "Информация",
                         modifier = Modifier.size(16.dp),
                         tint = MaterialTheme.colorScheme.secondary
                     )
@@ -367,11 +367,12 @@ fun RoutesListState(
 @Composable
 fun HomeScreen(
     navController: NavController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    routesViewModel: RoutesViewModel? = null
 ) {
-    // Получаем ViewModel с фабрикой
+    // Получаем ViewModel: используем переданный или создаем новый (для backwards compatibility)
     val appContext = androidx.compose.ui.platform.LocalContext.current
-    val viewModel: RoutesViewModel = viewModel(
+    val viewModel: RoutesViewModel = routesViewModel ?: viewModel(
         factory = ViewModelFactory(appContext.applicationContext as android.app.Application)
     )
     

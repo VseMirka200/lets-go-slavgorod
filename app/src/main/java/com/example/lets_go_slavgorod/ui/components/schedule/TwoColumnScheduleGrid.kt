@@ -14,7 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.lets_go_slavgorod.data.model.BusSchedule
 import com.example.lets_go_slavgorod.ui.components.CompactScheduleCard
-import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.FavoritesViewModel
 
 /**
  * Компонент для отображения расписания в две колонки
@@ -65,7 +65,7 @@ fun TwoColumnScheduleGrid(
     rightTitle: String,
     nextUpcomingLeftId: String?,
     nextUpcomingRightId: String?,
-    viewModel: BusViewModel,
+    viewModel: FavoritesViewModel,
     route: com.example.lets_go_slavgorod.data.model.BusRoute,
     showOnlyFavorites: Boolean = false,
     showOnlyUpcoming: Boolean = false,

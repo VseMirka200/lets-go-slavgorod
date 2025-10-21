@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.ui.screens.settings
+﻿package com.example.lets_go_slavgorod.ui.screens.settings
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -17,7 +17,7 @@ import com.example.lets_go_slavgorod.ui.viewmodel.DisplaySettingsViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.RouteDisplayMode
 import com.example.lets_go_slavgorod.ui.viewmodel.ThemeViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.AppTheme
-import com.example.lets_go_slavgorod.utils.Constants
+import com.example.lets_go_slavgorod.core.Constants
 
 /**
  * Экран настроек отображения

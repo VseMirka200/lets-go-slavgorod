@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Менеджер для проверки и загрузки обновлений приложения
  * 
  * Этот класс отвечает за:
@@ -9,7 +9,7 @@
  */
 @file:Suppress("UNCHECKED_CAST")
 
-package com.example.lets_go_slavgorod.updates
+package com.example.lets_go_slavgorod.domain.update
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -24,7 +24,7 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlin.math.max
-import com.example.lets_go_slavgorod.utils.ValidationUtils
+import com.example.lets_go_slavgorod.domain.util.ValidationUtils
 
 /**
  * Менеджер для проверки и загрузки обновлений приложения

@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.ui.components
+﻿package com.example.lets_go_slavgorod.ui.components
 
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.RepeatMode
@@ -29,8 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.lets_go_slavgorod.data.model.BusSchedule
-import com.example.lets_go_slavgorod.utils.Constants
-import com.example.lets_go_slavgorod.utils.TimeUtils
+import com.example.lets_go_slavgorod.core.Constants
+import com.example.lets_go_slavgorod.domain.util.TimeUtils
 import kotlinx.coroutines.delay
 import timber.log.Timber
 import java.util.Calendar

@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.data.local
+﻿package com.example.lets_go_slavgorod.data.local
 
 import android.content.Context
 import androidx.room.Database
@@ -8,7 +8,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.lets_go_slavgorod.data.local.dao.FavoriteTimeDao
 import com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity
-import com.example.lets_go_slavgorod.utils.Constants
+import com.example.lets_go_slavgorod.core.Constants
 
 /**
  * Основная база данных приложения на базе Room

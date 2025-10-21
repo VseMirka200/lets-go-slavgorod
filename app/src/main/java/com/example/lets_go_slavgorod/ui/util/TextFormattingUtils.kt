@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.ui.utils
+package com.example.lets_go_slavgorod.ui.util
 
 /**
  * Утилиты для форматирования текста в UI

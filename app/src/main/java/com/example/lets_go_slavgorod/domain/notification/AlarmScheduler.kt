@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.notifications
+﻿package com.example.lets_go_slavgorod.domain.notification
 
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -8,15 +8,13 @@ import android.os.Build
 import android.provider.Settings
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.example.lets_go_slavgorod.core.Constants
 import com.example.lets_go_slavgorod.data.local.NotificationPreferencesCache
-import com.example.lets_go_slavgorod.data.local.NotificationTimePreferences
 import com.example.lets_go_slavgorod.data.model.FavoriteTime
-import com.example.lets_go_slavgorod.notifications.AlarmScheduler.cancelAlarm
+import com.example.lets_go_slavgorod.data.notification.AlarmReceiver
+import com.example.lets_go_slavgorod.domain.notification.AlarmScheduler.cancelAlarm
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationMode
-import com.example.lets_go_slavgorod.utils.Constants
 import timber.log.Timber
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import java.text.SimpleDateFormat
 import java.time.DayOfWeek
 import java.util.Calendar
@@ -48,23 +46,11 @@ import java.util.Calendar
 object AlarmScheduler {
 
     // =====================================================================================
-    //                              КОНСТАНТЫ И КЛЮЧИ
+    //                              КОНСТАНТЫ
     // =====================================================================================
     
     /** Префикс для генерации уникальных request codes для каждого будильника */
     private const val ALARM_REQUEST_CODE_PREFIX = Constants.ALARM_REQUEST_CODE_PREFIX
-    
-    /** 
-     * Время опережения уведомления перед отправлением автобуса
-     * По умолчанию 5 минут = 300 000 миллисекунд
-     */
-    private const val FIVE_MINUTES_IN_MILLIS = Constants.NOTIFICATION_LEAD_TIME_MINUTES * 60 * 1000L
-    
-    /** Ключ DataStore для хранения текущего тихого режима */
-    private val QUIET_MODE_KEY = stringPreferencesKey("quiet_mode")
-    
-    /** Ключ DataStore для хранения времени окончания временного отключения */
-    private val QUIET_UNTIL_KEY = longPreferencesKey("quiet_until_time")
 
     /**
      * Проверяет, должны ли отправляться уведомления в соответствии с настройками пользователя
@@ -91,21 +77,23 @@ object AlarmScheduler {
      * - Режим уведомлений (будни/выходные/выбранные дни)
      * - Тихий режим и его расписание
      * - Системные разрешения на уведомления
-     * - Время опережения (5 минут до отправления)
+     * - Индивидуальное время опережения для маршрута (из NotificationTimePreferences)
      * 
      * Алгоритм планирования:
      * 1. Получает AlarmManager из системы
-     * 2. Вычисляет следующее время отправления согласно режиму уведомлений
-     * 3. Вычитает 5 минут для опережающего уведомления
-     * 4. Проверяет что время в будущем
-     * 5. Создает PendingIntent с данными маршрута
-     * 6. Планирует будильник учитывая версию Android
+     * 2. Загружает leadTime для конкретного маршрута из DataStore
+     * 3. Вычисляет следующее время отправления согласно режиму уведомлений
+     * 4. Вычитает leadTime для опережающего уведомления
+     * 5. Проверяет что время в будущем
+     * 6. Создает PendingIntent с данными маршрута
+     * 7. Планирует будильник учитывая версию Android
      * 
      * Особенности работы:
      * - На Android S+ (API 31+) требуется разрешение SCHEDULE_EXACT_ALARM
      * - На Android M-R (API 23-30) использует setExactAndAllowWhileIdle
      * - При отсутствии разрешений планирует приблизительный будильник с окном ±1 минута
      * - Проверка shouldSendNotification откладывается до срабатывания в AlarmReceiver
+     * - leadTime читается из настроек (глобальных или индивидуальных для маршрута)
      * 
      * @param context контекст приложения для доступа к системным сервисам
      * @param favoriteTime избранное время отправления с метаданными (ID, время, маршрут и т.д.)
@@ -113,6 +101,7 @@ object AlarmScheduler {
      * @see cancelAlarm для отмены запланированного уведомления
      * @see updateAllAlarmsBasedOnSettings для обновления всех уведомлений
      * @see AlarmReceiver.onReceive для обработки срабатывания будильника
+     * @see NotificationTimePreferences.getLeadTimeForRoute для получения времени опережения
      */
     fun scheduleAlarm(context: Context, favoriteTime: FavoriteTime) {
         // Проверка shouldSendNotification НЕ выполняется здесь преднамеренно:
@@ -126,11 +115,8 @@ object AlarmScheduler {
             return
         }
 
-        // Получаем время уведомления для конкретного маршрута из настроек пользователя
-        val timePreferences = NotificationTimePreferences(context)
-        val leadTimeMinutes = runBlocking {
-            timePreferences.getLeadTimeForRoute(favoriteTime.routeId).first()
-        }
+        // Получаем время уведомления для конкретного маршрута из кэша (синхронно, без блокировки)
+        val leadTimeMinutes = NotificationPreferencesCache.getLeadTimeForRoute(favoriteTime.routeId)
         val leadTimeMillis = leadTimeMinutes * 60 * 1000L
         
         Timber.d("Lead time for route ${favoriteTime.routeId}: $leadTimeMinutes minutes ($leadTimeMillis ms)")
@@ -375,7 +361,9 @@ object AlarmScheduler {
             NotificationMode.WEEKDAYS -> WeekdaysStrategy()
             NotificationMode.SELECTED_DAYS -> {
                 val selectedDays = NotificationPreferencesCache.getSelectedDays(favoriteTime.routeId)
-                SelectedDaysStrategy(selectedDays)
+                // Конвертируем день недели избранного времени в DayOfWeek
+                val targetDayOfWeek = convertCalendarDayToDayOfWeek(favoriteTime.dayOfWeek)
+                SelectedDaysStrategy(selectedDays, targetDayOfWeek)
             }
             NotificationMode.DISABLED -> DisabledStrategy()
         }
@@ -493,6 +481,37 @@ object AlarmScheduler {
         } catch (e: Exception) {
             Timber.e(e, "Error formatting millis: $millis")
             "Error formatting timestamp"
+        }
+    }
+    
+    /**
+     * Конвертирует день недели из формата Calendar в формат java.time.DayOfWeek
+     * 
+     * Calendar формат (из BusSchedule):
+     * - 1 = Воскресенье
+     * - 2 = Понедельник
+     * - 3 = Вторник
+     * - 4 = Среда
+     * - 5 = Четверг
+     * - 6 = Пятница
+     * - 7 = Суббота
+     * 
+     * @param calendarDay день недели в формате Calendar (1-7)
+     * @return DayOfWeek или null если неверное значение
+     */
+    private fun convertCalendarDayToDayOfWeek(calendarDay: Int): DayOfWeek? {
+        return when (calendarDay) {
+            1 -> DayOfWeek.SUNDAY
+            2 -> DayOfWeek.MONDAY
+            3 -> DayOfWeek.TUESDAY
+            4 -> DayOfWeek.WEDNESDAY
+            5 -> DayOfWeek.THURSDAY
+            6 -> DayOfWeek.FRIDAY
+            7 -> DayOfWeek.SATURDAY
+            else -> {
+                Timber.e("Invalid calendar day: $calendarDay")
+                null
+            }
         }
     }
 }

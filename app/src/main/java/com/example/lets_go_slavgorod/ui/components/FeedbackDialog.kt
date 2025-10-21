@@ -139,7 +139,7 @@ private fun FeedbackTypeCard(
         ) {
             Icon(
                 imageVector = type.icon,
-                contentDescription = null,
+                contentDescription = type.label,
                 modifier = Modifier.size(32.dp),
                 tint = MaterialTheme.colorScheme.primary
             )

@@ -120,8 +120,8 @@ temp/
 *.md~
 *.txt~
 
-# Gradle wrapper batch file (Windows)
-gradlew.bat
+# Gradle wrapper batch file (Windows) - COMMENTED OUT TO ALLOW VERSION CONTROL
+# gradlew.bat
 
 # Build output APKs (раскомментируйте если хотите коммитить APK в релизах)
 app/build/outputs/apk/

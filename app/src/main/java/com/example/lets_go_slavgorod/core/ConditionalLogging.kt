@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.utils
+package com.example.lets_go_slavgorod.core
 
 import com.example.lets_go_slavgorod.BuildConfig
 import timber.log.Timber

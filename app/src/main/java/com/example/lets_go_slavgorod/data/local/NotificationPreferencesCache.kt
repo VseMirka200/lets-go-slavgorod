@@ -3,11 +3,14 @@ package com.example.lets_go_slavgorod.data.local
 import android.content.Context
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
+import com.example.lets_go_slavgorod.core.Constants
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationMode
 import com.example.lets_go_slavgorod.ui.viewmodel.QuietMode
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
 import java.time.DayOfWeek
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Кэш настроек уведомлений для синхронного доступа из BroadcastReceiver
@@ -42,7 +45,7 @@ import java.time.DayOfWeek
  * @version 2.0
  * @since 2.0
  * 
- * @see com.example.lets_go_slavgorod.notifications.AlarmReceiver
+ * @see com.example.lets_go_slavgorod.data.notification.AlarmReceiver
  * @see QuietMode
  * @see NotificationMode
  */
@@ -64,17 +67,22 @@ object NotificationPreferencesCache {
     @Volatile
     private var selectedDays: Set<DayOfWeek> = emptySet()
     
-    /** Индивидуальные режимы уведомлений для каждого маршрута */
-    @Volatile
-    private var routeNotificationModes: MutableMap<String, NotificationMode> = mutableMapOf()
+    /** Индивидуальные режимы уведомлений для каждого маршрута (thread-safe) */
+    private val routeNotificationModes: ConcurrentHashMap<String, NotificationMode> = ConcurrentHashMap()
     
-    /** Индивидуальные наборы дней для каждого маршрута */
-    @Volatile
-    private var routeSelectedDays: MutableMap<String, Set<DayOfWeek>> = mutableMapOf()
+    /** Индивидуальные наборы дней для каждого маршрута (thread-safe) */
+    private val routeSelectedDays: ConcurrentHashMap<String, Set<DayOfWeek>> = ConcurrentHashMap()
     
     /** Флаг включения вибрации при получении уведомлений */
     @Volatile
     private var vibrationEnabled: Boolean = true
+    
+    /** Глобальное время опережения уведомления (в минутах) */
+    @Volatile
+    private var globalLeadTime: Int = Constants.DEFAULT_NOTIFICATION_LEAD_TIME
+    
+    /** Индивидуальное время опережения для каждого маршрута (в минутах, thread-safe) */
+    private val routeLeadTimes: ConcurrentHashMap<String, Int> = ConcurrentHashMap()
     
     /**
      * Асинхронное обновление всего кэша из DataStore
@@ -123,9 +131,14 @@ object NotificationPreferencesCache {
             // Обновляем настройку вибрации
             vibrationEnabled = preferences[androidx.datastore.preferences.core.booleanPreferencesKey("vibration_enabled")] ?: true
             
-            // ИСПРАВЛЕНИЕ: Загружаем индивидуальные настройки для каждого маршрута
-            val tempRouteModes = mutableMapOf<String, NotificationMode>()
-            val tempRouteDays = mutableMapOf<String, Set<DayOfWeek>>()
+            // Обновляем глобальное время опережения
+            globalLeadTime = preferences[androidx.datastore.preferences.core.intPreferencesKey("global_notification_lead_time")] 
+                ?: Constants.DEFAULT_NOTIFICATION_LEAD_TIME
+            
+            // Загружаем индивидуальные настройки для каждого маршрута
+            val tempRouteModes = ConcurrentHashMap<String, NotificationMode>()
+            val tempRouteDays = ConcurrentHashMap<String, Set<DayOfWeek>>()
+            val tempRouteLeadTimes = ConcurrentHashMap<String, Int>()
             
             // Проходим по всем ключам в preferences и ищем настройки маршрутов
             preferences.asMap().forEach { (key, value) ->
@@ -163,14 +176,30 @@ object NotificationPreferencesCache {
                         Timber.d("Loaded route days: $routeId -> $days")
                     }
                 }
+                
+                // Загружаем индивидуальное время опережения для конкретного маршрута
+                if (keyName.startsWith("route_") && keyName.endsWith("_lead_time")) {
+                    val routeId = keyName.removePrefix("route_").removeSuffix("_lead_time")
+                    val leadTime = value as? Int
+                    if (leadTime != null && leadTime > 0) {
+                        tempRouteLeadTimes[routeId] = leadTime
+                        Timber.d("Loaded route lead time: $routeId -> $leadTime minutes")
+                    }
+                }
             }
             
-            // Атомарно обновляем мапы (для потокобезопасности)
-            routeNotificationModes = tempRouteModes
-            routeSelectedDays = tempRouteDays
+            // Обновляем мапы (ConcurrentHashMap уже thread-safe)
+            routeNotificationModes.clear()
+            routeNotificationModes.putAll(tempRouteModes)
             
-            Timber.d("NotificationPreferencesCache updated: quietMode=$quietMode, notificationMode=$notificationMode, vibration=$vibrationEnabled")
-            Timber.d("Route-specific settings: ${routeNotificationModes.size} modes, ${routeSelectedDays.size} day sets")
+            routeSelectedDays.clear()
+            routeSelectedDays.putAll(tempRouteDays)
+            
+            routeLeadTimes.clear()
+            routeLeadTimes.putAll(tempRouteLeadTimes)
+            
+            Timber.d("NotificationPreferencesCache updated: quietMode=$quietMode, notificationMode=$notificationMode, vibration=$vibrationEnabled, globalLeadTime=$globalLeadTime")
+            Timber.d("Route-specific settings: ${routeNotificationModes.size} modes, ${routeSelectedDays.size} day sets, ${routeLeadTimes.size} lead times")
         } catch (e: Exception) {
             Timber.e(e, "Error updating notification preferences cache")
         }
@@ -242,6 +271,30 @@ object NotificationPreferencesCache {
      * @return true если вибрация должна срабатывать при уведомлениях
      */
     fun isVibrationEnabled(): Boolean = vibrationEnabled
+    
+    /**
+     * Получает время опережения уведомления для конкретного маршрута или глобальное
+     * 
+     * Если для маршрута установлено индивидуальное время, возвращает его,
+     * иначе возвращает глобальное время опережения.
+     * 
+     * Этот метод СИНХРОННЫЙ и НЕ блокирует поток - читает из in-memory кэша.
+     * Кэш обновляется асинхронно через updateCache().
+     * 
+     * @param routeId ID маршрута для получения индивидуальных настроек (опционально)
+     * @return время опережения в минутах
+     */
+    fun getLeadTimeForRoute(routeId: String? = null): Int {
+        val leadTime = if (routeId != null && routeLeadTimes.containsKey(routeId)) {
+            val customLeadTime = routeLeadTimes[routeId] ?: globalLeadTime
+            Timber.d("getLeadTimeForRoute($routeId): using CUSTOM lead time = $customLeadTime minutes")
+            customLeadTime
+        } else {
+            Timber.d("getLeadTimeForRoute($routeId): using GLOBAL lead time = $globalLeadTime minutes")
+            globalLeadTime
+        }
+        return leadTime
+    }
     
     /**
      * Комплексная проверка, должно ли быть отправлено уведомление (синхронно)

@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.ui.viewmodel
+﻿package com.example.lets_go_slavgorod.ui.viewmodel
 
 import android.app.Application
 import androidx.compose.runtime.Stable
@@ -10,10 +10,10 @@ import com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity
 import com.example.lets_go_slavgorod.data.model.BusSchedule
 import com.example.lets_go_slavgorod.data.model.FavoriteTime
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
-import com.example.lets_go_slavgorod.notifications.AlarmScheduler
-import com.example.lets_go_slavgorod.utils.Constants
-import com.example.lets_go_slavgorod.utils.toFavoriteTime
-import com.example.lets_go_slavgorod.utils.toFavoriteTimesBatch
+import com.example.lets_go_slavgorod.domain.notification.AlarmScheduler
+import com.example.lets_go_slavgorod.core.Constants
+import com.example.lets_go_slavgorod.core.toFavoriteTime
+import com.example.lets_go_slavgorod.core.toFavoriteTimesBatch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -92,12 +92,20 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
     fun addFavoriteTime(schedule: BusSchedule) {
         viewModelScope.launch {
             try {
+                Timber.d("═══════════════════════════════════════════════════")
+                Timber.d("🌟 ADDING FAVORITE TIME")
+                Timber.d("Input schedule:")
+                Timber.d("  id: ${schedule.id}")
+                Timber.d("  routeId: ${schedule.routeId}")
+                Timber.d("  time: ${schedule.departureTime}")
+                Timber.d("  day: ${schedule.dayOfWeek}")
+                
                 _uiState.update { it.copy(isAddingFavorite = true, error = null) }
                 
                 // Валидация
                 val sanitizedSchedule = schedule.sanitized()
                 if (!sanitizedSchedule.isValid()) {
-                    Timber.e("Invalid schedule data")
+                    Timber.e("❌ Invalid schedule data after sanitization")
                     _uiState.update {
                         it.copy(isAddingFavorite = false, error = "Некорректные данные")
                     }
@@ -107,6 +115,8 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
                 // Получаем информацию о маршруте
                 val route = routeRepository.getRouteById(sanitizedSchedule.routeId)
                 val currentTime = System.currentTimeMillis()
+                
+                Timber.d("Route info loaded: ${route?.name ?: "null"}")
                 
                 // Создаем entity
                 val favoriteTimeEntity = FavoriteTimeEntity(
@@ -122,12 +132,31 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
                     isActive = true
                 )
                 
+                Timber.d("Created FavoriteTimeEntity:")
+                Timber.d("  id: ${favoriteTimeEntity.id}")
+                Timber.d("  routeId: ${favoriteTimeEntity.routeId}")
+                Timber.d("  isActive: ${favoriteTimeEntity.isActive}")
+                Timber.d("  time: ${favoriteTimeEntity.departureTime}")
+                
                 // Сохраняем в БД
                 favoriteTimeDao.addFavoriteTime(favoriteTimeEntity)
+                Timber.d("✓ Saved to database")
+                
+                // Проверяем что сохранилось
+                val savedEntity = favoriteTimeDao.getFavoriteTimeById(favoriteTimeEntity.id).firstOrNull()
+                if (savedEntity != null) {
+                    Timber.d("✅ VERIFICATION: Favorite saved successfully!")
+                    Timber.d("   Saved entity routeId: ${savedEntity.routeId}")
+                    Timber.d("   Saved entity isActive: ${savedEntity.isActive}")
+                } else {
+                    Timber.e("❌ VERIFICATION FAILED: Favorite not found in DB after save!")
+                }
                 
                 // Планируем уведомление
                 val favoriteTime = favoriteTimeEntity.toFavoriteTime(routeRepository)
                 AlarmScheduler.checkAndUpdateNotifications(getApplication(), favoriteTime)
+                
+                Timber.d("═══════════════════════════════════════════════════")
                 
                 _uiState.update { it.copy(isAddingFavorite = false, error = null) }
             } catch (e: Exception) {

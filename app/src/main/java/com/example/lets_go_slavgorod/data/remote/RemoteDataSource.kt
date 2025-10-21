@@ -1,11 +1,11 @@
-package com.example.lets_go_slavgorod.data.remote
+﻿package com.example.lets_go_slavgorod.data.remote
 
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.model.BusSchedule
-import com.example.lets_go_slavgorod.utils.Constants
+import com.example.lets_go_slavgorod.core.Constants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -461,10 +461,11 @@ class RemoteDataSource(private val context: Context) {
      * Получает актуальный JSON (из GitHub, кэша или assets)
      * 
      * НОВАЯ ЛОГИКА:
-     * 1. При каждом запуске проверяет версию на GitHub (если есть интернет)
-     * 2. Если версия новее - автоматически скачивает и сохраняет
-     * 3. Если интернета нет - использует кэш
-     * 4. Если кэша нет - fallback на assets
+     * 1. Проверяет наличие интернета в начале
+     * 2. Если интернета НЕТ - сразу использует кэш или assets (быстро!)
+     * 3. Если интернет ЕСТЬ - проверяет обновления на GitHub
+     * 4. Если версия новее - автоматически скачивает и сохраняет
+     * 5. Если кэша нет - fallback на assets
      * 
      * @param forceRefresh принудительная загрузка с GitHub (игнорирует проверку версии)
      * @return JSON строка или null при ошибке
@@ -472,7 +473,33 @@ class RemoteDataSource(private val context: Context) {
     private suspend fun getJsonString(forceRefresh: Boolean = false): String? {
         Timber.d("📥 getJsonString called with forceRefresh=$forceRefresh")
         
-        // Если принудительное обновление - скачиваем без проверки версии
+        // ОПТИМИЗАЦИЯ: Проверяем интернет в начале, чтобы не тратить время на таймауты
+        val hasInternet = isNetworkAvailable()
+        Timber.d("🌐 Internet connection: ${if (hasInternet) "✅ Available" else "❌ Not available"}")
+        
+        // Если интернета нет и не force refresh - сразу используем кэш/assets
+        if (!hasInternet && !forceRefresh) {
+            Timber.d("⚡ No internet, skipping remote check and using local data...")
+            
+            // Пробуем загрузить из кэша
+            val cachedJson = loadFromCache()
+            if (cachedJson != null) {
+                Timber.i("✅ Using cached data (offline mode)")
+                return cachedJson
+            }
+            
+            // Если кэша нет - загружаем из assets
+            val assetsJson = loadFromAssets()
+            if (assetsJson != null) {
+                Timber.i("✅ Using assets (offline mode)")
+                return assetsJson
+            }
+            
+            Timber.e("❌ No cached or assets data available in offline mode")
+            return null
+        }
+        
+        // Если есть интернет или force refresh - пытаемся обновить
         if (forceRefresh) {
             Timber.d("🔄 Force refresh requested, attempting GitHub download...")
             val remoteJson = downloadRemoteJson()
@@ -505,14 +532,16 @@ class RemoteDataSource(private val context: Context) {
         }
         Timber.d("⚠️ Cache not available, attempting GitHub download...")
         
-        // Если в кэше нет, пробуем загрузить с GitHub
-        val remoteJson = downloadRemoteJson()
-        if (remoteJson != null) {
-            Timber.i("✅ Downloaded from GitHub, saving to cache")
-            saveToCache(remoteJson)
-            return remoteJson
+        // Если в кэше нет и есть интернет, пробуем загрузить с GitHub
+        if (hasInternet) {
+            val remoteJson = downloadRemoteJson()
+            if (remoteJson != null) {
+                Timber.i("✅ Downloaded from GitHub, saving to cache")
+                saveToCache(remoteJson)
+                return remoteJson
+            }
+            Timber.w("⚠️ GitHub download failed, falling back to assets...")
         }
-        Timber.w("⚠️ GitHub download failed, falling back to assets...")
         
         // Если всё не удалось, используем assets
         val assetsJson = loadFromAssets()

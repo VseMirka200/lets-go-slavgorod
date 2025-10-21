@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.ui.screens.settings
+﻿package com.example.lets_go_slavgorod.ui.screens.settings
 
 import android.content.Intent
 import androidx.compose.foundation.layout.*
@@ -19,7 +19,7 @@ import com.example.lets_go_slavgorod.ui.components.SettingsTopBar
 import com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory
 import com.example.lets_go_slavgorod.ui.viewmodel.UpdateMode
 import com.example.lets_go_slavgorod.ui.viewmodel.UpdateSettingsViewModel
-import com.example.lets_go_slavgorod.utils.Constants
+import com.example.lets_go_slavgorod.core.Constants
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.*

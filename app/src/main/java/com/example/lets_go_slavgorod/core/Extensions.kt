@@ -1,9 +1,10 @@
-package com.example.lets_go_slavgorod.utils
+package com.example.lets_go_slavgorod.core
 
 import com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity
 import com.example.lets_go_slavgorod.data.model.FavoriteTime
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
+import com.example.lets_go_slavgorod.domain.util.ValidationUtils
 import timber.log.Timber
 
 /**
@@ -143,10 +144,10 @@ fun FavoriteTimeEntity.toFavoriteTime(routeRepository: Any? = null): FavoriteTim
         routeId = this.routeId,
         routeNumber = routeNumber,
         routeName = routeName,
-        stopName = this.stopName.takeIf { it.isNotBlank() } ?: "Неизвестная остановка",
+        stopName = this.stopName.takeIf { it.isNotBlank() } ?: Constants.FALLBACK_UNKNOWN_STOP,
         departureTime = this.departureTime.takeIf { it.isNotBlank() } ?: "00:00",
         dayOfWeek = this.dayOfWeek.takeIf { it in 1..7 } ?: 1,
-        departurePoint = this.departurePoint.takeIf { it.isNotBlank() } ?: "Неизвестный пункт",
+        departurePoint = this.departurePoint.takeIf { it.isNotBlank() } ?: Constants.FALLBACK_UNKNOWN_POINT,
         addedDate = addedDate,
         isActive = this.isActive
     )
@@ -182,11 +183,11 @@ fun List<FavoriteTimeEntity>.toFavoriteTimesBatch(routeRepository: BusRouteRepos
             id = entity.id,
             routeId = entity.routeId,
             routeNumber = route?.routeNumber ?: entity.routeNumber.takeIf { it.isNotBlank() } ?: entity.routeId,
-            routeName = route?.name ?: entity.routeName.takeIf { it.isNotBlank() } ?: "Маршрут ${entity.routeId}", // TODO: strings.xml
-            stopName = entity.stopName.takeIf { it.isNotBlank() } ?: "Неизвестная остановка", // TODO: strings.xml
+            routeName = route?.name ?: entity.routeName.takeIf { it.isNotBlank() } ?: "${Constants.FALLBACK_ROUTE_PREFIX} ${entity.routeId}",
+            stopName = entity.stopName.takeIf { it.isNotBlank() } ?: Constants.FALLBACK_UNKNOWN_STOP,
             departureTime = entity.departureTime.takeIf { it.isNotBlank() } ?: "00:00",
             dayOfWeek = entity.dayOfWeek.takeIf { it in 1..7 } ?: 1,
-            departurePoint = entity.departurePoint.takeIf { it.isNotBlank() } ?: "Неизвестный пункт", // TODO: strings.xml
+            departurePoint = entity.departurePoint.takeIf { it.isNotBlank() } ?: Constants.FALLBACK_UNKNOWN_POINT,
             addedDate = if (entity.addedDate <= 0L) System.currentTimeMillis() else entity.addedDate,
             isActive = entity.isActive
         )

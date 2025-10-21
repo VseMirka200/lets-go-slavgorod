@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.ui.screens.settings
+﻿package com.example.lets_go_slavgorod.ui.screens.settings
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -29,6 +29,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,7 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.lets_go_slavgorod.ui.components.SettingsTopBar
-import com.example.lets_go_slavgorod.ui.utils.TextFormattingUtils
+import com.example.lets_go_slavgorod.ui.util.TextFormattingUtils
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationMode
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationSettingsViewModel
 import java.time.DayOfWeek
@@ -93,6 +94,7 @@ fun GlobalNotificationSettingsScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Напрямую из DataStore без оптимистичного обновления
     val currentGlobalMode by notificationSettingsViewModel.currentNotificationMode.collectAsState()
     val globalSelectedDays by notificationSettingsViewModel.selectedNotificationDays.collectAsState()
     
@@ -324,9 +326,9 @@ fun GlobalNotificationSettingsScreen(
     }
     
     // Диалог выбора дней недели для уведомлений
-    // Временное состояние для изменений до подтверждения
+    // Временное состояние для изменений до подтверждения, синхронизируется с globalSelectedDays
     if (showDaysDialog) {
-        var tempSelectedDays by remember { mutableStateOf(globalSelectedDays) }
+        var tempSelectedDays by remember(globalSelectedDays) { mutableStateOf(globalSelectedDays) }
         
         AlertDialog(
             onDismissRequest = { showDaysDialog = false },

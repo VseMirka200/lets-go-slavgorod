@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.notifications
+package com.example.lets_go_slavgorod.domain.notification
 
 import timber.log.Timber
 import java.time.DayOfWeek
@@ -89,9 +89,22 @@ class WeekdaysStrategy : DepartureTimeStrategy() {
 
 /**
  * Стратегия для режима SELECTED_DAYS - выбранные дни недели
+ * 
+ * ИСПРАВЛЕНО v2.2: Теперь работает согласованно с ALL_DAYS/WEEKDAYS
+ * Игнорирует день недели избранного времени и ищет ЛЮБОЙ ближайший выбранный день.
+ * 
+ * Пример:
+ * - Избранное: Понедельник 10:00
+ * - Выбранные дни: [Среда, Пятница]
+ * - Результат: Уведомления в Среду и Пятницу в 10:00 ✅
+ * 
+ * @param selectedDays набор выбранных дней недели для уведомлений
+ * @param targetDayOfWeek (устаревший параметр, игнорируется)
  */
 class SelectedDaysStrategy(
-    private val selectedDays: Set<DayOfWeek>
+    private val selectedDays: Set<DayOfWeek>,
+    @Suppress("UNUSED_PARAMETER")
+    private val targetDayOfWeek: DayOfWeek? = null
 ) : DepartureTimeStrategy() {
     
     override fun calculateNextTime(baseTime: Calendar, now: Calendar): Long {
@@ -100,8 +113,14 @@ class SelectedDaysStrategy(
             return -1L
         }
         
-        // Проверяем 2 недели вперед
-        for (i in 0..14) {
+        // В режиме "Выбранные дни" игнорируем день недели избранного времени
+        // Уведомления должны приходить в ЛЮБОЙ выбранный день, не только в день избранного
+        // Это согласуется с поведением ALL_DAYS и WEEKDAYS
+        
+        Timber.d("SelectedDaysStrategy: Searching for next selected day. Selected days: $selectedDays")
+        
+        // Ищем ЛЮБОЙ ближайший выбранный день
+        for (i in 0..14) { // 2 недели
             val candidateDeparture = (baseTime.clone() as Calendar).apply {
                 add(Calendar.DAY_OF_YEAR, i)
             }

@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.utils
+package com.example.lets_go_slavgorod.domain.util
 
 import com.example.lets_go_slavgorod.data.model.BusSchedule
 import timber.log.Timber

@@ -86,9 +86,14 @@ fun NavController.navigateToSchedule(routeId: String) {
  * @param routeId ID маршрута
  */
 fun NavController.navigateToRouteNotificationSettings(routeId: String) {
-    navigateOptimized(
-        route = "route_notifications/$routeId"
-    )
+    try {
+        Timber.d("Navigating to route notification settings for routeId: $routeId")
+        navigate("route_notifications/$routeId") {
+            launchSingleTop = true
+        }
+    } catch (e: Exception) {
+        Timber.e(e, "Failed to navigate to route notification settings for routeId: $routeId")
+    }
 }
 
 /**

@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.workers
+package com.example.lets_go_slavgorod.data.workers
 
 import android.content.Context
 import androidx.work.*

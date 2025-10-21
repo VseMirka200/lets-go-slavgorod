@@ -1,8 +1,8 @@
-package com.example.lets_go_slavgorod.data.model
+﻿package com.example.lets_go_slavgorod.data.model
 
 import androidx.compose.runtime.Immutable
-import com.example.lets_go_slavgorod.utils.ValidationUtils
-import com.example.lets_go_slavgorod.utils.loge
+import com.example.lets_go_slavgorod.domain.util.ValidationUtils
+import com.example.lets_go_slavgorod.core.loge
 
 /**
  * Модель расписания автобуса для конкретной остановки

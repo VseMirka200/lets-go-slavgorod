@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.ui.components
+﻿package com.example.lets_go_slavgorod.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -38,7 +38,7 @@ import androidx.core.graphics.toColorInt
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.ui.theme.DesignTokens
 import com.example.lets_go_slavgorod.ui.theme.lets_go_slavgorodTheme
-import com.example.lets_go_slavgorod.utils.Constants
+import com.example.lets_go_slavgorod.core.Constants
 
 /**
  * Переиспользуемый компонент карточки автобусного маршрута

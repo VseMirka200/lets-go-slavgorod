@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.ui.screens.settings
+﻿package com.example.lets_go_slavgorod.ui.screens.settings
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -17,7 +17,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lets_go_slavgorod.ui.components.SettingsTopBar
 import com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory
 import com.example.lets_go_slavgorod.ui.viewmodel.DataManagementViewModel
-import com.example.lets_go_slavgorod.utils.Constants
+import com.example.lets_go_slavgorod.core.Constants
 import timber.log.Timber
 
 /**

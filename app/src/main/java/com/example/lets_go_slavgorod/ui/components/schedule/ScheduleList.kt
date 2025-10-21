@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.ui.components.schedule
+﻿package com.example.lets_go_slavgorod.ui.components.schedule
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
@@ -28,10 +28,10 @@ import com.example.lets_go_slavgorod.ui.components.schedule.UnifiedScheduleHeade
 import com.example.lets_go_slavgorod.ui.components.UniversalFilterRow
 import com.example.lets_go_slavgorod.ui.components.FilterItem
 import com.example.lets_go_slavgorod.ui.model.ScheduleUiState
-import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
-import com.example.lets_go_slavgorod.utils.Constants
-import com.example.lets_go_slavgorod.ui.utils.TextFormattingUtils
-import com.example.lets_go_slavgorod.utils.ConditionalLogging
+import com.example.lets_go_slavgorod.ui.viewmodel.FavoritesViewModel
+import com.example.lets_go_slavgorod.core.Constants
+import com.example.lets_go_slavgorod.ui.util.TextFormattingUtils
+import com.example.lets_go_slavgorod.core.ConditionalLogging
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.*
@@ -91,7 +91,7 @@ import java.util.*
 @Composable
 fun ScheduleList(
     scheduleState: ScheduleUiState,
-    viewModel: BusViewModel,
+    viewModel: FavoritesViewModel,
     onBackClick: () -> Unit = {},
     onNotificationClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
@@ -724,7 +724,7 @@ private fun LazyListScope.ExpandableScheduleSection(
     title: String,
     isExpanded: Boolean,
     onToggleExpand: () -> Unit,
-    viewModel: BusViewModel,
+    viewModel: FavoritesViewModel,
     route: BusRoute,
     departurePointForCheck: String,
     leftSchedules: List<BusSchedule>,

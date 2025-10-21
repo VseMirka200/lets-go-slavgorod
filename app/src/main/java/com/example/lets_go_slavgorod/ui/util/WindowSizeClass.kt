@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.ui.utils
+package com.example.lets_go_slavgorod.ui.util
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember

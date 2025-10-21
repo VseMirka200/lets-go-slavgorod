@@ -15,34 +15,43 @@ import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 /**
- * Компонент таймера до следующего уведомления
+ * Компонент таймера до следующего уведомления о избранном времени
  * 
- * Показывает время до срабатывания ближайшего запланированного уведомления.
+ * Показывает время до ближайшего запланированного УВЕДОМЛЕНИЯ.
  * Отображает три типа информации:
- * 1. Относительное время: "Через 2 ч. 15 мин."
- * 2. Абсолютное время: "Сегодня в 13:45" или "Завтра в 08:30"
- * 3. Подсказка: "За 15 мин до отправления"
+ * 1. Относительное время до уведомления: "Через 45 мин." или "Через 2 мин. 35 сек."
+ * 2. Абсолютное время уведомления: "Сегодня в 13:45"
+ * 3. Подсказка: время отправления автобуса "Автобус в 14:00"
  * 
- * Обновляется каждую минуту автоматически.
+ * Умное обновление:
+ * - Каждую СЕКУНДУ когда осталось меньше 5 минут (показывает секунды)
+ * - Каждую МИНУТУ когда осталось больше 5 минут (экономия батареи)
  * 
- * ВАЖНО: nextNotificationTime - это время УВЕДОМЛЕНИЯ (уже вычитан leadTime),
- * а не время отправления автобуса!
+ * ВАЖНО: nextNotificationTime - это время УВЕДОМЛЕНИЯ (уже вычитан leadTime).
+ * Показываем именно время уведомления, чтобы пользователь знал когда придет notification!
  * 
- * Пример:
+ * Пример 1 (далеко до уведомления):
  * - Автобус отправляется в 14:00
- * - Пользователь выбрал уведомление за 15 минут
- * - nextNotificationTime = 13:45 (время когда придет уведомление)
+ * - Уведомление за 15 минут → уведомление в 13:45
+ * - Сейчас 13:00
  * - Компонент покажет:
- *   "Через 2 ч. 15 мин."
+ *   "Через 45 мин." (обновляется каждую минуту)
  *   "Сегодня в 13:45"
- *   "За 15 мин до отправления"
+ *   "Автобус в 14:00"
+ * 
+ * Пример 2 (близко к уведомлению):
+ * - Сейчас 13:43
+ * - Компонент покажет:
+ *   "Через 1 мин. 45 сек." (обновляется каждую секунду!)
+ *   "Сегодня в 13:45"
+ *   "Автобус в 14:00"
  * 
  * @param nextNotificationTime время срабатывания уведомления (уже с учетом leadTime)
- * @param leadTimeMinutes интервал в минутах до отправления (для отображения подсказки)
+ * @param leadTimeMinutes интервал в минутах до отправления (для вычисления времени отправления)
  * @param modifier модификатор для стилизации компонента
  * 
  * @author VseMirka200
- * @version 2.0
+ * @version 2.3
  * @since 2.1
  */
 @Composable
@@ -53,30 +62,58 @@ fun NextNotificationTimer(
 ) {
     var currentTime by remember { mutableStateOf(LocalDateTime.now()) }
     
+    // Вычисляем время отправления автобуса (для справки)
+    // Пересчитывается при изменении nextNotificationTime ИЛИ leadTimeMinutes
+    val nextDepartureTime = remember(nextNotificationTime, leadTimeMinutes) {
+        val result = nextNotificationTime?.plusMinutes(leadTimeMinutes.toLong())
+        Timber.d("🕐 NextDepartureTime recalculated:")
+        Timber.d("   Notification time: $nextNotificationTime")
+        Timber.d("   Lead time: $leadTimeMinutes min")
+        Timber.d("   Departure time: $result")
+        result
+    }
+    
     // Логируем при изменении nextNotificationTime
-    LaunchedEffect(nextNotificationTime) {
-        if (nextNotificationTime != null) {
+    LaunchedEffect(nextNotificationTime, leadTimeMinutes) {
+        if (nextNotificationTime != null && nextDepartureTime != null) {
             Timber.d("═══════════════════════════════════════════════════")
-            Timber.d("NextNotificationTimer updated:")
+            Timber.d("🔔 NextNotificationTimer updated:")
             Timber.d("  Current time: ${LocalDateTime.now()}")
             Timber.d("  Notification time: $nextNotificationTime")
+            Timber.d("  Departure time: $nextDepartureTime")
             Timber.d("  Lead time: $leadTimeMinutes min")
             
             val now = LocalDateTime.now()
-            val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(now.toLocalDate(), nextNotificationTime.toLocalDate())
-            val hoursDiff = java.time.temporal.ChronoUnit.HOURS.between(now, nextNotificationTime) % 24
-            val minDiff = java.time.temporal.ChronoUnit.MINUTES.between(now, nextNotificationTime) % 60
+            val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(now.toLocalDate(), nextDepartureTime.toLocalDate())
+            val hoursDiff = java.time.temporal.ChronoUnit.HOURS.between(now, nextDepartureTime) % 24
+            val minDiff = java.time.temporal.ChronoUnit.MINUTES.between(now, nextDepartureTime) % 60
             
-            Timber.d("  Time until: $daysDiff days, $hoursDiff hours, $minDiff minutes")
+            Timber.d("  Time until departure: $daysDiff days, $hoursDiff hours, $minDiff minutes")
             Timber.d("═══════════════════════════════════════════════════")
         }
     }
     
-    // Обновляем текущее время каждую минуту
-    LaunchedEffect(Unit) {
+    // Проверяем сколько времени осталось до уведомления
+    val minutesUntilNotification = remember(currentTime, nextNotificationTime) {
+        if (nextNotificationTime != null) {
+            ChronoUnit.MINUTES.between(currentTime, nextNotificationTime)
+        } else {
+            Long.MAX_VALUE
+        }
+    }
+    
+    // Обновляем текущее время:
+    // - Каждую секунду если осталось меньше 5 минут (для показа секунд)
+    // - Каждую минуту если осталось больше 5 минут
+    LaunchedEffect(minutesUntilNotification) {
         while (true) {
             currentTime = LocalDateTime.now()
-            delay(60000L) // 1 минута
+            val updateInterval = if (minutesUntilNotification < 5) {
+                1000L // 1 секунда
+            } else {
+                60000L // 1 минута
+            }
+            delay(updateInterval)
         }
     }
     
@@ -96,7 +133,7 @@ fun NextNotificationTimer(
         ) {
             Icon(
                 imageVector = Icons.Default.Notifications,
-                contentDescription = null,
+                contentDescription = "Иконка уведомления",
                 tint = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.size(32.dp)
             )
@@ -111,32 +148,47 @@ fun NextNotificationTimer(
                 )
                 
                 if (nextNotificationTime != null) {
-                    // Время до уведомления (относительное)
-                    val timeUntil = formatTimeUntil(currentTime, nextNotificationTime)
+                    // Показываем время ДО УВЕДОМЛЕНИЯ (не до отправления автобуса!)
+                    // Время до уведомления (относительное, с умным форматированием)
+                    val timeUntilNotification = remember(currentTime, nextNotificationTime, minutesUntilNotification) {
+                        // Показываем секунды если осталось меньше 5 минут
+                        if (minutesUntilNotification < 5) {
+                            formatTimeUntilWithSeconds(currentTime, nextNotificationTime)
+                        } else {
+                            formatTimeUntil(currentTime, nextNotificationTime)
+                        }
+                    }
                     Text(
-                        text = timeUntil,
+                        text = timeUntilNotification,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     
                     // Точное время уведомления
-                    val exactTime = formatExactTime(nextNotificationTime)
+                    val exactNotificationTime = remember(nextNotificationTime) {
+                        formatExactTime(nextNotificationTime)
+                    }
                     Text(
-                        text = exactTime,
+                        text = exactNotificationTime,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     
-                    // Подсказка: за сколько минут до отправления
-                    Text(
-                        text = "За $leadTimeMinutes мин до отправления",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                    )
+                    // Подсказка: время отправления автобуса (для справки)
+                    if (nextDepartureTime != null) {
+                        val departureTimeFormatted = remember(nextDepartureTime) {
+                            nextDepartureTime.toLocalTime().toString()
+                        }
+                        Text(
+                            text = "Автобус в $departureTimeFormatted",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
                 } else {
                     Text(
-                        text = "Нет запланированных уведомлений",
+                        text = "Нет запланированных избранных времен",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                     )
@@ -148,6 +200,14 @@ fun NextNotificationTimer(
 
 /**
  * Форматирует время до события (относительное: "Через 2 ч. 15 мин.")
+ * 
+ * Умная логика отображения:
+ * - Если > 24 часов: показывает дни + часы + минуты
+ * - Если < 24 часов: показывает только часы + минуты (без дней)
+ * 
+ * Примеры:
+ * - До события 8 ч 35 мин → "Через 8 ч. 35 мин." (а не "Через 1 д. 8 ч. 35 мин.")
+ * - До события 1 д 10 ч → "Через 1 д. 10 ч. 0 мин."
  */
 private fun formatTimeUntil(now: LocalDateTime, target: LocalDateTime): String {
     if (target.isBefore(now)) {
@@ -155,22 +215,65 @@ private fun formatTimeUntil(now: LocalDateTime, target: LocalDateTime): String {
         return "Просрочено"
     }
     
-    val totalDays = ChronoUnit.DAYS.between(now.toLocalDate(), target.toLocalDate())
+    // Вычисляем полное количество часов и минут
     val totalHours = ChronoUnit.HOURS.between(now, target)
-    val hours = totalHours % 24
-    val minutes = ChronoUnit.MINUTES.between(now, target) % 60
+    val totalMinutes = ChronoUnit.MINUTES.between(now, target)
     
-    Timber.d("formatTimeUntil: now=$now, target=$target -> $totalDays days, $hours hours, $minutes min")
+    Timber.d("formatTimeUntil: now=$now, target=$target -> total: $totalHours hours, $totalMinutes min")
     
-    return buildString {
-        append("Через ")
-        if (totalDays > 0) {
-            append("$totalDays д. ")
+    return when {
+        totalHours >= 24 -> {
+            // Больше суток - показываем дни, часы, минуты
+            val days = totalHours / 24
+            val hours = totalHours % 24
+            val minutes = totalMinutes % 60
+            
+            buildString {
+                append("Через ")
+                append("$days д. ")
+                if (hours > 0) {
+                    append("$hours ч. ")
+                }
+                append("$minutes мин.")
+            }
         }
-        if (hours > 0 || totalDays > 0) {
-            append("$hours ч. ")
+        totalHours > 0 -> {
+            // Меньше суток - показываем только часы и минуты
+            val hours = totalHours
+            val minutes = totalMinutes % 60
+            
+            "Через $hours ч. $minutes мин."
         }
-        append("$minutes мин.")
+        else -> {
+            // Меньше часа - показываем только минуты
+            val minutes = totalMinutes
+            "Через $minutes мин."
+        }
+    }
+}
+
+/**
+ * Форматирует время до события с секундами (относительное: "Через 2 мин. 35 сек.")
+ * 
+ * Используется когда осталось меньше 5 минут до уведомления.
+ * Обновляется каждую секунду для точного отображения.
+ */
+private fun formatTimeUntilWithSeconds(now: LocalDateTime, target: LocalDateTime): String {
+    if (target.isBefore(now)) {
+        Timber.w("Target time $target is before current time $now")
+        return "Просрочено"
+    }
+    
+    val totalSeconds = ChronoUnit.SECONDS.between(now, target)
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    
+    Timber.d("formatTimeUntilWithSeconds: $minutes min $seconds sec (total: $totalSeconds sec)")
+    
+    return when {
+        minutes > 0 -> "Через $minutes мин. $seconds сек."
+        seconds > 0 -> "Через $seconds сек."
+        else -> "Сейчас!"
     }
 }
 

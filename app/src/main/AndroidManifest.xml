@@ -63,13 +63,13 @@
         
         <!-- Receiver для обработки уведомлений о времени отправления -->
         <receiver
-            android:name=".notifications.AlarmReceiver"
+            android:name=".data.notification.AlarmReceiver"
             android:enabled="true"
             android:exported="false" />
             
         <!-- Receiver для восстановления уведомлений после перезагрузки -->
         <receiver
-            android:name=".notifications.BootReceiver"
+            android:name=".data.notification.BootReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter android:priority="1000">

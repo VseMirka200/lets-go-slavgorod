@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ViewModel для управления настройками обновлений приложения
  * 
  * Этот ViewModel отвечает за:
@@ -19,7 +19,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lets_go_slavgorod.data.local.UpdatePreferences
 import timber.log.Timber
-import com.example.lets_go_slavgorod.updates.UpdateManager
+import com.example.lets_go_slavgorod.domain.update.UpdateManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

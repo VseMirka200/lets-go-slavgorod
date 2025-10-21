@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.utils
+package com.example.lets_go_slavgorod.domain.util
 
 import android.annotation.SuppressLint
 import timber.log.Timber

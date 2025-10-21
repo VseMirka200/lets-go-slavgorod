@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.ui.viewmodel
+﻿package com.example.lets_go_slavgorod.ui.viewmodel
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
@@ -12,8 +12,8 @@ import com.example.lets_go_slavgorod.data.local.NotificationPreferencesCache
 import com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity
 import com.example.lets_go_slavgorod.data.model.FavoriteTime
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
-import com.example.lets_go_slavgorod.utils.toFavoriteTime
-import com.example.lets_go_slavgorod.notifications.AlarmScheduler
+import com.example.lets_go_slavgorod.core.toFavoriteTime
+import com.example.lets_go_slavgorod.domain.notification.AlarmScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

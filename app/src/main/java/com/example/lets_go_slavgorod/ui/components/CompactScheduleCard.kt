@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.ui.components
+﻿package com.example.lets_go_slavgorod.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.lets_go_slavgorod.data.model.BusSchedule
 import com.example.lets_go_slavgorod.ui.theme.lets_go_slavgorodTheme
-import com.example.lets_go_slavgorod.utils.Constants
+import com.example.lets_go_slavgorod.core.Constants
 
 /**
  * Компактная карточка рейса для двухколоночной сетки расписания

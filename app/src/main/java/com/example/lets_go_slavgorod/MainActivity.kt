@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod
+﻿package com.example.lets_go_slavgorod
 
 import android.Manifest
 import android.app.AlarmManager
@@ -14,10 +14,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.ui.Alignment
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -41,10 +44,11 @@ import androidx.navigation.navArgument
 import com.example.lets_go_slavgorod.data.local.AppDatabase
 import com.example.lets_go_slavgorod.data.local.DisclaimerManager
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
-import com.example.lets_go_slavgorod.notifications.AlarmScheduler
+import com.example.lets_go_slavgorod.domain.notification.AlarmScheduler
 import com.example.lets_go_slavgorod.ui.components.DisclaimerDialog
 import com.example.lets_go_slavgorod.ui.components.UpdateDialogManager
 import com.example.lets_go_slavgorod.ui.navigation.Screen
+import com.example.lets_go_slavgorod.ui.navigation.navigateToRouteNotificationSettings
 import com.example.lets_go_slavgorod.ui.screens.HomeScreen
 import com.example.lets_go_slavgorod.ui.screens.RouteNotificationSettingsScreen
 import com.example.lets_go_slavgorod.ui.screens.ScheduleScreen
@@ -59,13 +63,16 @@ import com.example.lets_go_slavgorod.ui.screens.settings.GlobalNotificationSetti
 import com.example.lets_go_slavgorod.ui.theme.lets_go_slavgorodTheme
 import com.example.lets_go_slavgorod.ui.viewmodel.AndroidViewModelFactory
 import com.example.lets_go_slavgorod.ui.viewmodel.AppTheme
-import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.FavoritesViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.ScheduleViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.ViewModelFactory
+import com.example.lets_go_slavgorod.ui.viewmodel.RoutesViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationSettingsViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.ThemeViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.ThemeViewModelFactory
 import com.example.lets_go_slavgorod.ui.viewmodel.UpdateSettingsViewModel
-import com.example.lets_go_slavgorod.utils.toFavoriteTime
+import com.example.lets_go_slavgorod.core.toFavoriteTime
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
@@ -414,8 +421,8 @@ fun BusScheduleApp(
     var showDisclaimerDialog by remember { mutableStateOf(initialShowDisclaimerDialog) }
     
     // ViewModels с generic фабриками
-    val busViewModel: BusViewModel = viewModel(
-        factory = AndroidViewModelFactory.create(application) { BusViewModel(it) }
+    val favoritesViewModel: FavoritesViewModel = viewModel(
+        factory = AndroidViewModelFactory.create(application) { FavoritesViewModel(it) }
     )
     
     val notificationSettingsViewModel: NotificationSettingsViewModel = viewModel(
@@ -447,7 +454,7 @@ fun BusScheduleApp(
             AppNavHost(
                 navController = navController,
                 modifier = Modifier.padding(innerPadding),
-                busViewModel = busViewModel,
+                favoritesViewModel = favoritesViewModel,
                 themeViewModel = themeViewModel,
                 notificationSettingsViewModel = notificationSettingsViewModel
             )
@@ -546,10 +553,17 @@ fun BusScheduleApp(
 fun AppNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    busViewModel: BusViewModel,
+    favoritesViewModel: FavoritesViewModel,
     themeViewModel: ThemeViewModel,
     notificationSettingsViewModel: NotificationSettingsViewModel
 ) {
+    // Создаем общий RoutesViewModel для всего NavHost
+    // Это гарантирует, что все экраны используют один и тот же экземпляр
+    val appContext = LocalContext.current
+    val sharedRoutesViewModel: RoutesViewModel = viewModel(
+        factory = ViewModelFactory(appContext.applicationContext as Application)
+    )
+    
     NavHost(
         navController = navController,
         startDestination = Screen.Home.route,
@@ -559,7 +573,8 @@ fun AppNavHost(
             route = Screen.Home.route
         ) {
             HomeScreen(
-                navController = navController
+                navController = navController,
+                routesViewModel = sharedRoutesViewModel
             )
         }
 
@@ -571,21 +586,24 @@ fun AppNavHost(
         ) { backStackEntry ->
             val routeId = backStackEntry.arguments?.getString("routeId") ?: ""
             Timber.d("Navigating to schedule for routeId: $routeId")
-            val route = busViewModel.getRouteById(routeId)
-            Timber.d("Found route: ${route?.name} (${route?.id})")
+            
+            // Создаем ScheduleViewModel для этого экрана
+            val appContext = androidx.compose.ui.platform.LocalContext.current
+            val scheduleViewModel: ScheduleViewModel = viewModel(
+                factory = ViewModelFactory(appContext.applicationContext as android.app.Application)
+            )
+            
             ScheduleScreen(
-                route = route,
+                routeId = routeId,
+                scheduleViewModel = scheduleViewModel,
+                favoritesViewModel = favoritesViewModel,
+                notificationSettingsViewModel = notificationSettingsViewModel,
                 onBackClick = { navController.popBackStack() },
-                viewModel = busViewModel,
-                onNotificationClick = { routeIdForNotifications ->
-                    try {
-                        navController.navigate("route_notifications/$routeIdForNotifications") {
-                            launchSingleTop = true
-                        }
-                    } catch (e: Exception) {
-                        Timber.e(e, "Navigation error to notifications for route: $routeIdForNotifications")
-                    }
-                }
+                onNotificationClick = {
+                    Timber.d("ScheduleScreen: onNotificationClick called for routeId=$routeId")
+                    navController.navigateToRouteNotificationSettings(routeId)
+                },
+                routesViewModel = sharedRoutesViewModel
             )
         }
 
@@ -637,7 +655,17 @@ fun AppNavHost(
             ),
         ) { backStackEntry ->
             val routeId = backStackEntry.arguments?.getString("routeId") ?: ""
-            val route = busViewModel.getRouteById(routeId)
+            Timber.d("RouteNotificationSettings: Opened for routeId=$routeId")
+            
+            // Используем общий RoutesViewModel вместо создания нового
+            // Это гарантирует, что маршруты уже загружены
+            val uiState by sharedRoutesViewModel.uiState.collectAsState()
+            val route = remember(routeId, uiState.routes) {
+                val foundRoute = uiState.routes.find { it.id == routeId }
+                Timber.d("RouteNotificationSettings: Found route=${foundRoute?.id}, isLoading=${uiState.isLoading}, total routes=${uiState.routes.size}")
+                foundRoute
+            }
+            
             if (route != null) {
                 RouteNotificationSettingsScreen(
                     route = route,
@@ -645,10 +673,20 @@ fun AppNavHost(
                     onBackClick = { navController.popBackStack() }
                 )
             } else {
-                // Если маршрут не найден, возвращаемся назад
-                Timber.w("Route not found for notifications: $routeId")
-                LaunchedEffect(Unit) {
-                    navController.popBackStack()
+                // Если маршрут не найден, показываем загрузку
+                if (uiState.isLoading) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    // Маршрут действительно не найден, возвращаемся назад
+                    Timber.w("Route not found for notifications: $routeId")
+                    LaunchedEffect(Unit) {
+                        navController.popBackStack()
+                    }
                 }
             }
         }

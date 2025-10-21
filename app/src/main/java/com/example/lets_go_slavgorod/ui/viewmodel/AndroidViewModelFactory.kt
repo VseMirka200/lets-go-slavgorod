@@ -13,8 +13,8 @@ import androidx.lifecycle.ViewModelProvider
  * 
  * Использование:
  * ```kotlin
- * val viewModel: BusViewModel = viewModel(
- *     factory = AndroidViewModelFactory.create { BusViewModel(it) }
+ * val viewModel: FavoritesViewModel = viewModel(
+ *     factory = AndroidViewModelFactory.create(application) { FavoritesViewModel(it) }
  * )
  * ```
  * 

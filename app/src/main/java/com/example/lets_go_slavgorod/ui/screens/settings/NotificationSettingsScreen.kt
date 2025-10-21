@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.ui.screens.settings
+﻿package com.example.lets_go_slavgorod.ui.screens.settings
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -18,7 +18,7 @@ import com.example.lets_go_slavgorod.ui.components.SettingsTopBar
 import com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory
 import com.example.lets_go_slavgorod.ui.viewmodel.QuietModeViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.VibrationSettingsViewModel
-import com.example.lets_go_slavgorod.utils.Constants
+import com.example.lets_go_slavgorod.core.Constants
 import kotlinx.coroutines.launch
 
 /**

@@ -1,20 +1,19 @@
-package com.example.lets_go_slavgorod.ui.screens
+﻿package com.example.lets_go_slavgorod.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,24 +21,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.material3.ExperimentalMaterial3Api
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import com.example.lets_go_slavgorod.data.model.BusRoute
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.lets_go_slavgorod.core.ConditionalLogging
+import com.example.lets_go_slavgorod.core.Constants
 import com.example.lets_go_slavgorod.data.model.BusSchedule
 import com.example.lets_go_slavgorod.ui.components.schedule.ScheduleList
 import com.example.lets_go_slavgorod.ui.model.createScheduleUiState
-import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.FavoritesViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.RoutesViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.ScheduleViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.ViewModelFactory
-import com.example.lets_go_slavgorod.utils.ScheduleUtils
-import com.example.lets_go_slavgorod.utils.ConditionalLogging
-import com.example.lets_go_slavgorod.utils.Constants
-import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -74,10 +69,11 @@ import java.util.Calendar
  * - Маршруты 102/102Б: Славгород (Рынок) ↔ Яровое (МСЧ-128/Зори)
  * - Маршрут №1: Вокзал ↔ Совхоз (по выходам)
  * 
- * @param route маршрут для отображения расписания (null = пустое состояние)
+ * @param routeId ID маршрута для отображения расписания
+ * @param scheduleViewModel ViewModel для загрузки расписаний
+ * @param favoritesViewModel ViewModel для работы с избранными временами
+ * @param notificationSettingsViewModel ViewModel для настроек уведомлений
  * @param onBackClick callback для возврата на главный экран
- * @param viewModel BusViewModel для данных и избранного
- * @param onNotificationClick callback для открытия настроек уведомлений маршрута
  * 
  * @author VseMirka200
  * @version 3.0
@@ -86,16 +82,25 @@ import java.util.Calendar
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleScreen(
-    route: BusRoute?,
+    routeId: String,
+    scheduleViewModel: ScheduleViewModel,
+    favoritesViewModel: FavoritesViewModel,
+    notificationSettingsViewModel: com.example.lets_go_slavgorod.ui.viewmodel.NotificationSettingsViewModel,
     onBackClick: () -> Unit,
-    viewModel: BusViewModel, // Deprecated: Используется для ScheduleList (будет удалено в v3.0)
-    onNotificationClick: ((String) -> Unit)? = null
+    onNotificationClick: (() -> Unit)? = null,
+    routesViewModel: RoutesViewModel? = null
 ) {
-    // Получаем ScheduleViewModel с фабрикой
+    // Получаем RoutesViewModel: используем переданный или создаем новый (для backwards compatibility)
     val appContext = androidx.compose.ui.platform.LocalContext.current
-    val scheduleViewModel: ScheduleViewModel = viewModel(
+    val actualRoutesViewModel: RoutesViewModel = routesViewModel ?: viewModel(
         factory = ViewModelFactory(appContext.applicationContext as android.app.Application)
     )
+    
+    // Получаем маршрут по ID реактивно (наблюдаем за изменениями)
+    val uiState by actualRoutesViewModel.uiState.collectAsState()
+    val route = remember(routeId, uiState.routes) {
+        uiState.routes.find { it.id == routeId }
+    }
     // Состояние загрузки и данных
     // Remember с зависимостью от route гарантирует сброс при смене маршрута
     var isLoading by remember(route) { mutableStateOf(true) }
@@ -202,7 +207,17 @@ fun ScheduleScreen(
     }
 
         if (route == null) {
-            NoRouteSelectedMessage(Modifier.fillMaxSize())
+            // Проверяем, загружаются ли маршруты
+            if (uiState.isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                NoRouteSelectedMessage(Modifier.fillMaxSize())
+            }
         } else if (isLoading) {
             // Анимация загрузки расписания
             Box(
@@ -238,7 +253,7 @@ fun ScheduleScreen(
                             }
                             
                             // Небольшая задержка для анимации
-                            delay(com.example.lets_go_slavgorod.utils.Constants.PULL_TO_REFRESH_MIN_DELAY_MS)
+                            delay(Constants.PULL_TO_REFRESH_MIN_DELAY_MS)
                             
                             // Триггерим перезагрузку
                             refreshTrigger++
@@ -270,11 +285,9 @@ fun ScheduleScreen(
                 
                 ScheduleList(
                     scheduleState = scheduleUiState,
-                    viewModel = viewModel,
+                    viewModel = favoritesViewModel,
                     onBackClick = onBackClick,
-                    onNotificationClick = if (onNotificationClick != null) {
-                        { onNotificationClick(route.id) }
-                    } else null,
+                    onNotificationClick = onNotificationClick,
                     modifier = Modifier.fillMaxSize()
                 )
             }

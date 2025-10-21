@@ -1,8 +1,8 @@
-package com.example.lets_go_slavgorod.domain.usecase
+﻿package com.example.lets_go_slavgorod.domain.usecase
 
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
-import com.example.lets_go_slavgorod.utils.search
+import com.example.lets_go_slavgorod.core.search
 import timber.log.Timber
 
 /**

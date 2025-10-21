@@ -1,9 +1,9 @@
-package com.example.lets_go_slavgorod.domain.usecase
+﻿package com.example.lets_go_slavgorod.domain.usecase
 
 import com.example.lets_go_slavgorod.data.local.dao.FavoriteTimeDao
 import com.example.lets_go_slavgorod.data.model.FavoriteTime
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
-import com.example.lets_go_slavgorod.utils.toFavoriteTime
+import com.example.lets_go_slavgorod.core.toFavoriteTime
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map

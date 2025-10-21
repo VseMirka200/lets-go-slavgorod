@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.notifications
+package com.example.lets_go_slavgorod.data.notification
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -153,11 +153,9 @@ object NotificationHelper {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        // Временно используем стандартную иконку до исправления проблем с линковкой
+        // Используем стандартную иконку автобуса для уведомлений
         val smallIconResId = R.drawable.ic_stat_directions_bus
         val largeIconResId = R.drawable.ic_launcher_foreground
-        
-        // Используем стандартную иконку
         val finalSmallIcon = smallIconResId
         
         Timber.d("Notification icon: smallIcon=$smallIconResId, largeIcon=$largeIconResId")
@@ -255,13 +253,11 @@ object NotificationHelper {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        // Временно используем стандартную иконку до исправления проблем с линковкой
+        // Используем иконку приложения для уведомлений об обновлениях
         val smallIconResId = R.drawable.ic_launcher_foreground
         val title = "Доступно обновление $versionName"
         val contentText = releaseNotes?.takeIf { it.isNotBlank() } 
             ?: "Доступна новая версия приложения с улучшениями и исправлениями."
-
-        // Используем стандартную иконку
         val finalSmallIcon = smallIconResId
 
         // Обработка большой иконки для уведомлений об обновлениях

@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.ui.viewmodel
+﻿package com.example.lets_go_slavgorod.ui.viewmodel
 
 import android.app.Application
 import androidx.compose.runtime.Stable
@@ -6,7 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
-import com.example.lets_go_slavgorod.utils.Constants
+import com.example.lets_go_slavgorod.core.Constants
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.notifications
+﻿package com.example.lets_go_slavgorod.data.notification
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -7,7 +7,8 @@ import com.example.lets_go_slavgorod.data.local.AppDatabase
 import com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity
 import com.example.lets_go_slavgorod.data.model.FavoriteTime
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
-import com.example.lets_go_slavgorod.utils.toFavoriteTime
+import com.example.lets_go_slavgorod.domain.notification.AlarmScheduler
+import com.example.lets_go_slavgorod.core.toFavoriteTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull

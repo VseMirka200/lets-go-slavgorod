@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.utils
+package com.example.lets_go_slavgorod.core
 
 /**
  * Центральное хранилище констант приложения
@@ -138,4 +138,19 @@ object Constants {
     // Задержки для UI операций (DataManagementViewModel)
     const val APP_RESTART_DELAY_MS = 1000L                         // Задержка перед перезапуском приложения
     const val DATA_OPERATION_COMPLETION_DELAY_MS = 500L            // Задержка для завершения операций с данными
+    
+    // =====================================================================================
+    //                              FALLBACK STRINGS
+    // =====================================================================================
+    // Эти константы соответствуют строкам в res/values/strings.xml
+    // Используются в Extension функциях где нет доступа к Context
+    
+    /** Fallback для неизвестной остановки (синхронизировано с R.string.fallback_unknown_stop) */
+    const val FALLBACK_UNKNOWN_STOP = "Неизвестная остановка"
+    
+    /** Fallback для неизвестного пункта отправления (синхронизировано с R.string.fallback_unknown_point) */
+    const val FALLBACK_UNKNOWN_POINT = "Неизвестный пункт"
+    
+    /** Префикс для fallback названия маршрута (синхронизировано с R.string.fallback_route_id) */
+    const val FALLBACK_ROUTE_PREFIX = "Маршрут"
 }

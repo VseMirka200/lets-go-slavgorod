@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.utils
+package com.example.lets_go_slavgorod.domain.util
 
 import timber.log.Timber
 import java.util.Calendar

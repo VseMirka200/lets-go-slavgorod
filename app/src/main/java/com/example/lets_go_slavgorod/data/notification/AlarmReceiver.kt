@@ -1,13 +1,13 @@
-package com.example.lets_go_slavgorod.notifications
+package com.example.lets_go_slavgorod.data.notification
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.example.lets_go_slavgorod.data.local.AppDatabase
-import com.example.lets_go_slavgorod.data.local.dataStore
 import com.example.lets_go_slavgorod.data.local.NotificationPreferencesCache
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
-import com.example.lets_go_slavgorod.utils.toFavoriteTime
+import com.example.lets_go_slavgorod.domain.notification.AlarmScheduler
+import com.example.lets_go_slavgorod.core.toFavoriteTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -115,13 +115,30 @@ class AlarmReceiver : BroadcastReceiver() {
         }
     }
     
-    // Перепланирование уведомления на следующий день
+    /**
+     * Перепланирование уведомления на следующее срабатывание
+     * 
+     * После срабатывания уведомления автоматически планирует следующее
+     * уведомление для этого же избранного времени. Процесс выполняется
+     * асинхронно через корутины, чтобы не блокировать главный поток.
+     * 
+     * Алгоритм:
+     * 1. Загружает избранное время из БД по favoriteId
+     * 2. Проверяет что избранное время активно (isActive = true)
+     * 3. Конвертирует Entity → FavoriteTime с данными маршрута
+     * 4. Вызывает AlarmScheduler.scheduleAlarm() для планирования следующего уведомления
+     * 5. Новое уведомление запланируется на следующую неделю (тот же день недели)
+     * 
+     * @param context контекст приложения
+     * @param favoriteId ID избранного времени для перепланирования
+     * @param pendingResult результат goAsync() для управления жизненным циклом BroadcastReceiver
+     */
     private fun rescheduleNotification(context: Context, favoriteId: String, pendingResult: PendingResult) {
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
                 val database = AppDatabase.getDatabase(context)
                 val favoriteTimeDao = database.favoriteTimeDao()
-                val repository = BusRouteRepository()
+                val repository = BusRouteRepository(context.applicationContext)
                 
                 // Получаем данные из БД
                 val favoriteEntity = favoriteTimeDao.getAllFavoriteTimes().firstOrNull()

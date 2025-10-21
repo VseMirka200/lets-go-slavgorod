@@ -18,6 +18,9 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+
+// App импорты
+import com.example.lets_go_slavgorod.core.Constants
 import kotlinx.coroutines.launch
 
 /**
@@ -64,7 +67,7 @@ class ThemeViewModel(private val dataStore: DataStore<Preferences>) : ViewModel(
         }
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(com.example.lets_go_slavgorod.utils.Constants.STATE_FLOW_TIMEOUT_MS),
+            started = SharingStarted.WhileSubscribed(Constants.STATE_FLOW_TIMEOUT_MS),
             initialValue = AppTheme.SYSTEM
         )
 

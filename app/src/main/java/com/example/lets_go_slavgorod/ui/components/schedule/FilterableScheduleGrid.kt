@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.lets_go_slavgorod.data.model.BusSchedule
 import com.example.lets_go_slavgorod.ui.components.CompactScheduleCard
-import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.FavoritesViewModel
 
 /**
  * Компонент для отображения расписания в две колонки с интерактивной фильтрацией
@@ -65,7 +65,7 @@ fun FilterableScheduleGrid(
     rightTitle: String,
     nextUpcomingLeftId: String?,
     nextUpcomingRightId: String?,
-    viewModel: BusViewModel,
+    viewModel: FavoritesViewModel,
     route: com.example.lets_go_slavgorod.data.model.BusRoute,
     showOnlyFavorites: Boolean = false,
     showOnlyUpcoming: Boolean = false,

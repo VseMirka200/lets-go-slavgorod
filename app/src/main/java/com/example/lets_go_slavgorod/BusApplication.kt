@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod
+﻿package com.example.lets_go_slavgorod
 
 import android.app.Application
 import androidx.lifecycle.Lifecycle
@@ -14,14 +14,14 @@ import com.example.lets_go_slavgorod.data.local.NotificationPreferencesCache
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.model.FavoriteTime
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
-import com.example.lets_go_slavgorod.notifications.AlarmScheduler
-import com.example.lets_go_slavgorod.notifications.NotificationHelper
-import com.example.lets_go_slavgorod.updates.UpdateManager
-import com.example.lets_go_slavgorod.utils.Constants
-import com.example.lets_go_slavgorod.utils.createBusRoute
-import com.example.lets_go_slavgorod.utils.logd
-import com.example.lets_go_slavgorod.utils.loge
-import com.example.lets_go_slavgorod.workers.DataSyncManager
+import com.example.lets_go_slavgorod.domain.notification.AlarmScheduler
+import com.example.lets_go_slavgorod.data.notification.NotificationHelper
+import com.example.lets_go_slavgorod.domain.update.UpdateManager
+import com.example.lets_go_slavgorod.core.Constants
+import com.example.lets_go_slavgorod.core.createBusRoute
+import com.example.lets_go_slavgorod.core.logd
+import com.example.lets_go_slavgorod.core.loge
+import com.example.lets_go_slavgorod.data.workers.DataSyncManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -237,8 +237,8 @@ class BusApplication : MultiDexApplication() {
     // Получение маршрута по ID
     private fun getRouteById(routeId: String): BusRoute? {
         return try {
-            val repository = BusRouteRepository()
-            repository.getRouteById(routeId) ?: run {
+            // Используем уже инициализированный репозиторий вместо создания нового
+            busRouteRepository.getRouteById(routeId) ?: run {
                 // Проверяем, не является ли это удалённым маршрутом
                 if (routeId in listOf("2", "3", "4", "5")) {
                     loge("Attempted to access removed route: $routeId")

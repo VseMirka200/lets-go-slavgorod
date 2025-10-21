@@ -1,4 +1,4 @@
-package com.example.lets_go_slavgorod.utils
+package com.example.lets_go_slavgorod.data.network
 
 import android.content.Context
 import android.net.ConnectivityManager
