@@ -9,11 +9,14 @@ import android.provider.Settings
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.lets_go_slavgorod.data.local.NotificationPreferencesCache
+import com.example.lets_go_slavgorod.data.local.NotificationTimePreferences
 import com.example.lets_go_slavgorod.data.model.FavoriteTime
 import com.example.lets_go_slavgorod.notifications.AlarmScheduler.cancelAlarm
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationMode
 import com.example.lets_go_slavgorod.utils.Constants
 import timber.log.Timber
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import java.text.SimpleDateFormat
 import java.time.DayOfWeek
 import java.util.Calendar
@@ -123,13 +126,22 @@ object AlarmScheduler {
             return
         }
 
+        // Получаем время уведомления для конкретного маршрута из настроек пользователя
+        val timePreferences = NotificationTimePreferences(context)
+        val leadTimeMinutes = runBlocking {
+            timePreferences.getLeadTimeForRoute(favoriteTime.routeId).first()
+        }
+        val leadTimeMillis = leadTimeMinutes * 60 * 1000L
+        
+        Timber.d("Lead time for route ${favoriteTime.routeId}: $leadTimeMinutes minutes ($leadTimeMillis ms)")
+
         val calculatedDepartureTime = calculateNextDepartureTimeInMillis(context, favoriteTime)
         if (calculatedDepartureTime == -1L) {
             Timber.e("Failed to calculate a valid departure time for ${favoriteTime.id}. Not scheduling.")
             return
         }
 
-        val triggerAtMillis = calculatedDepartureTime - FIVE_MINUTES_IN_MILLIS
+        val triggerAtMillis = calculatedDepartureTime - leadTimeMillis
 
         if (triggerAtMillis <= System.currentTimeMillis()) {
             Timber.w(
@@ -138,6 +150,9 @@ object AlarmScheduler {
             )
             return
         }
+        
+        Timber.d("Scheduling alarm: departure=${formatMillis(calculatedDepartureTime)}, " +
+                "notification=${formatMillis(triggerAtMillis)} ($leadTimeMinutes min before)")
 
         // Улучшенная обработка номера маршрута для уведомления
         val routeNumber = favoriteTime.routeNumber.trim()

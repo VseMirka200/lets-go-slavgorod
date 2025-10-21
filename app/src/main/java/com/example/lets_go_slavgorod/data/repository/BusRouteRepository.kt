@@ -441,4 +441,11 @@ class BusRouteRepository(private val context: Context? = null) {
             null
         }
     }
+    
+    /**
+     * Получает RemoteDataSource для доступа к метрикам
+     */
+    fun getRemoteDataSource(): RemoteDataSource? {
+        return remoteDataSource
+    }
 }

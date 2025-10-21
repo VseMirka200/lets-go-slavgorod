@@ -45,6 +45,7 @@ class AlarmReceiver : BroadcastReceiver() {
         // goAsync() предотвращает завершение BroadcastReceiver пока не завершится асинхронная работа
         val pendingResult = goAsync()
         
+        Timber.d("═══════════════════════════════════════════════════")
         Timber.d("Alarm received: ${intent.action}")
         
         // Получаем данные из Intent
@@ -55,12 +56,23 @@ class AlarmReceiver : BroadcastReceiver() {
         val destinationInfo = intent.getStringExtra("DESTINATION_INFO")
         val departurePointInfo = intent.getStringExtra("DEPARTURE_POINT_INFO")
         
-        Timber.d("Alarm data - favoriteId: $favoriteId, routeId: $routeId, routeInfo: $routeInfo")
+        Timber.d("Alarm data:")
+        Timber.d("  favoriteId: $favoriteId")
+        Timber.d("  routeId: $routeId")
+        Timber.d("  routeInfo: $routeInfo")
+        Timber.d("  departureTime: $departureTimeInfo")
+        Timber.d("  departurePoint: $departurePointInfo")
         
         // Отправляем уведомление
         if (favoriteId != null) {
             // Проверяем настройки уведомлений перед отправкой
+            Timber.d("───────────────────────────────────────────────────")
+            Timber.d("Checking notification settings...")
+            
             val shouldSend = AlarmScheduler.shouldSendNotification(context, routeId)
+            
+            Timber.d("Should send notification: $shouldSend")
+            Timber.d("───────────────────────────────────────────────────")
             
             if (shouldSend) {
                 val safeRouteInfo = if (routeInfo.isNullOrBlank()) "Автобус" else routeInfo
@@ -70,7 +82,10 @@ class AlarmReceiver : BroadcastReceiver() {
                 // Получаем настройки вибрации из кэша (без runBlocking)
                 val vibrationEnabled = NotificationPreferencesCache.isVibrationEnabled()
                 
-                Timber.d("Sending notification with: routeInfo='$safeRouteInfo', departureTime='$safeDepartureTimeInfo', vibration=$vibrationEnabled")
+                Timber.d("✓ Sending notification:")
+                Timber.d("  Route: $safeRouteInfo")
+                Timber.d("  Departure: $safeDepartureTimeInfo at $safeDeparturePointInfo")
+                Timber.d("  Vibration: $vibrationEnabled")
                 
                 NotificationHelper.showDepartureNotification(
                     context = context,
@@ -80,14 +95,22 @@ class AlarmReceiver : BroadcastReceiver() {
                     departurePointInfo = safeDeparturePointInfo,
                     enableVibration = vibrationEnabled
                 )
+                
+                Timber.d("✓ Notification sent successfully")
             } else {
-                Timber.d("Notification skipped for $favoriteId - current day/mode settings don't allow it")
+                Timber.d("✗ Notification SKIPPED")
+                Timber.d("  Reason: Current settings don't allow notification")
+                Timber.d("  FavoriteId: $favoriteId")
+                Timber.d("  RouteId: $routeId")
             }
             
             // ВАЖНО: Перепланируем уведомление на следующий раз
+            Timber.d("───────────────────────────────────────────────────")
+            Timber.d("Rescheduling notification for next occurrence...")
             rescheduleNotification(context, favoriteId, pendingResult)
         } else {
-            Timber.w("No favoriteId found in alarm intent")
+            Timber.w("✗ No favoriteId found in alarm intent - cannot process")
+            Timber.d("═══════════════════════════════════════════════════")
             pendingResult.finish()  // Завершаем BroadcastReceiver
         }
     }
@@ -104,17 +127,32 @@ class AlarmReceiver : BroadcastReceiver() {
                 val favoriteEntity = favoriteTimeDao.getAllFavoriteTimes().firstOrNull()
                     ?.find { it.id == favoriteId }
                 
-                if (favoriteEntity != null && favoriteEntity.isActive) {
-                    val favoriteTime = favoriteEntity.toFavoriteTime(repository)
-                    
-                    // Планируем следующее уведомление
-                    AlarmScheduler.scheduleAlarm(context, favoriteTime)
-                    Timber.d("Rescheduled notification for next occurrence: $favoriteId")
+                if (favoriteEntity != null) {
+                    if (favoriteEntity.isActive) {
+                        val favoriteTime = favoriteEntity.toFavoriteTime(repository)
+                        
+                        Timber.d("Rescheduling:")
+                        Timber.d("  FavoriteId: $favoriteId")
+                        Timber.d("  Route: ${favoriteTime.routeNumber}")
+                        Timber.d("  Time: ${favoriteTime.departureTime}")
+                        Timber.d("  Day: ${favoriteTime.dayOfWeek}")
+                        Timber.d("  Active: ${favoriteEntity.isActive}")
+                        
+                        // Планируем следующее уведомление
+                        AlarmScheduler.scheduleAlarm(context, favoriteTime)
+                        
+                        Timber.d("✓ Rescheduled successfully for next week")
+                    } else {
+                        Timber.w("✗ FavoriteTime is inactive, not rescheduling: $favoriteId")
+                    }
                 } else {
-                    Timber.w("FavoriteTime not found or inactive, not rescheduling: $favoriteId")
+                    Timber.w("✗ FavoriteTime not found in database: $favoriteId")
                 }
+                
+                Timber.d("═══════════════════════════════════════════════════")
             } catch (e: Exception) {
-                Timber.e(e, "Error rescheduling notification for $favoriteId")
+                Timber.e(e, "✗ Error rescheduling notification for $favoriteId")
+                Timber.d("═══════════════════════════════════════════════════")
             } finally {
                 // ВАЖНО: Сигнализируем что BroadcastReceiver завершил работу
                 pendingResult.finish()

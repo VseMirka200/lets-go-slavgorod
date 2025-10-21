@@ -50,6 +50,8 @@ class RemoteDataSource(private val context: Context) {
         private const val CACHE_VERSION_FILE = "cache_version.txt"
         /** Имя файла для хранения метаданных кэша */
         private const val CACHE_METADATA_FILE = "cache_metadata.json"
+        /** Имя файла для хранения ETag */
+        private const val CACHE_ETAG_FILE = "cache_etag.txt"
         /** TTL кэша в часах */
         private const val CACHE_TTL_HOURS = 24L
         /** Таймаут загрузки */
@@ -58,6 +60,7 @@ class RemoteDataSource(private val context: Context) {
     
     private var cachedRoutes: List<BusRoute>? = null
     private val cachedSchedules = mutableMapOf<String, List<BusSchedule>>()
+    private val metrics = DownloadMetrics(context)
     
     /**
      * Получает файл кэша в internal storage
@@ -71,6 +74,42 @@ class RemoteDataSource(private val context: Context) {
      */
     private fun getCacheVersionFile(): File {
         return File(context.filesDir, CACHE_VERSION_FILE)
+    }
+    
+    /**
+     * Получает файл ETag кэша
+     */
+    private fun getCacheETagFile(): File {
+        return File(context.filesDir, CACHE_ETAG_FILE)
+    }
+    
+    /**
+     * Сохраняет ETag
+     */
+    private fun saveETag(etag: String) {
+        try {
+            getCacheETagFile().writeText(etag)
+            Timber.d("💾 Saved ETag: $etag")
+        } catch (e: Exception) {
+            Timber.e(e, "Error saving ETag")
+        }
+    }
+    
+    /**
+     * Загружает сохранённый ETag
+     */
+    private fun loadETag(): String? {
+        return try {
+            val etagFile = getCacheETagFile()
+            if (etagFile.exists()) {
+                etagFile.readText().trim()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Error loading ETag")
+            null
+        }
     }
     
     /**
@@ -127,8 +166,10 @@ class RemoteDataSource(private val context: Context) {
             return@withContext null
         }
         
-        // Загружаем с таймаутом
-        downloadWithTimeout()
+        // Загружаем с retry механизмом
+        RetryPolicy.executeWithRetry(
+            operation = { attempt -> downloadWithTimeout() }
+        )
     }
     
     /**
@@ -149,6 +190,14 @@ class RemoteDataSource(private val context: Context) {
                 setRequestProperty("User-Agent", "LetsGoSlavgorod-Android/2.0")
                 setRequestProperty("Cache-Control", "no-cache")
                 setRequestProperty("Connection", "close")
+                
+                // Добавляем ETag для условной загрузки
+                val savedETag = loadETag()
+                if (savedETag != null) {
+                    setRequestProperty("If-None-Match", savedETag)
+                    Timber.d("📋 Using cached ETag: $savedETag")
+                }
+                
                 useCaches = false
                 defaultUseCaches = false
             }
@@ -159,6 +208,14 @@ class RemoteDataSource(private val context: Context) {
             when (responseCode) {
                 HttpURLConnection.HTTP_OK -> {
                     val jsonString = connection.inputStream.bufferedReader().use { it.readText() }
+                    
+                    // Сохраняем ETag для будущих запросов
+                    val etag = connection.getHeaderField("ETag")
+                    if (etag != null) {
+                        saveETag(etag)
+                        Timber.d("💾 Saved new ETag: $etag")
+                    }
+                    
                     connection.disconnect()
                     
                     // Расширенная валидация
@@ -168,6 +225,19 @@ class RemoteDataSource(private val context: Context) {
                     } else {
                         Timber.e("❌ Downloaded data failed validation")
                         return@withTimeoutOrNull null
+                    }
+                }
+                HttpURLConnection.HTTP_NOT_MODIFIED -> {
+                    // 304 - данные не изменились, используем кэш
+                    Timber.i("✅ Data not modified (ETag match), using cache")
+                    connection.disconnect()
+                    
+                    // Загружаем из кэша
+                    val cacheFile = getCacheFile()
+                    if (cacheFile.exists()) {
+                        cacheFile.readText()
+                    } else {
+                        null
                     }
                 }
                 HttpURLConnection.HTTP_NOT_FOUND -> {
@@ -508,10 +578,23 @@ class RemoteDataSource(private val context: Context) {
             cachedRoutes = routes
             
             val loadTime = System.currentTimeMillis() - startTime
+            
+            // Записываем метрики
+            metrics.recordSuccess(
+                DownloadMetrics.DataSource.GITHUB,
+                jsonString.length.toLong(),
+                loadTime
+            )
+            
             Timber.i("✅ Successfully loaded ${routes.size} routes (forceRefresh=$forceRefresh) in ${loadTime}ms")
             
             routes
         } catch (e: Exception) {
+            metrics.recordFailure(
+                DownloadMetrics.DataSource.GITHUB,
+                e.message ?: "Unknown error"
+            )
+            
             Timber.e(e, "❌ Error parsing routes JSON: ${e.javaClass.simpleName} - ${e.message}")
             emptyList()
         }
@@ -726,5 +809,13 @@ class RemoteDataSource(private val context: Context) {
         cachedSchedules.remove(routeId)
         Timber.d("Cleared schedule cache for route $routeId")
     }
+    
+    /**
+     * Получает статистику загрузок
+     */
+    fun getDownloadStats(): DownloadMetrics.DownloadStats {
+        return metrics.getStats()
+    }
 }
+
 

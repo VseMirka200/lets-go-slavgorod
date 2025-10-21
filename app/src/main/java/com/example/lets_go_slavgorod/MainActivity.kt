@@ -49,6 +49,12 @@ import com.example.lets_go_slavgorod.ui.screens.HomeScreen
 import com.example.lets_go_slavgorod.ui.screens.RouteNotificationSettingsScreen
 import com.example.lets_go_slavgorod.ui.screens.ScheduleScreen
 import com.example.lets_go_slavgorod.ui.screens.SettingsScreen
+import com.example.lets_go_slavgorod.ui.screens.settings.SettingsMainScreen
+import com.example.lets_go_slavgorod.ui.screens.settings.AboutScreen
+import com.example.lets_go_slavgorod.ui.screens.settings.NotificationSettingsScreen as NotifSettingsScreen
+import com.example.lets_go_slavgorod.ui.screens.settings.DisplaySettingsScreen
+import com.example.lets_go_slavgorod.ui.screens.settings.UpdateSettingsScreen
+import com.example.lets_go_slavgorod.ui.screens.settings.DataManagementScreen
 import com.example.lets_go_slavgorod.ui.screens.settings.GlobalNotificationSettingsScreen
 import com.example.lets_go_slavgorod.ui.theme.lets_go_slavgorodTheme
 import com.example.lets_go_slavgorod.ui.viewmodel.AndroidViewModelFactory
@@ -587,9 +593,40 @@ fun AppNavHost(
         composable(
             route = Screen.Settings.route
         ) {
-            SettingsScreen(
+            SettingsMainScreen(
                 navController = navController,
-                themeViewModel = themeViewModel
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+        
+        composable(route = Screen.About.route) {
+            AboutScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+        
+        composable(route = Screen.NotificationSettings.route) {
+            NotifSettingsScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+        
+        composable(route = Screen.DisplaySettings.route) {
+            DisplaySettingsScreen(
+                themeViewModel = themeViewModel,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+        
+        composable(route = Screen.UpdateSettings.route) {
+            UpdateSettingsScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+        
+        composable(route = Screen.DataManagement.route) {
+            DataManagementScreen(
+                onBackClick = { navController.popBackStack() }
             )
         }
         

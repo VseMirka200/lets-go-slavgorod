@@ -45,6 +45,12 @@ object Constants {
     const val ROUTE_NUMBER_BOX_SIZE = 52           // Размер блока с номером маршрута
     const val ROUTE_NUMBER_BOX_CORNER_RADIUS = 16  // Скругление углов блока номера маршрута
     
+    // Унифицированные отступы для Settings
+    const val SETTINGS_SECTION_SPACING = 16        // Отступ между разделами настроек
+    const val SETTINGS_ITEM_SPACING = 12           // Отступ между элементами внутри раздела
+    const val SETTINGS_HORIZONTAL_PADDING = 16     // Горизонтальный отступ
+    const val SETTINGS_VERTICAL_PADDING = 16       // Вертикальный отступ
+    
     // Размеры карточек маршрутов
     const val ROUTE_CARD_HEIGHT_GRID = 180         // Высота карточки в режиме сетки
     const val ROUTE_NUMBER_BOX_SIZE_GRID = 75      // Размер блока номера в режиме сетки
@@ -77,8 +83,12 @@ object Constants {
     const val COLOR_ALPHA = 0.9f                   // Прозрачность цветов (90%)
     
     // Уведомления
-    const val NOTIFICATION_LEAD_TIME_MINUTES = 5  // За сколько минут до отправления показывать уведомление
+    const val NOTIFICATION_LEAD_TIME_MINUTES = 5  // За сколько минут до отправления показывать уведомление (по умолчанию)
     const val ALARM_REQUEST_CODE_PREFIX = "fav_alarm_" // Префикс для кодов будильников избранных маршрутов
+    
+    // Доступные опции времени уведомлений (в минутах)
+    val NOTIFICATION_TIME_OPTIONS = listOf(5, 10, 15, 30, 60)
+    const val DEFAULT_NOTIFICATION_LEAD_TIME = 5  // Значение по умолчанию
     
     // Удалённая загрузка данных
     // Настройка GitHub репозитория

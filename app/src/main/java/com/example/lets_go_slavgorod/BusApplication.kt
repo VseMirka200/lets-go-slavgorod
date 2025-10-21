@@ -21,6 +21,7 @@ import com.example.lets_go_slavgorod.utils.Constants
 import com.example.lets_go_slavgorod.utils.createBusRoute
 import com.example.lets_go_slavgorod.utils.logd
 import com.example.lets_go_slavgorod.utils.loge
+import com.example.lets_go_slavgorod.workers.DataSyncManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -126,6 +127,9 @@ class BusApplication : MultiDexApplication() {
         MultiDex.install(this)
         initializeLogging()
         NotificationHelper.createNotificationChannel(this)
+        
+        // Запускаем фоновую синхронизацию
+        DataSyncManager.schedulePeriodic(this)
         
         // Фоновые задачи
         applicationScope.launch {

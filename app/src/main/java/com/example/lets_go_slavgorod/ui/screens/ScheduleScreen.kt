@@ -315,12 +315,24 @@ private fun getNextUpcomingScheduleId(schedules: List<BusSchedule>): String? {
         try {
             val departureTime = timeFormat.parse(schedule.departureTime)
             if (departureTime != null) {
-                // Создаем Calendar для времени отправления
+                // Создаем Calendar для времени отправления на сегодняшний день
                 val scheduleCalendar = Calendar.getInstance().apply {
-                    time = departureTime
+                    // Сохраняем текущую дату
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
                     set(Calendar.SECOND, 0)
                     set(Calendar.MILLISECOND, 0)
                 }
+                
+                // Создаем временный календарь для парсинга времени
+                val tempCalendar = Calendar.getInstance().apply {
+                    time = departureTime
+                }
+                
+                // Устанавливаем только часы и минуты из расписания
+                scheduleCalendar.set(Calendar.HOUR_OF_DAY, tempCalendar.get(Calendar.HOUR_OF_DAY))
+                scheduleCalendar.set(Calendar.MINUTE, tempCalendar.get(Calendar.MINUTE))
+                
                 // Проверяем что рейс в будущем
                 scheduleCalendar.after(currentTime)
             } else {

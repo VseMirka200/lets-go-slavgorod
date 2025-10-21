@@ -32,6 +32,27 @@ sealed class Screen(val route: String) {
     /** Главный экран со списком маршрутов и поиском */
     object Home : Screen("home")
     
-    /** Экран настроек приложения со сворачиваемыми разделами */
+    /** Главный экран настроек (список разделов) */
     object Settings : Screen("settings")
+    
+    /** Настройки отображения */
+    object DisplaySettings : Screen("display_settings")
+    
+    /** Настройки темы */
+    object ThemeSettings : Screen("theme_settings")
+    
+    /** Настройки обновлений */
+    object UpdateSettings : Screen("update_settings")
+    
+    /** Настройки уведомлений */
+    object NotificationSettings : Screen("notification_settings")
+    
+    /** Управление данными */
+    object DataManagement : Screen("data_management")
+    
+    /** О приложении */
+    object About : Screen("about")
+    
+    /** Экран статистики загрузок */
+    object DownloadStats : Screen("download_stats")
 }

@@ -1,6 +1,7 @@
 package com.example.lets_go_slavgorod.ui.screens
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -38,10 +39,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.ui.utils.TextFormattingUtils
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationMode
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationSettingsViewModel
+import com.example.lets_go_slavgorod.ui.components.NotificationTimeSelector
+import com.example.lets_go_slavgorod.ui.components.NextNotificationTimer
+import com.example.lets_go_slavgorod.data.local.NotificationTimePreferences
+import com.example.lets_go_slavgorod.data.local.AppDatabase
+import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
+import com.example.lets_go_slavgorod.utils.Constants
+import com.example.lets_go_slavgorod.utils.NotificationTimeCalculator
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 
 /**
@@ -140,23 +151,99 @@ fun RouteNotificationSettingsScreen(
             modifier = modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
+                .padding(Constants.SETTINGS_HORIZONTAL_PADDING.dp)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(Constants.SETTINGS_SECTION_SPACING.dp)
         ) {
+            // Настройка времени уведомления
+            val context = LocalContext.current
+            val timePreferences = remember { NotificationTimePreferences(context) }
+            val hasCustomTime by timePreferences.hasCustomLeadTime(route.id).collectAsState(initial = false)
+            val leadTime by timePreferences.getLeadTimeForRoute(route.id).collectAsState(initial = Constants.DEFAULT_NOTIFICATION_LEAD_TIME)
+            val coroutineScope = rememberCoroutineScope()
+            
+            // Таймер до следующего уведомления для ЭТОГО маршрута
+            val database = remember { AppDatabase.getDatabase(context) }
+            val allFavoriteTimes by database.favoriteTimeDao().getAllFavoriteTimes().collectAsState(initial = emptyList())
+            
+            // Фильтруем только избранные времена для текущего маршрута
+            val routeFavoriteTimes = remember(allFavoriteTimes, route.id) {
+                allFavoriteTimes.filter { it.routeId == route.id }
+            }
+            
+            val nextNotificationTime = remember(routeFavoriteTimes, leadTime) {
+                val convertedTimes = routeFavoriteTimes.mapNotNull { entity ->
+                    try {
+                        val repo = BusRouteRepository(context)
+                        val routeData = repo.getRouteById(entity.routeId)
+                        com.example.lets_go_slavgorod.data.model.FavoriteTime(
+                            id = entity.id,
+                            routeId = entity.routeId,
+                            routeNumber = routeData?.routeNumber ?: "N/A",
+                            routeName = routeData?.name ?: "Unknown",
+                            stopName = entity.stopName,
+                            departureTime = entity.departureTime,
+                            dayOfWeek = entity.dayOfWeek,
+                            departurePoint = entity.departurePoint,
+                            addedDate = entity.addedDate,
+                            isActive = entity.isActive
+                        )
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+                NotificationTimeCalculator.getNextNotificationTime(convertedTimes, leadTime)
+            }
+            
+            if (routeFavoriteTimes.isNotEmpty()) {
+                NextNotificationTimer(
+                    nextNotificationTime = nextNotificationTime,
+                    leadTimeMinutes = leadTime
+                )
+            }
+            
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(Constants.SETTINGS_HORIZONTAL_PADDING.dp)) {
+                    NotificationTimeSelector(
+                        selectedMinutes = leadTime,
+                        onMinutesSelected = { minutes ->
+                            coroutineScope.launch {
+                                timePreferences.setLeadTimeForRoute(route.id, minutes)
+                            }
+                        },
+                        useGlobal = !hasCustomTime,
+                        onUseGlobalChange = { useGlobal ->
+                            coroutineScope.launch {
+                                if (useGlobal) {
+                                    timePreferences.removeCustomLeadTime(route.id)
+                                } else {
+                                    timePreferences.setLeadTimeForRoute(route.id, leadTime)
+                                }
+                            }
+                        }
+                    )
+                }
+            }
+            
             // Режим уведомлений
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    modifier = Modifier.padding(Constants.SETTINGS_HORIZONTAL_PADDING.dp),
+                    verticalArrangement = Arrangement.spacedBy(Constants.SETTINGS_ITEM_SPACING.dp)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { showModeDropdown = true }
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { showModeDropdown = true }
                             .padding(vertical = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
@@ -189,7 +276,10 @@ fun RouteNotificationSettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { showDaysDialog = true }
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) { showDaysDialog = true }
                                 .padding(vertical = 12.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
@@ -295,7 +385,10 @@ private fun NotificationModeDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onModeSelected(mode) }
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { onModeSelected(mode) }
                             .padding(vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -386,7 +479,10 @@ private fun DaysSelectionDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) {
                                 tempSelectedDays = if (tempSelectedDays.contains(day)) {
                                     tempSelectedDays - day
                                 } else {

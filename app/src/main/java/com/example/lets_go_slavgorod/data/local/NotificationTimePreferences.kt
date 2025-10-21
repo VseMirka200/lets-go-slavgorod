@@ -1,0 +1,138 @@
+package com.example.lets_go_slavgorod.data.local
+
+import android.content.Context
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
+import com.example.lets_go_slavgorod.notifications.AlarmScheduler
+import com.example.lets_go_slavgorod.utils.Constants
+import com.example.lets_go_slavgorod.utils.toFavoriteTime
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
+import timber.log.Timber
+
+/**
+ * Управление настройками времени уведомлений
+ * 
+ * Хранит:
+ * - Глобальное время уведомления (по умолчанию для всех маршрутов)
+ * - Индивидуальные настройки времени для каждого маршрута
+ * 
+ * @author VseMirka200
+ * @version 1.0
+ * @since 2.1
+ */
+class NotificationTimePreferences(private val context: Context) {
+    
+    companion object {
+        private val GLOBAL_LEAD_TIME_KEY = intPreferencesKey("global_notification_lead_time")
+        
+        /**
+         * Создает ключ для времени уведомления конкретного маршрута
+         */
+        private fun routeLeadTimeKey(routeId: String) = 
+            intPreferencesKey("route_${routeId}_lead_time")
+    }
+    
+    /**
+     * Глобальное время уведомления (по умолчанию)
+     */
+    val globalLeadTime: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[GLOBAL_LEAD_TIME_KEY] ?: Constants.DEFAULT_NOTIFICATION_LEAD_TIME
+    }
+    
+    /**
+     * Устанавливает глобальное время уведомления
+     * 
+     * После сохранения автоматически обновляет все активные уведомления
+     */
+    suspend fun setGlobalLeadTime(minutes: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[GLOBAL_LEAD_TIME_KEY] = minutes
+        }
+        Timber.d("✅ Global lead time set to $minutes minutes")
+        
+        // Обновляем все активные уведомления с новым временем
+        updateAllAlarmsAfterTimeChange()
+    }
+    
+    /**
+     * Получает время уведомления для конкретного маршрута
+     * 
+     * @param routeId ID маршрута
+     * @return Flow с временем в минутах (глобальное, если не задано индивидуальное)
+     */
+    fun getLeadTimeForRoute(routeId: String): Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[routeLeadTimeKey(routeId)] ?: preferences[GLOBAL_LEAD_TIME_KEY] 
+            ?: Constants.DEFAULT_NOTIFICATION_LEAD_TIME
+    }
+    
+    /**
+     * Устанавливает индивидуальное время уведомления для маршрута
+     * 
+     * После сохранения автоматически обновляет все активные уведомления для этого маршрута
+     * 
+     * @param routeId ID маршрута
+     * @param minutes время в минутах (null = использовать глобальное)
+     */
+    suspend fun setLeadTimeForRoute(routeId: String, minutes: Int?) {
+        context.dataStore.edit { preferences ->
+            if (minutes == null) {
+                // Удаляем индивидуальную настройку, используем глобальную
+                preferences.remove(routeLeadTimeKey(routeId))
+                Timber.d("✅ Removed custom lead time for route $routeId (will use global)")
+            } else {
+                preferences[routeLeadTimeKey(routeId)] = minutes
+                Timber.d("✅ Set lead time for route $routeId to $minutes minutes")
+            }
+        }
+        
+        // Обновляем все активные уведомления с новым временем
+        updateAllAlarmsAfterTimeChange()
+    }
+    
+    /**
+     * Проверяет, есть ли индивидуальная настройка для маршрута
+     */
+    fun hasCustomLeadTime(routeId: String): Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences.contains(routeLeadTimeKey(routeId))
+    }
+    
+    /**
+     * Удаляет индивидуальную настройку для маршрута
+     */
+    suspend fun removeCustomLeadTime(routeId: String) {
+        setLeadTimeForRoute(routeId, null)
+    }
+    
+    /**
+     * Обновляет все активные уведомления после изменения времени уведомления
+     * 
+     * Загружает все избранные времена и перепланирует их уведомления
+     * с учетом новых настроек leadTime.
+     */
+    private suspend fun updateAllAlarmsAfterTimeChange() {
+        try {
+            Timber.d("📢 Updating all alarms after lead time change...")
+            
+            val database = AppDatabase.getDatabase(context)
+            val favoriteTimeDao = database.favoriteTimeDao()
+            val repository = BusRouteRepository(context)
+            
+            val favoriteTimeEntities = favoriteTimeDao.getAllFavoriteTimes().firstOrNull() ?: emptyList()
+            
+            val activeFavoriteTimes = favoriteTimeEntities
+                .filter { entity -> entity.isActive }
+                .map { entity -> entity.toFavoriteTime(repository) }
+            
+            AlarmScheduler.updateAllAlarmsBasedOnSettings(context, activeFavoriteTimes)
+            Timber.d("✅ Updated ${activeFavoriteTimes.size} active alarms with new lead time")
+            
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Error updating alarms after lead time change")
+        }
+    }
+}
+
+

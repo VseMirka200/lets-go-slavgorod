@@ -32,8 +32,6 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.Info
-import com.example.lets_go_slavgorod.ui.components.FeedbackTypeDialog
-import com.example.lets_go_slavgorod.ui.components.FeedbackType
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PhoneAndroid
@@ -60,7 +58,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -77,6 +74,10 @@ import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.lets_go_slavgorod.R
+import com.example.lets_go_slavgorod.data.local.NotificationTimePreferences
+import com.example.lets_go_slavgorod.ui.components.FeedbackTypeDialog
+import com.example.lets_go_slavgorod.ui.components.NotificationTimeSelector
+import com.example.lets_go_slavgorod.ui.utils.TextFormattingUtils
 import com.example.lets_go_slavgorod.ui.viewmodel.AppTheme
 import com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory
 import com.example.lets_go_slavgorod.ui.viewmodel.DataManagementViewModel
@@ -89,7 +90,7 @@ import com.example.lets_go_slavgorod.ui.viewmodel.UpdateMode
 import com.example.lets_go_slavgorod.ui.viewmodel.UpdateSettingsViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.VibrationSettingsViewModel
 import com.example.lets_go_slavgorod.utils.Constants
-import com.example.lets_go_slavgorod.ui.utils.TextFormattingUtils
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
@@ -403,6 +404,28 @@ fun SettingsScreen(
             )
             
             if (isNotificationSectionExpanded) {
+                // Селектор глобального времени уведомления
+                val context = LocalContext.current
+                val timePreferences = remember { NotificationTimePreferences(context) }
+                val globalLeadTime by timePreferences.globalLeadTime.collectAsState(initial = Constants.DEFAULT_NOTIFICATION_LEAD_TIME)
+                val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
+                
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Column(modifier = Modifier.padding(Constants.SETTINGS_HORIZONTAL_PADDING.dp)) {
+                        NotificationTimeSelector(
+                            selectedMinutes = globalLeadTime,
+                            onMinutesSelected = { minutes ->
+                                coroutineScope.launch {
+                                    timePreferences.setGlobalLeadTime(minutes)
+                                }
+                            }
+                        )
+                    }
+                }
+                
             QuietModeSettingsCard(
                 currentQuietMode = currentQuietMode,
                 showQuietModeDropdown = showQuietModeDropdown,
@@ -414,7 +437,7 @@ fun SettingsScreen(
                 }
             )
                 
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(Constants.SETTINGS_ITEM_SPACING.dp))
                 
                 // Карточка настройки вибрации (оптимизация: collect один раз)
                 val vibrationEnabled by vibrationSettingsViewModel.vibrationEnabled.collectAsState()
@@ -501,7 +524,7 @@ fun SettingsScreen(
                     )
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(Constants.SETTINGS_HORIZONTAL_PADDING.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
@@ -513,7 +536,37 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Разработал:",
+                                text = "Разработали:",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = "Urban SOLUTION",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    textDecoration = TextDecoration.Underline
+                                ),
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) {
+                                    try {
+                                        val intent = Intent(Intent.ACTION_VIEW, "https://vk.com/urban_solution".toUri())
+                                        context.startActivity(intent)
+                                    } catch (e: Exception) {
+                                        Timber.e(e, "Could not open VK group")
+                                    }
+                                }
+                            )
+                        }
+                        
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Автор:",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -523,8 +576,8 @@ fun SettingsScreen(
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     fontWeight = FontWeight.Medium,
                                     textDecoration = TextDecoration.Underline
-                ),
-                color = MaterialTheme.colorScheme.primary,
+                                ),
+                                color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null
@@ -546,8 +599,6 @@ fun SettingsScreen(
                         )
                     }
                 }
-            
-            Spacer(Modifier.height(16.dp))
                 
                 // Обратная связь
                 Card(
@@ -559,16 +610,14 @@ fun SettingsScreen(
                     )
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                        modifier = Modifier.padding(Constants.SETTINGS_HORIZONTAL_PADDING.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
                             text = "Есть вопросы или предложения? Напишите нам на почту!",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-
-                        Spacer(Modifier.height(16.dp))
 
                         // Кнопка обратной связи
                         Button(
@@ -584,8 +633,6 @@ fun SettingsScreen(
                             Text("Написать на почту")
                         }
 
-                        Spacer(Modifier.height(8.dp))
-
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(
@@ -594,7 +641,7 @@ fun SettingsScreen(
                         ) {
                             Column(
                                 modifier = Modifier.padding(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(3.dp)
+                                verticalArrangement = Arrangement.spacedBy(Constants.SETTINGS_ITEM_SPACING.dp)
                             ) {
                                 Text(
                                     text = "💬 Что можно сообщить:",
@@ -627,7 +674,7 @@ fun SettingsScreen(
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                        verticalArrangement = Arrangement.spacedBy(Constants.SETTINGS_ITEM_SPACING.dp)
                     ) {
                         Text(
                             text = "Если приложение вам нравится, вы можете поддержать его разработку:",
@@ -695,7 +742,7 @@ fun SettingsScreen(
                         ) {
                             Column(
                                 modifier = Modifier.padding(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(3.dp)
+                                verticalArrangement = Arrangement.spacedBy(Constants.SETTINGS_ITEM_SPACING.dp)
                             ) {
                                 Text(
                                     text = "💡 Способы поддержки:",
@@ -733,7 +780,7 @@ fun SettingsScreen(
             },
             text = { 
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(Constants.SETTINGS_ITEM_SPACING.dp)
                 ) {
                     Text(
                         text = stringResource(R.string.settings_reset_warning),
@@ -815,7 +862,7 @@ fun SettingsScreen(
             },
             text = { 
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(Constants.SETTINGS_ITEM_SPACING.dp)
                 ) {
                     Text(
                         text = "Это действие очистит весь кэш приложения:",
