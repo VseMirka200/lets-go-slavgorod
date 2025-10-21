@@ -1,14 +1,6 @@
 # Поехали! Славгород
 ![](https://github.com/VseMirka200/lets-go-slavgorod/blob/main/materials/banner/banner1600x600.png)
 
-<div align="center">
-    <p>
-        <a href="https://github.com/VseMirka200/lets_go_slavgorod/releases">
-            <img src="https://img.shields.io/badge/Скачать-последнюю_версию-success?style=for-the-badge&logo=android" alt="Скачать приложение" />
-        </a>
-    </p>
-</div>
-
 ---
 
 <table>
