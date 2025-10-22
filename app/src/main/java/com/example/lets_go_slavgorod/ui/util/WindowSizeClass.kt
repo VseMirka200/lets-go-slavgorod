@@ -118,4 +118,3 @@ fun isFoldable(): Boolean {
     val windowSize = rememberWindowSize()
     return windowSize.widthSizeClass == WindowSizeClass.EXPANDED
 }
-

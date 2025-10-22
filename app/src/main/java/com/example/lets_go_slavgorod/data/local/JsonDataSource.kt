@@ -3,6 +3,7 @@ package com.example.lets_go_slavgorod.data.local
 import android.content.Context
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.model.BusSchedule
+import com.example.lets_go_slavgorod.data.validation.JsonValidator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -64,10 +65,13 @@ class JsonDataSource(private val context: Context) {
                 routes.add(route)
             }
             
-            cachedRoutes = routes
-            Timber.d("Loaded ${routes.size} routes from JSON")
+            // Валидируем загруженные данные
+            val validatedRoutes = JsonValidator.validateRoutes(routes)
             
-            routes
+            cachedRoutes = validatedRoutes
+            Timber.d("Loaded and validated ${validatedRoutes.size} routes from JSON")
+            
+            validatedRoutes
         } catch (e: Exception) {
             Timber.e(e, "Error loading routes from JSON, falling back to hardcoded data")
             // Fallback на старый метод если JSON не загрузился

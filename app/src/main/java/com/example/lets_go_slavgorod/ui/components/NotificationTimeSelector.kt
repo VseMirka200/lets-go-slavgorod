@@ -160,4 +160,3 @@ private fun formatMinutes(minutes: Int): String {
         else -> "${minutes / 60} ч ${minutes % 60} мин"
     }
 }
-

@@ -6,6 +6,7 @@ import android.net.NetworkCapabilities
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.model.BusSchedule
 import com.example.lets_go_slavgorod.core.Constants
+import com.example.lets_go_slavgorod.core.RetryUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -470,7 +471,7 @@ class RemoteDataSource(private val context: Context) {
      * @param forceRefresh принудительная загрузка с GitHub (игнорирует проверку версии)
      * @return JSON строка или null при ошибке
      */
-    private suspend fun getJsonString(forceRefresh: Boolean = false): String? {
+    suspend fun getJsonString(forceRefresh: Boolean = false): String? {
         Timber.d("📥 getJsonString called with forceRefresh=$forceRefresh")
         
         // ОПТИМИЗАЦИЯ: Проверяем интернет в начале, чтобы не тратить время на таймауты
@@ -555,7 +556,7 @@ class RemoteDataSource(private val context: Context) {
     }
     
     /**
-     * Загружает маршруты с метриками
+     * Загружает маршруты с метриками и retry механизмом
      * 
      * @param forceRefresh принудительная загрузка с GitHub
      * @return список маршрутов
@@ -571,8 +572,10 @@ class RemoteDataSource(private val context: Context) {
         }
         
         try {
-            Timber.d("📥 Getting JSON string...")
-            val jsonString = getJsonString(forceRefresh)
+            Timber.d("📥 Getting JSON string with retry mechanism...")
+            val jsonString = RetryUtils.retryNetwork {
+                getJsonString(forceRefresh)
+            }
             
             if (jsonString == null) {
                 Timber.e("❌ getJsonString returned null - NO DATA AVAILABLE")
@@ -846,5 +849,3 @@ class RemoteDataSource(private val context: Context) {
         return metrics.getStats()
     }
 }
-
-

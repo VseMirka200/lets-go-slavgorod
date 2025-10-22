@@ -3,7 +3,6 @@ package com.example.lets_go_slavgorod.data.local
 import android.content.Context
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
-import androidx.datastore.preferences.core.intPreferencesKey
 import com.example.lets_go_slavgorod.core.Constants
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationMode
 import com.example.lets_go_slavgorod.ui.viewmodel.QuietMode
@@ -402,4 +401,3 @@ object NotificationPreferencesCache {
         }
     }
 }
-

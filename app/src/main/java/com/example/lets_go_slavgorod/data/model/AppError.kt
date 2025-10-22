@@ -200,4 +200,3 @@ fun AppError.getLogMessage(): String {
         else -> getUserMessage()
     }
 }
-

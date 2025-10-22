@@ -117,4 +117,3 @@ fun <T> NetworkResult<T>.isSuccess(): Boolean {
 fun <T> NetworkResult<T>.isError(): Boolean {
     return this is NetworkResult.Error
 }
-

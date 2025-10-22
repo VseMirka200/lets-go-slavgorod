@@ -33,7 +33,7 @@ object ErrorHandler {
      * Преобразует Exception в AppError
      * 
      * Автоматически определяет тип ошибки и создает соответствующий AppError.
-     * Логирует ошибку для отладки.
+     * Логирует ошибку для отладки и записывает в метрики.
      * 
      * @param exception исходное исключение
      * @param context дополнительный контекст для логирования
@@ -48,7 +48,7 @@ object ErrorHandler {
         }
         
         // Маппинг исключения в AppError
-        return when (exception) {
+        val appError = when (exception) {
             // Network errors
             is UnknownHostException -> {
                 Timber.w("No internet connection")
@@ -98,6 +98,14 @@ object ErrorHandler {
                 )
             }
         }
+        
+        // Записываем ошибку в метрики
+        ErrorMetrics.recordError(appError, context, mapOf(
+            "exception_type" to exception.javaClass.simpleName,
+            "exception_message" to (exception.message ?: "Unknown error")
+        ))
+        
+        return appError
     }
     
     /**
@@ -152,4 +160,3 @@ object ErrorHandler {
         }
     }
 }
-

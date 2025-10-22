@@ -88,4 +88,3 @@ class VibrationSettingsViewModel(private val context: Context) : ViewModel() {
         }
     }
 }
-

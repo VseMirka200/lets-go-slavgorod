@@ -7,7 +7,11 @@ import androidx.lifecycle.viewModelScope
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
 import com.example.lets_go_slavgorod.core.Constants
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,6 +21,8 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -70,6 +76,19 @@ class RoutesViewModel(application: Application) : AndroidViewModel(application) 
     private var cachedRoutes: List<BusRoute> = emptyList()
     private var cachedRoutesMap: Map<String, BusRoute> = emptyMap()
     
+    // Job для отслеживания корутин и предотвращения утечек
+    private val cacheJobs = mutableMapOf<String, Job>()
+    
+    // SupervisorJob для безопасной отмены всех корутин
+    private val supervisorJob = SupervisorJob()
+    private val cacheScope = CoroutineScope(supervisorJob + Dispatchers.IO)
+    
+    // Константы для управления кэшем (используем централизованные константы)
+    companion object {
+        private const val MAX_CACHE_SIZE = Constants.ROUTES_MAX_CACHE_SIZE
+        private const val CACHE_CLEANUP_THRESHOLD = Constants.ROUTES_CACHE_CLEANUP_THRESHOLD
+    }
+    
     // Поисковые результаты с debounce
     private val debouncedSearchResults = _searchQuery
         .debounce(Constants.SEARCH_DEBOUNCE_MS)
@@ -96,6 +115,13 @@ class RoutesViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             routeRepository.routes.collect { routes ->
                 Timber.d("📥 Received ${routes.size} routes from Repository")
+                
+                // Проверяем размер кэша и очищаем при необходимости
+                if (routes.size > MAX_CACHE_SIZE) {
+                    Timber.w("Cache size exceeded: ${routes.size} > $MAX_CACHE_SIZE")
+                    clearCache()
+                }
+                
                 cachedRoutes = routes
                 cachedRoutesMap = routes.associateBy { it.id }
                 
@@ -175,5 +201,39 @@ class RoutesViewModel(application: Application) : AndroidViewModel(application) 
             Timber.w("Route not found in cache: $routeId, falling back to repository")
             routeRepository.getRouteById(routeId)
         }
+    }
+    
+    /**
+     * Очищает кэш маршрутов для предотвращения утечек памяти
+     */
+    private fun clearCache() {
+        Timber.d("🧹 Clearing routes cache to prevent memory leaks")
+        
+        // Отменяем все активные корутины
+        cacheJobs.values.forEach { job ->
+            if (job.isActive) {
+                job.cancel()
+            }
+        }
+        cacheJobs.clear()
+        
+        // Очищаем кэш
+        cachedRoutes = emptyList()
+        cachedRoutesMap = emptyMap()
+    }
+    
+    /**
+     * Очистка ресурсов при уничтожении ViewModel
+     */
+    override fun onCleared() {
+        super.onCleared()
+        Timber.d("🧹 RoutesViewModel cleared, cleaning up resources")
+        
+        // Отменяем все корутины
+        supervisorJob.cancel()
+        cacheScope.cancel()
+        
+        // Очищаем кэш
+        clearCache()
     }
 }

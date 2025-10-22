@@ -107,4 +107,3 @@ fun createScheduleUiState(
         favoriteIds = favoriteIds
     )
 }
-

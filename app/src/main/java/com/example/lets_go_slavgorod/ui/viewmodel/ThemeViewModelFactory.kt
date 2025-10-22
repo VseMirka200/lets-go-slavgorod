@@ -16,4 +16,3 @@ class ThemeViewModelFactory(private val context: Context) : ViewModelProvider.Fa
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }
-

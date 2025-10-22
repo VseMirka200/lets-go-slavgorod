@@ -402,6 +402,4 @@ object NotificationTimeCalculator {
             }
         }
     }
-    
 }
-

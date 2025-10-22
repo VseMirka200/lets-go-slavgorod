@@ -6,13 +6,13 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
-import androidx.datastore.preferences.core.longPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.lets_go_slavgorod.core.Constants
 import com.example.lets_go_slavgorod.data.local.NotificationPreferencesCache
 import com.example.lets_go_slavgorod.data.model.FavoriteTime
 import com.example.lets_go_slavgorod.data.notification.AlarmReceiver
 import com.example.lets_go_slavgorod.domain.notification.AlarmScheduler.cancelAlarm
+import com.example.lets_go_slavgorod.domain.notification.AlarmScheduler.scheduleAlarm
+import com.example.lets_go_slavgorod.domain.notification.AlarmScheduler.updateAllAlarmsBasedOnSettings
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationMode
 import timber.log.Timber
 import java.text.SimpleDateFormat

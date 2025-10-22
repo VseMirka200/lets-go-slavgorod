@@ -7,8 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.lets_go_slavgorod.core.Constants
 import com.example.lets_go_slavgorod.data.local.dataStore
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
-import com.example.lets_go_slavgorod.ui.viewmodel.themeDataStore
-import com.example.lets_go_slavgorod.ui.viewmodel.displayDataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -279,5 +277,3 @@ class DataManagementViewModel(private val context: Context) : ViewModel() {
     }
 
 }
-
-

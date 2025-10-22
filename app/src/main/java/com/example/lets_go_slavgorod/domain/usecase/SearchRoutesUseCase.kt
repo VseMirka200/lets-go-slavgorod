@@ -2,16 +2,13 @@
 
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
-import com.example.lets_go_slavgorod.core.search
 import timber.log.Timber
 
 /**
- * Use Case для поиска маршрутов по запросу
+ * Use Case для поиска маршрутов
  * 
- * Инкапсулирует бизнес-логику поиска маршрутов.
- * Использует нечеткий поиск по номеру и названию маршрута.
- * 
- * @param repository репозиторий маршрутов
+ * Инкапсулирует бизнес-логику поиска маршрутов по запросу.
+ * Отделяет бизнес-логику от UI слоя.
  * 
  * @author VseMirka200
  * @version 1.0
@@ -20,35 +17,22 @@ import timber.log.Timber
 class SearchRoutesUseCase(
     private val repository: BusRouteRepository
 ) {
+    
     /**
      * Выполняет поиск маршрутов по запросу
      * 
      * @param query поисковый запрос
-     * @return List<BusRoute> список найденных маршрутов
-     * 
-     * @sample
-     * ```kotlin
-     * val routes = searchRoutesUseCase("1")
-     * // Вернет все маршруты содержащие "1" в номере или названии
-     * ```
+     * @return список найденных маршрутов
      */
     suspend operator fun invoke(query: String): List<BusRoute> {
-        return try {
-            val allRoutes = repository.getAllRoutes()
-            
-            if (query.isBlank()) {
-                Timber.d("Empty query, returning all routes")
-                return allRoutes
-            }
-            
-            val results = allRoutes.search(query)
-            Timber.d("Search '$query' found ${results.size} routes")
-            
-            results
-        } catch (e: Exception) {
-            Timber.e(e, "Error searching routes")
-            emptyList()
+        Timber.d("🔍 Searching routes with query: '$query'")
+        
+        return if (query.isBlank()) {
+            // Если запрос пустой, возвращаем все маршруты
+            repository.getAllRoutes()
+        } else {
+            // Выполняем поиск
+            repository.searchRoutes(query)
         }
     }
 }
-

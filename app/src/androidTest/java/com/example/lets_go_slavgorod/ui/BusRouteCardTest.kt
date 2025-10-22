@@ -114,4 +114,3 @@ class BusRouteCardTest {
             .assertIsDisplayed()
     }
 }
-

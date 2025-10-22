@@ -180,4 +180,3 @@ class FavoriteFlowTest {
         assertTrue(savedFavorites.any { it.routeId == "102B" && it.isActive })
     }
 }
-

@@ -126,4 +126,3 @@ object TextFormattingUtils {
         return "$count $word"
     }
 }
-

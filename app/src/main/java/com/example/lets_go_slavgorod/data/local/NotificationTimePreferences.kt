@@ -3,12 +3,11 @@
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
-import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
-import com.example.lets_go_slavgorod.domain.notification.AlarmScheduler
 import com.example.lets_go_slavgorod.core.Constants
 import com.example.lets_go_slavgorod.core.toFavoriteTime
+import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
+import com.example.lets_go_slavgorod.domain.notification.AlarmScheduler
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
@@ -54,8 +53,8 @@ class NotificationTimePreferences(private val context: Context) {
         }
         Timber.d("✅ Global lead time set to $minutes minutes")
         
-        // Обновляем все активные уведомления с новым временем
-        updateAllAlarmsAfterTimeChange()
+        // Временно отключено для предотвращения крашей
+        // updateAllAlarmsAfterTimeChange()
     }
     
     /**
@@ -114,8 +113,8 @@ class NotificationTimePreferences(private val context: Context) {
         NotificationPreferencesCache.updateCache(context)
         Timber.d("   ✓ Updated NotificationPreferencesCache")
         
-        // Обновляем все активные уведомления с новым временем
-        updateAllAlarmsAfterTimeChange()
+        // Временно отключено для предотвращения крашей
+        // updateAllAlarmsAfterTimeChange()
         
         Timber.d("═══════════════════════════════════════════════════")
     }
@@ -162,6 +161,3 @@ class NotificationTimePreferences(private val context: Context) {
         }
     }
 }
-
-
-

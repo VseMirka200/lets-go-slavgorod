@@ -223,4 +223,3 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 }
-

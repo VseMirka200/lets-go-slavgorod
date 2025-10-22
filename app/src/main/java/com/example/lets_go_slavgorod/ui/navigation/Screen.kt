@@ -3,7 +3,7 @@ package com.example.lets_go_slavgorod.ui.navigation
 /**
  * Экраны навигации приложения
  * 
- * Версия: 3.0
+ * Версия: 2.0
  * Последнее обновление: Октябрь 2025
  * 
  * Определяет основные маршруты навигации в приложении.
@@ -17,15 +17,15 @@ package com.example.lets_go_slavgorod.ui.navigation
  * - **schedule/{routeId}**: расписание конкретного маршрута с фильтрами
  * - **route_notifications/{routeId}**: настройки уведомлений для конкретного маршрута
  * 
- * Изменения v3.0:
- * - Удален устаревший Screen.About (информация встроена в Settings)
- * - Упрощена навигационная структура
+ * v2.0 Changes:
+ * - Добавлена поддержка навигации из виджетов
+ * - Улучшена структура навигации
  * - Обновлена документация
  * 
  * @property route строковый идентификатор маршрута для NavController
  * 
  * @author VseMirka200
- * @version 3.0
+ * @version 2.0
  * @since 1.0
  */
 sealed class Screen(val route: String) {

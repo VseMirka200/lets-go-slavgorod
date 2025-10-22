@@ -28,6 +28,11 @@ import com.example.lets_go_slavgorod.core.Constants
  * - Thread-safe операции через @Volatile
  * - Поддержка резервного копирования
  * 
+ * v2.0 Changes:
+ * - Добавлена поддержка виджетов
+ * - Улучшена производительность запросов
+ * - Оптимизированы индексы для быстрого доступа
+ * 
  * @author VseMirka200
  * @version 2.0 (Database version 6)
  * @since 1.0
@@ -83,6 +88,45 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         /**
+         * Миграция базы данных с версии 6 на 7
+         * 
+         * Добавляет индексы для оптимизации производительности запросов:
+         * - Индекс по route_id для быстрого поиска по маршруту
+         * - Индекс по departure_time для сортировки по времени
+         * - Индекс по day_of_week для фильтрации по дню недели
+         * - Индекс по is_active для фильтрации активных записей
+         * - Составные индексы для сложных запросов
+         */
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Создаем индексы для оптимизации производительности
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_favorite_times_route_id ON favorite_times (route_id)")
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_favorite_times_departure_time ON favorite_times (departure_time)")
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_favorite_times_day_of_week ON favorite_times (day_of_week)")
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_favorite_times_is_active ON favorite_times (is_active)")
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_favorite_times_route_id_is_active ON favorite_times (route_id, is_active)")
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_favorite_times_departure_time_day_of_week ON favorite_times (departure_time, day_of_week)")
+            }
+        }
+
+        /**
+         * Миграция базы данных с версии 7 на 8
+         * 
+         * Добавляет дополнительные индексы для оптимизации сложных запросов:
+         * - Составной индекс по route_id и departure_time
+         * - Составной индекс по is_active и departure_time
+         * - Трехкомпонентный индекс для сложных запросов
+         */
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Создаем дополнительные индексы для оптимизации сложных запросов
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_favorite_times_route_id_departure_time ON favorite_times (route_id, departure_time)")
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_favorite_times_is_active_departure_time ON favorite_times (is_active, departure_time)")
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_favorite_times_route_id_day_of_week_is_active ON favorite_times (route_id, day_of_week, is_active)")
+            }
+        }
+
+        /**
          * Получает единственный экземпляр базы данных (Singleton)
          * 
          * Использует double-checked locking для thread-safe инициализации.
@@ -98,7 +142,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     Constants.DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_4_5, MIGRATION_5_6)
+                    .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance

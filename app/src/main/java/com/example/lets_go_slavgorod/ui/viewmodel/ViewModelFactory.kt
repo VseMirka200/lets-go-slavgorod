@@ -25,4 +25,3 @@ class ViewModelFactory(private val application: Application) : ViewModelProvider
         }
     }
 }
-

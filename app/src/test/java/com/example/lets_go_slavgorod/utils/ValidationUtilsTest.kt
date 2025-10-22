@@ -197,4 +197,3 @@ class ValidationUtilsTest {
         assertEquals("", ValidationUtils.sanitizeString(null))
     }
 }
-

@@ -464,5 +464,4 @@ class UpdateManager(private val context: Context) {
             UpdateResult(false, error = "Неожиданная ошибка при проверке обновлений: ${e.message}")
         }
     }
-
 }

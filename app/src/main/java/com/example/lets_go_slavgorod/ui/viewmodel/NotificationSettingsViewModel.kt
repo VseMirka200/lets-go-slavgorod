@@ -1,29 +1,28 @@
 ﻿package com.example.lets_go_slavgorod.ui.viewmodel
 
 import android.app.Application
-import timber.log.Timber
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.lets_go_slavgorod.core.Constants
-import com.example.lets_go_slavgorod.data.local.dataStore
+import com.example.lets_go_slavgorod.core.toFavoriteTime
 import com.example.lets_go_slavgorod.data.local.AppDatabase
-import com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity
 import com.example.lets_go_slavgorod.data.local.NotificationPreferencesCache
+import com.example.lets_go_slavgorod.data.local.dataStore
+import com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity
 import com.example.lets_go_slavgorod.data.model.FavoriteTime
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
-import com.example.lets_go_slavgorod.core.toFavoriteTime
 import com.example.lets_go_slavgorod.domain.notification.AlarmScheduler
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.time.DayOfWeek
 
 /**
@@ -491,5 +490,4 @@ class NotificationSettingsViewModel(application: Application) : AndroidViewModel
             }
         }
     }
-
 }

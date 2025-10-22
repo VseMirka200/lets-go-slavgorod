@@ -2,6 +2,7 @@ package com.example.lets_go_slavgorod.data.local.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
@@ -27,7 +28,22 @@ import androidx.room.PrimaryKey
  * @version 2.0
  * @since 1.0
  */
-@Entity(tableName = "favorite_times")
+@Entity(
+    tableName = "favorite_times",
+    indices = [
+        Index(value = ["route_id"]), // Индекс для быстрого поиска по маршруту
+        Index(value = ["departure_time"]), // Индекс для сортировки по времени
+        Index(value = ["day_of_week"]), // Индекс для фильтрации по дню недели
+        Index(value = ["is_active"]), // Индекс для фильтрации активных записей
+        Index(value = ["route_id", "is_active"]), // Составной индекс для частых запросов
+        Index(value = ["departure_time", "day_of_week"]), // Составной индекс для сортировки
+        Index(value = ["route_id", "departure_time"]), // Составной индекс для поиска по маршруту и времени
+        Index(value = ["is_active", "departure_time"]), // Составной индекс для активных записей по времени
+        Index(value = ["route_id", "day_of_week", "is_active"]), // Трехкомпонентный индекс для сложных запросов
+        Index(value = ["added_date"]), // Индекс для сортировки по дате создания
+        Index(value = ["route_id", "departure_time", "day_of_week"]) // Четырехкомпонентный индекс для максимальной оптимизации
+    ]
+)
 data class FavoriteTimeEntity(
     /** Уникальный идентификатор записи */
     @PrimaryKey

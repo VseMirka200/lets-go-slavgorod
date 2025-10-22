@@ -5,8 +5,19 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lets_go_slavgorod.data.model.BusSchedule
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
+import com.example.lets_go_slavgorod.core.Constants
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -38,8 +49,20 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     private val appContext = application.applicationContext
     private val repository = BusRouteRepository(appContext)
     
-    // Кэш расписаний по routeId
-    private val schedulesCache = mutableMapOf<String, MutableStateFlow<List<BusSchedule>>>()
+    // Кэш расписаний по routeId - используем StateFlow для кэширования
+    private val schedulesCache = mutableMapOf<String, StateFlow<List<BusSchedule>>>()
+    
+    // Job для отслеживания корутин и предотвращения утечек
+    private val cacheJobs = mutableMapOf<String, Job>()
+    
+    // SupervisorJob для безопасной отмены всех корутин
+    private val supervisorJob = SupervisorJob()
+    private val cacheScope = CoroutineScope(supervisorJob + Dispatchers.IO)
+    
+    // Константы для управления кэшем (используем централизованные константы)
+    companion object {
+        private const val MAX_SCHEDULE_CACHE_SIZE = Constants.SCHEDULE_MAX_CACHE_SIZE
+    }
     
     /**
      * Получает расписание для маршрута
@@ -48,21 +71,35 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
      * @return StateFlow с расписанием
      */
     fun getScheduleFor(routeId: String): StateFlow<List<BusSchedule>> {
-        return schedulesCache.getOrPut(routeId) {
-            val flow = MutableStateFlow<List<BusSchedule>>(emptyList())
-            viewModelScope.launch {
-                try {
-                    // Асинхронная загрузка через suspend функцию
-                    val loadedSchedules = repository.getSchedulesForRoute(routeId)
-                    flow.value = loadedSchedules
-                    Timber.d("Loaded ${loadedSchedules.size} schedules for route $routeId")
-                } catch (e: Exception) {
-                    Timber.e(e, "Error loading schedules for route $routeId")
-                    flow.value = emptyList()
-                }
-            }
-            flow
+        // Проверяем размер кэша и очищаем при необходимости
+        if (schedulesCache.size > MAX_SCHEDULE_CACHE_SIZE) {
+            Timber.w("Schedule cache size exceeded: ${schedulesCache.size} > $MAX_SCHEDULE_CACHE_SIZE")
+            clearScheduleCache()
         }
+        
+        // Проверяем, есть ли уже кэшированный StateFlow
+        schedulesCache[routeId]?.let { return it }
+        
+        // Создаем новый StateFlow и кэшируем его
+        val newStateFlow = flow {
+            try {
+                // Асинхронная загрузка через suspend функцию
+                val loadedSchedules = repository.getSchedulesForRoute(routeId)
+                emit(loadedSchedules)
+                Timber.d("Loaded ${loadedSchedules.size} schedules for route $routeId")
+            } catch (e: Exception) {
+                Timber.e(e, "Error loading schedules for route $routeId")
+                emit(emptyList())
+            }
+        }.flowOn(Dispatchers.IO).stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+        
+        // Кэшируем StateFlow
+        schedulesCache[routeId] = newStateFlow
+        return newStateFlow
     }
     
     /**
@@ -77,12 +114,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 // Асинхронная загрузка с принудительным обновлением
                 val loadedSchedules = repository.getSchedulesForRoute(routeId, forceRefresh = true)
                 
-                val existingFlow = schedulesCache[routeId]
-                if (existingFlow != null) {
-                    existingFlow.value = loadedSchedules
-                } else {
-                    schedulesCache[routeId] = MutableStateFlow(loadedSchedules)
-                }
+                // Удаляем старый кэш и создаем новый
+                schedulesCache.remove(routeId)
+                val newStateFlow = MutableStateFlow(loadedSchedules)
+                schedulesCache[routeId] = newStateFlow
                 
                 Timber.d("Schedule refreshed for route $routeId: ${loadedSchedules.size} items")
             } catch (e: Exception) {
@@ -108,5 +143,37 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             emptyList()
         }
     }
+    
+    /**
+     * Очищает кэш расписаний для предотвращения утечек памяти
+     */
+    private fun clearScheduleCache() {
+        Timber.d("🧹 Clearing schedule cache to prevent memory leaks")
+        
+        // Отменяем все активные корутины
+        cacheJobs.values.forEach { job ->
+            if (job.isActive) {
+                job.cancel()
+            }
+        }
+        cacheJobs.clear()
+        
+        // Очищаем кэш
+        schedulesCache.clear()
+    }
+    
+    /**
+     * Очистка ресурсов при уничтожении ViewModel
+     */
+    override fun onCleared() {
+        super.onCleared()
+        Timber.d("🧹 ScheduleViewModel cleared, cleaning up resources")
+        
+        // Отменяем все корутины
+        supervisorJob.cancel()
+        cacheScope.cancel()
+        
+        // Очищаем кэш
+        clearScheduleCache()
+    }
 }
-

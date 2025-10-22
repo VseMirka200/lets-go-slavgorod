@@ -1,23 +1,17 @@
 package com.example.lets_go_slavgorod.widget
 
-import com.example.lets_go_slavgorod.R
-
 /**
- * Виджет для маршрута 102Б
- * Цвет: определяется в routes_data.json
+ * Виджет для маршрута 102Б (Славгород — Ст. Зори)
+ * 
+ * Отображает следующее время отправления для маршрута 102Б:
+ * - Левое направление: Славгород (отправление от Рынка)
+ * - Правое направление: Ст. Зори (отправление от Ст. Зори)
+ * 
+ * Цвет: #FF4CAF50 (зеленый)
+ * Размер: 1x1 (110dp x 60dp)
+ * 
+ * @author VseMirka200
+ * @version 2.0
+ * @since 1.0
  */
-class Route102BWidgetProvider : BaseRouteWidgetProvider() {
-    override val routeId = "102B"
-    override val layoutId = R.layout.widget_route_102b
-    override val workName = "route102b_widget_update"
-    override val leftDirection = "Славгород"
-    override val rightDirection = "Ст. Зори"
-
-    override fun isLeftDirection(direction: String): Boolean {
-        return direction.contains("Славгород") || direction.contains("Рынок")
-    }
-
-    override fun isRightDirection(direction: String): Boolean {
-        return direction.contains("Ст. Зори") || direction.contains("Зори")
-    }
-}
+class Route102BWidgetProvider : ConfigurableWidgetProvider(WidgetConfigRegistry.ROUTE_102B)

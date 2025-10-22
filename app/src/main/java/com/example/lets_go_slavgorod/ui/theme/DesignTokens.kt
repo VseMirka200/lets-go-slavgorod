@@ -119,4 +119,3 @@ object DesignTokens {
         const val Tooltip = 5f
     }
 }
-

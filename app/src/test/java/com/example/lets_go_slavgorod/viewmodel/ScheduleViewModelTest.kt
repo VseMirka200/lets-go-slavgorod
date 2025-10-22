@@ -95,4 +95,3 @@ class ScheduleViewModelTest {
         assertNotNull(schedules)
     }
 }
-

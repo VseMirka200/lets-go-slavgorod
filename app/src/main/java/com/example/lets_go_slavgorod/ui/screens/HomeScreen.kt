@@ -3,21 +3,18 @@
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.SearchOff
@@ -26,6 +23,7 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,33 +33,34 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.lets_go_slavgorod.R
+import com.example.lets_go_slavgorod.core.ConditionalLogging
 import com.example.lets_go_slavgorod.data.model.BusRoute
+import com.example.lets_go_slavgorod.ui.components.BusRouteCard
 import com.example.lets_go_slavgorod.ui.components.SearchBar
+import com.example.lets_go_slavgorod.ui.theme.DesignTokens
 import com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory
 import com.example.lets_go_slavgorod.ui.viewmodel.DisplaySettingsViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.RouteDisplayMode
 import com.example.lets_go_slavgorod.ui.viewmodel.RoutesViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.ViewModelFactory
-import com.example.lets_go_slavgorod.core.ConditionalLogging
-import com.example.lets_go_slavgorod.ui.viewmodel.RouteDisplayMode
-import com.example.lets_go_slavgorod.ui.components.BusRouteCard
-import com.example.lets_go_slavgorod.ui.theme.DesignTokens
+import kotlinx.coroutines.launch
 import timber.log.Timber
-import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.viewmodel.compose.viewModel
 
 /**
  * Компонент состояния загрузки данных
@@ -344,15 +343,17 @@ fun RoutesListState(
  * - Навигация к расписанию конкретного маршрута (клик на карточку)
  * - Быстрый доступ к настройкам через иконку в шапке
  * - Обработка состояний: загрузка, ошибка, пустой список, нет результатов поиска
+ * - Поддержка Pull-to-Refresh для обновления данных
  * 
  * Шапка экрана:
  * - Название приложения "Поехали! Славгород" (Material Design titleLarge)
  * - Кнопка настроек справа (Settings icon)
  * 
- * Изменения v2.0:
- * - Удалено нижнее меню навигации (единственный главный экран)
+ * v2.0 Changes:
+ * - Добавлена поддержка навигации из виджетов
  * - Улучшена типографика с использованием Roboto
  * - Оптимизирована структура для более быстрой навигации
+ * - Добавлен Pull-to-Refresh для обновления данных
  * 
  * Оптимизации:
  * - LazyVerticalGrid/LazyColumn для эффективного отображения больших списков
@@ -361,6 +362,7 @@ fun RoutesListState(
  * - Использование remember для вычисляемых значений
  * 
  * @param navController контроллер навигации для переходов между экранами
+ * @param routesViewModel ViewModel для управления данными маршрутов
  * @param modifier модификатор для настройки внешнего вида
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -379,6 +381,20 @@ fun HomeScreen(
     Timber.d("HomeScreen is being displayed")
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    
+    // Стабилизация вычисляемых значений для предотвращения лишних рекомпозиций
+    val filteredRoutes by remember(uiState.routes, searchQuery) {
+        derivedStateOf {
+            if (searchQuery.isBlank()) {
+                uiState.routes
+            } else {
+                uiState.routes.filter { route ->
+                    route.name.contains(searchQuery, ignoreCase = true) ||
+                    route.routeNumber.contains(searchQuery, ignoreCase = true)
+                }
+            }
+        }
+    }
     
     // Snackbar state
     val snackbarHostState = remember { SnackbarHostState() }

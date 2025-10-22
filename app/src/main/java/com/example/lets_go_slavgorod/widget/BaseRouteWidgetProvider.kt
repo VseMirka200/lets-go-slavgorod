@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import androidx.work.*
 import com.example.lets_go_slavgorod.MainActivity
 import com.example.lets_go_slavgorod.R
+import com.example.lets_go_slavgorod.core.Constants
 import com.example.lets_go_slavgorod.data.local.JsonDataSource
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.model.BusSchedule
@@ -20,14 +21,38 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 /**
  * Базовый класс для всех виджетов маршрутов
+ * 
+ * Предоставляет общую функциональность для виджетов автобусных маршрутов:
+ * - Обновление содержимого виджета с расписанием
+ * - Обработка кликов для навигации к маршруту
+ * - Периодическое обновление через WorkManager
+ * - Определение следующего времени отправления
+ * 
+ * Архитектура:
+ * - Использует JsonDataSource для загрузки данных
+ * - WorkManager для периодических обновлений
+ * - Coroutines для асинхронных операций
+ * - RemoteViews для обновления UI
+ * 
+ * v2.0 Changes:
+ * - Добавлена поддержка навигации к конкретным маршрутам
+ * - Улучшена обработка Intent с флагами
+ * - Добавлено логирование для отладки
+ * - Оптимизирована навигация с задержками
+ * 
+ * @author VseMirka200
+ * @version 2.0
+ * @since 1.0
  */
 abstract class BaseRouteWidgetProvider : AppWidgetProvider() {
 
-    protected val widgetScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    // Оптимизированный CoroutineScope с SupervisorJob для изоляции ошибок
+    protected val widgetScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     abstract val routeId: String
     abstract val layoutId: Int
@@ -35,6 +60,16 @@ abstract class BaseRouteWidgetProvider : AppWidgetProvider() {
     abstract val leftDirection: String
     abstract val rightDirection: String
 
+    /**
+     * Вызывается при обновлении виджета
+     * 
+     * Обновляет все экземпляры виджета данного типа на главном экране.
+     * Запускает периодическое обновление через WorkManager.
+     * 
+     * @param context Контекст приложения
+     * @param appWidgetManager Менеджер виджетов
+     * @param appWidgetIds Массив ID виджетов для обновления
+     */
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
@@ -47,18 +82,44 @@ abstract class BaseRouteWidgetProvider : AppWidgetProvider() {
         }
     }
 
+    /**
+     * Вызывается при создании первого экземпляра виджета
+     * 
+     * Запускает периодическое обновление виджета через WorkManager.
+     * 
+     * @param context Контекст приложения
+     */
     override fun onEnabled(context: Context) {
         Timber.d("${javaClass.simpleName}: onEnabled")
         super.onEnabled(context)
         startPeriodicUpdate(context)
     }
 
+    /**
+     * Вызывается при удалении последнего экземпляра виджета
+     * 
+     * Останавливает периодическое обновление виджета и отменяет корутины.
+     * 
+     * @param context Контекст приложения
+     */
     override fun onDisabled(context: Context) {
         Timber.d("${javaClass.simpleName}: onDisabled")
         super.onDisabled(context)
         stopPeriodicUpdate(context)
+        
+        // Явная отмена корутин для предотвращения утечек памяти
+        widgetScope.cancel()
+        Timber.d("${javaClass.simpleName}: Widget scope cancelled")
     }
 
+    /**
+     * Запускает периодическое обновление виджета через WorkManager
+     * 
+     * Создает уникальную задачу для каждого типа виджета с интервалом 15 минут.
+     * Использует ограничения для оптимизации батареи.
+     * 
+     * @param context Контекст приложения
+     */
     private fun startPeriodicUpdate(context: Context) {
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
@@ -67,7 +128,7 @@ abstract class BaseRouteWidgetProvider : AppWidgetProvider() {
 
         val workRequest = PeriodicWorkRequest.Builder(
             BaseWidgetUpdateWorker::class.java,
-            15, TimeUnit.MINUTES
+            Constants.WIDGET_UPDATE_INTERVAL_MINUTES, TimeUnit.MINUTES
         )
             .setConstraints(constraints)
             .setInputData(workDataOf("route_id" to routeId))
@@ -81,11 +142,28 @@ abstract class BaseRouteWidgetProvider : AppWidgetProvider() {
             )
     }
 
+    /**
+     * Останавливает периодическое обновление виджета
+     * 
+     * Отменяет уникальную задачу WorkManager для данного типа виджета.
+     * 
+     * @param context Контекст приложения
+     */
     private fun stopPeriodicUpdate(context: Context) {
         WorkManager.getInstance(context)
             .cancelUniqueWork(workName)
     }
 
+    /**
+     * Обновляет содержимое виджета
+     * 
+     * Загружает данные маршрута, определяет следующее время отправления
+     * и обновляет UI виджета. Настраивает обработчик кликов для навигации.
+     * 
+     * @param context Контекст приложения
+     * @param appWidgetManager Менеджер виджетов
+     * @param appWidgetId ID виджета для обновления
+     */
     protected fun updateAppWidget(
         context: Context,
         appWidgetManager: AppWidgetManager,
@@ -131,6 +209,16 @@ abstract class BaseRouteWidgetProvider : AppWidgetProvider() {
         }
     }
 
+    /**
+     * Получает следующее время отправления для маршрутов
+     * 
+     * Загружает расписание маршрутов и определяет следующее время отправления
+     * для каждого направления (левое и правое).
+     * 
+     * @param routeIds Список ID маршрутов для обработки
+     * @param jsonDataSource Источник данных JSON
+     * @return Список пар (маршрут, время отправления с направлением)
+     */
     private suspend fun getNextDepartureTimes(
         routeIds: List<String>,
         jsonDataSource: JsonDataSource
@@ -218,9 +306,32 @@ abstract class BaseRouteWidgetProvider : AppWidgetProvider() {
         }
     }
 
+    /**
+     * Определяет, является ли направление левым
+     * 
+     * @param direction Строка с описанием направления
+     * @return true, если направление левое
+     */
     protected abstract fun isLeftDirection(direction: String): Boolean
+    
+    /**
+     * Определяет, является ли направление правым
+     * 
+     * @param direction Строка с описанием направления
+     * @return true, если направление правое
+     */
     protected abstract fun isRightDirection(direction: String): Boolean
 
+    /**
+     * Находит следующее время отправления из расписания
+     * 
+     * Анализирует расписание и находит ближайшее время отправления
+     * после текущего времени. Обрабатывает переход через полночь.
+     * 
+     * @param schedules Список расписаний для анализа
+     * @param currentTime Текущее время в миллисекундах
+     * @return Время следующего отправления или null, если не найдено
+     */
     private fun findNextDepartureTime(schedules: List<BusSchedule>, currentTime: Long): Long? {
         val calendar = Calendar.getInstance()
         calendar.timeInMillis = currentTime

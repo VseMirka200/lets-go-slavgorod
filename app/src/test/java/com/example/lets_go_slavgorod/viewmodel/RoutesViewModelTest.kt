@@ -178,4 +178,3 @@ class RoutesViewModelTest {
         assertEquals("102", query)
     }
 }
-

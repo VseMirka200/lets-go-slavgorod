@@ -15,4 +15,3 @@ package com.example.lets_go_slavgorod.data.model
 class AppErrorException(
     val appError: AppError
 ) : Exception(appError.getUserMessage())
-

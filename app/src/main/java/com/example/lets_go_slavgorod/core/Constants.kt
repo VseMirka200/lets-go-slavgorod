@@ -105,7 +105,7 @@ object Constants {
     
     // База данных
     const val DATABASE_NAME = "bus_app_database"  // Имя файла базы данных
-    const val DATABASE_VERSION = 6               // Версия схемы базы данных
+    const val DATABASE_VERSION = 8               // Версия схемы базы данных (увеличена для индексов)
     
     // ID маршрутов (для type-safe использования)
     const val ROUTE_ID_102 = "102"                                 // Маршрут №102 (Славгород — Яровое)
@@ -152,4 +152,18 @@ object Constants {
     
     /** Префикс для fallback названия маршрута (синхронизировано с R.string.fallback_route_id) */
     const val FALLBACK_ROUTE_PREFIX = "Маршрут"
+    
+    // =====================================================================================
+    //                              ПРОИЗВОДИТЕЛЬНОСТЬ И КЭШИРОВАНИЕ
+    // =====================================================================================
+    
+    // Виджеты
+    const val WIDGET_UPDATE_INTERVAL_MINUTES = 15L        // Интервал обновления виджетов (минуты)
+    const val WIDGET_MAX_CACHE_SIZE = 100                 // Максимальный размер кэша виджетов
+    const val WIDGET_CACHE_CLEANUP_THRESHOLD = 80         // Порог очистки кэша виджетов
+    
+    // ViewModels
+    const val ROUTES_MAX_CACHE_SIZE = 100                 // Максимальный размер кэша маршрутов
+    const val ROUTES_CACHE_CLEANUP_THRESHOLD = 80         // Порог очистки кэша маршрутов
+    const val SCHEDULE_MAX_CACHE_SIZE = 50                // Максимальный размер кэша расписаний
 }

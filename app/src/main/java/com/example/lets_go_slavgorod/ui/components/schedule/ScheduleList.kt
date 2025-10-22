@@ -2,7 +2,16 @@
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -12,29 +21,38 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.StarBorder
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.lets_go_slavgorod.core.Constants
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.model.BusSchedule
-import com.example.lets_go_slavgorod.ui.components.StickyDepartureHeader
-import com.example.lets_go_slavgorod.ui.components.schedule.TwoColumnScheduleGrid
-import com.example.lets_go_slavgorod.ui.components.schedule.FilterableScheduleGrid
-import com.example.lets_go_slavgorod.ui.components.schedule.UnifiedScheduleHeader
-import com.example.lets_go_slavgorod.ui.components.UniversalFilterRow
 import com.example.lets_go_slavgorod.ui.components.FilterItem
+import com.example.lets_go_slavgorod.ui.components.StickyDepartureHeader
+import com.example.lets_go_slavgorod.ui.components.UniversalFilterRow
 import com.example.lets_go_slavgorod.ui.model.ScheduleUiState
 import com.example.lets_go_slavgorod.ui.viewmodel.FavoritesViewModel
-import com.example.lets_go_slavgorod.core.Constants
-import com.example.lets_go_slavgorod.ui.util.TextFormattingUtils
-import com.example.lets_go_slavgorod.core.ConditionalLogging
 import timber.log.Timber
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
 
 /**
  * Основной компонент списка расписаний маршрута

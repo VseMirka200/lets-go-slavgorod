@@ -91,6 +91,7 @@ import com.example.lets_go_slavgorod.ui.screens.settings.NotificationSettingsScr
  * - Проверка обновлений приложения
  * - Отображение дисклеймера при первом запуске
  * - Восстановление уведомлений после перезагрузки
+ * - Обработка навигации из виджетов к конкретным маршрутам
  * 
  * Архитектура:
  * - MVVM паттерн с ViewModels
@@ -98,6 +99,13 @@ import com.example.lets_go_slavgorod.ui.screens.settings.NotificationSettingsScr
  * - Navigation Component для навигации
  * - DataStore для настроек
  * - Room для локальной базы данных
+ * - WorkManager для фоновых задач
+ * 
+ * v2.0 Changes:
+ * - Добавлена поддержка навигации из виджетов
+ * - Улучшена обработка Intent для виджетов
+ * - Добавлено логирование для отладки навигации
+ * - Оптимизирована навигация с задержками и проверками
  * 
  * @author VseMirka200
  * @version 2.0
@@ -306,6 +314,12 @@ class MainActivity : ComponentActivity() {
     /**
      * Обрабатывает Intent из уведомления для навигации к конкретному избранному времени
      * или из виджета для навигации к конкретному маршруту
+     * 
+     * Поддерживает два типа навигации:
+     * 1. Из уведомлений - навигация к избранному времени через базу данных
+     * 2. Из виджетов - прямая навигация к расписанию маршрута
+     * 
+     * @param intent Intent с данными для навигации
      */
     private fun handleNotificationIntent(intent: Intent?) {
         intent?.let {

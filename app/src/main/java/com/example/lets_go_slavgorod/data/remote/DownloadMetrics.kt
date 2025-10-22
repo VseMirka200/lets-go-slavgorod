@@ -130,4 +130,3 @@ class DownloadMetrics(private val context: Context) {
             get() = etagHits * averageBytesPerDownload
     }
 }
-

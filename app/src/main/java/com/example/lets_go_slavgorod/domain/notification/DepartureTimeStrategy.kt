@@ -165,4 +165,3 @@ class DisabledStrategy : DepartureTimeStrategy() {
         return -1L
     }
 }
-

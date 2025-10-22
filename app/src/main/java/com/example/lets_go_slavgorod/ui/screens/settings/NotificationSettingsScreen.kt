@@ -1,24 +1,38 @@
 ﻿package com.example.lets_go_slavgorod.ui.screens.settings
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.lets_go_slavgorod.core.Constants
 import com.example.lets_go_slavgorod.data.local.NotificationTimePreferences
 import com.example.lets_go_slavgorod.ui.components.NotificationTimeSelector
 import com.example.lets_go_slavgorod.ui.components.SettingsTopBar
-import com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory
-import com.example.lets_go_slavgorod.ui.viewmodel.QuietModeViewModel
-import com.example.lets_go_slavgorod.ui.viewmodel.VibrationSettingsViewModel
-import com.example.lets_go_slavgorod.core.Constants
+// Временно убраны проблемные ViewModels
+// import com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory
+// import com.example.lets_go_slavgorod.ui.viewmodel.QuietModeViewModel
+// import com.example.lets_go_slavgorod.ui.viewmodel.VibrationSettingsViewModel
 import kotlinx.coroutines.launch
 
 /**
@@ -35,16 +49,10 @@ fun NotificationSettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val quietModeViewModel: QuietModeViewModel = viewModel(
-        factory = ContextViewModelFactory.create(context) { QuietModeViewModel(it) }
-    )
-    val vibrationSettingsViewModel: VibrationSettingsViewModel = viewModel(
-        factory = ContextViewModelFactory.create(context) { VibrationSettingsViewModel(it) }
-    )
     
+    // Временно упрощаем - убираем проблемные ViewModels
     val timePreferences = remember { NotificationTimePreferences(context) }
     val globalLeadTime by timePreferences.globalLeadTime.collectAsState(initial = Constants.DEFAULT_NOTIFICATION_LEAD_TIME)
-    val vibrationEnabled by vibrationSettingsViewModel.vibrationEnabled.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     
     Scaffold(
@@ -57,7 +65,7 @@ fun NotificationSettingsScreen(
         contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0)
     ) { paddingValues ->
         Column(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(Constants.SETTINGS_HORIZONTAL_PADDING.dp)
@@ -81,7 +89,7 @@ fun NotificationSettingsScreen(
                 }
             }
             
-            // Настройки вибрации
+            // Настройки вибрации (временно отключены)
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -99,16 +107,14 @@ fun NotificationSettingsScreen(
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Text(
-                            text = "При получении уведомления",
+                            text = "При получении уведомления (временно недоступно)",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Switch(
-                        checked = vibrationEnabled,
-                        onCheckedChange = { enabled ->
-                            vibrationSettingsViewModel.setVibrationEnabled(enabled)
-                        }
+                        checked = true, // Временно всегда включено
+                        onCheckedChange = { /* Временно отключено */ }
                     )
                 }
             }
@@ -139,4 +145,3 @@ fun NotificationSettingsScreen(
         }
     }
 }
-

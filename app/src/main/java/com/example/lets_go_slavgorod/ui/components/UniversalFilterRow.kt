@@ -111,4 +111,3 @@ data class FilterItem(
     val icon: ImageVector? = null,
     val count: Int? = null
 )
-

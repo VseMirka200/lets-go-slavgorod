@@ -13,12 +13,10 @@
  */
 package com.example.lets_go_slavgorod.ui.viewmodel
 
-import android.annotation.SuppressLint
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lets_go_slavgorod.data.local.UpdatePreferences
-import timber.log.Timber
 import com.example.lets_go_slavgorod.domain.update.UpdateManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +24,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 /**
  * ViewModel для управления настройками обновлений

@@ -36,28 +36,27 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalContext
+import com.example.lets_go_slavgorod.core.Constants
+import com.example.lets_go_slavgorod.data.local.AppDatabase
+import com.example.lets_go_slavgorod.data.local.NotificationTimePreferences
 import com.example.lets_go_slavgorod.data.model.BusRoute
+import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
+import com.example.lets_go_slavgorod.domain.notification.NotificationTimeCalculator
+import com.example.lets_go_slavgorod.ui.components.NextNotificationTimer
+import com.example.lets_go_slavgorod.ui.components.NotificationTimeSelector
 import com.example.lets_go_slavgorod.ui.util.TextFormattingUtils
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationMode
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationSettingsViewModel
-import com.example.lets_go_slavgorod.ui.components.NotificationTimeSelector
-import com.example.lets_go_slavgorod.ui.components.NextNotificationTimer
-import com.example.lets_go_slavgorod.data.local.NotificationTimePreferences
-import com.example.lets_go_slavgorod.data.local.AppDatabase
-import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
-import com.example.lets_go_slavgorod.core.Constants
-import com.example.lets_go_slavgorod.domain.notification.NotificationTimeCalculator
-import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.DayOfWeek
-import kotlinx.coroutines.flow.flowOf
 
 /**
  * Экран настроек уведомлений для конкретного маршрута

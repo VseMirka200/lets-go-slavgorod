@@ -38,23 +38,23 @@ import androidx.compose.ui.platform.LocalContext
  */
 
 private val DarkColorScheme = darkColorScheme(
-    primary = BusBlueLight,
+    primary = Color(0xFF42A5F5), // BusBlueLight
     onPrimary = Color.Black,
-    primaryContainer = BusBlueDark,
+    primaryContainer = Color(0xFF0D47A1), // BusBlueDark
     onPrimaryContainer = Color.White,
     
-    secondary = AccentTeal,
+    secondary = Color(0xFF00BCD4), // AccentTeal
     onSecondary = Color.Black,
     secondaryContainer = Color(0xFF00695C),
     onSecondaryContainer = Color.White,
     
-    tertiary = TransportOrange,
+    tertiary = Color(0xFFFF9800), // TransportOrange
     onTertiary = Color.Black,
     tertiaryContainer = Color(0xFFE65100),
     onTertiaryContainer = Color.White,
     
-    background = SurfaceDark,
-    onBackground = OnSurfaceDark,
+    background = Color(0xFF1C1B1F), // SurfaceDark
+    onBackground = Color(0xFFE6E1E5), // OnSurfaceDark
     surface = Color(0xFF2C2C2C),
     onSurface = Color.White,
     surfaceVariant = Color(0xFF3C3C3C),
@@ -62,7 +62,7 @@ private val DarkColorScheme = darkColorScheme(
     
     outline = Color(0xFF757575),
     outlineVariant = Color(0xFF424242),
-    error = TransportRed,
+    error = Color(0xFFE53935), // TransportRed
     onError = Color.White,
     errorContainer = Color(0xFFD32F2F),
     onErrorContainer = Color.White,
@@ -71,31 +71,31 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = BusBlue,
+    primary = Color(0xFF1976D2), // BusBlue
     onPrimary = Color.White,
-    primaryContainer = BusBlueLight,
-    onPrimaryContainer = BusBlueDark,
+    primaryContainer = Color(0xFF42A5F5), // BusBlueLight
+    onPrimaryContainer = Color(0xFF0D47A1), // BusBlueDark
     
-    secondary = AccentTeal,
+    secondary = Color(0xFF00BCD4), // AccentTeal
     onSecondary = Color.White,
     secondaryContainer = Color(0xFF80CBC4),
     onSecondaryContainer = Color(0xFF004D40),
     
-    tertiary = TransportOrange,
+    tertiary = Color(0xFFFF9800), // TransportOrange
     onTertiary = Color.White,
     tertiaryContainer = Color(0xFFFFCC02),
     onTertiaryContainer = Color(0xFFE65100),
     
     background = Color(0xFFFFFBFE),
-    onBackground = OnSurfaceLight,
+    onBackground = Color(0xFF1C1B1F), // OnSurfaceLight
     surface = Color.White,
-    onSurface = OnSurfaceLight,
-    surfaceVariant = SurfaceLight,
+    onSurface = Color(0xFF1C1B1F), // OnSurfaceLight
+    surfaceVariant = Color(0xFFFFFFFF), // SurfaceLight
     onSurfaceVariant = Color(0xFF424242),
     
     outline = Color(0xFF757575),
     outlineVariant = Color(0xFFE0E0E0),
-    error = TransportRed,
+    error = Color(0xFFE53935), // TransportRed
     onError = Color.White,
     errorContainer = Color(0xFFFFDAD6),
     onErrorContainer = Color(0xFFD32F2F),

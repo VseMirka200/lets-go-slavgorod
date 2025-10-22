@@ -119,4 +119,3 @@ class FavoritesViewModelTest {
         assertNotNull(favorites)
     }
 }
-

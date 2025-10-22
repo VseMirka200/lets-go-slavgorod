@@ -1,27 +1,24 @@
 ﻿package com.example.lets_go_slavgorod
 
-import android.app.Application
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.multidex.MultiDex
 import androidx.multidex.MultiDexApplication
-import timber.log.Timber
-import com.example.lets_go_slavgorod.data.local.AppDatabase
-import com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity
-import com.example.lets_go_slavgorod.data.local.UpdatePreferences
-import com.example.lets_go_slavgorod.data.local.NotificationPreferencesCache
-import com.example.lets_go_slavgorod.data.model.BusRoute
-import com.example.lets_go_slavgorod.data.model.FavoriteTime
-import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
-import com.example.lets_go_slavgorod.domain.notification.AlarmScheduler
-import com.example.lets_go_slavgorod.data.notification.NotificationHelper
-import com.example.lets_go_slavgorod.domain.update.UpdateManager
 import com.example.lets_go_slavgorod.core.Constants
 import com.example.lets_go_slavgorod.core.createBusRoute
 import com.example.lets_go_slavgorod.core.logd
 import com.example.lets_go_slavgorod.core.loge
+import com.example.lets_go_slavgorod.data.local.AppDatabase
+import com.example.lets_go_slavgorod.data.local.NotificationPreferencesCache
+import com.example.lets_go_slavgorod.data.local.UpdatePreferences
+import com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity
+import com.example.lets_go_slavgorod.data.model.BusRoute
+import com.example.lets_go_slavgorod.data.model.FavoriteTime
+import com.example.lets_go_slavgorod.data.notification.NotificationHelper
+import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
 import com.example.lets_go_slavgorod.data.workers.DataSyncManager
+import com.example.lets_go_slavgorod.di.appModule
+import com.example.lets_go_slavgorod.domain.notification.AlarmScheduler
+import com.example.lets_go_slavgorod.domain.update.UpdateManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -29,6 +26,9 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
+import timber.log.Timber
 
 /**
  * Главный класс приложения "Поехали! Славгород"
@@ -70,35 +70,10 @@ import kotlinx.coroutines.launch
  */
 class BusApplication : MultiDexApplication() {
     
-    // Область видимости корутин для фоновых задач
-    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    
-    /**
-     * Ленивая инициализация базы данных
-     * Создается только при первом обращении для ускорения запуска
-     */
-    val database by lazy {
-        logd("Initializing database...")
-        AppDatabase.getDatabase(this)
-    }
-    
-    /**
-     * Ленивая инициализация репозитория
-     * Создается только при первом обращении для ускорения запуска
-     */
-    val busRouteRepository by lazy {
-        logd("Initializing repository...")
-        BusRouteRepository(this)
-    }
-    
-    /**
-     * Ленивая инициализация менеджера обновлений
-     * Создается только при первом обращении
-     */
-    val updateManager by lazy {
-        logd("Initializing update manager...")
-        UpdateManager(this)
-    }
+    // Область видимости корутин для фоновых задач - разделяем по типам операций
+    private val networkScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val databaseScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val uiScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     
     /**
      * Очистка ресурсов
@@ -115,7 +90,9 @@ class BusApplication : MultiDexApplication() {
      * Централизованная очистка ресурсов
      */
     private fun cleanupResources() {
-        applicationScope.cancel()
+        networkScope.cancel()
+        databaseScope.cancel()
+        uiScope.cancel()
         Timber.d("Application resources cleaned up")
     }
     
@@ -126,13 +103,20 @@ class BusApplication : MultiDexApplication() {
         // Критически важные компоненты
         MultiDex.install(this)
         initializeLogging()
+        
+        // Инициализация Koin DI
+        startKoin {
+            androidContext(this@BusApplication)
+            modules(appModule)
+        }
+        
         NotificationHelper.createNotificationChannel(this)
         
         // Запускаем фоновую синхронизацию
         DataSyncManager.schedulePeriodic(this)
         
-        // Фоновые задачи
-        applicationScope.launch {
+        // Фоновые задачи - используем networkScope для сетевых операций
+        networkScope.launch {
             try {
                 // Обновляем кэш настроек уведомлений (чтобы избежать runBlocking)
                 NotificationPreferencesCache.updateCache(this@BusApplication)
@@ -142,7 +126,8 @@ class BusApplication : MultiDexApplication() {
                 
                 // Маршруты загружаются автоматически при инициализации репозитория
                 
-                // Запускаем автоматическую проверку обновлений
+                // Запускаем автоматическую проверку обновлений через Koin
+                val updateManager = org.koin.core.context.GlobalContext.get().get<UpdateManager>()
                 startAutomaticUpdateCheck()
             } catch (e: Exception) {
                 loge("Error during app initialization: ${e.message}")
@@ -237,7 +222,8 @@ class BusApplication : MultiDexApplication() {
     // Получение маршрута по ID
     private fun getRouteById(routeId: String): BusRoute? {
         return try {
-            // Используем уже инициализированный репозиторий вместо создания нового
+            // Используем Koin для получения репозитория
+            val busRouteRepository = org.koin.core.context.GlobalContext.get().get<BusRouteRepository>()
             busRouteRepository.getRouteById(routeId) ?: run {
                 // Проверяем, не является ли это удалённым маршрутом
                 if (routeId in listOf("2", "3", "4", "5")) {

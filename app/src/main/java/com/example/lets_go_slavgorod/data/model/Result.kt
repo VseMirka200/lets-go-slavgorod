@@ -114,4 +114,3 @@ sealed class Result<out T> {
 fun AppError.toResultError(): Result.Error {
     return Result.Error(AppErrorException(this), this.getUserMessage())
 }
-

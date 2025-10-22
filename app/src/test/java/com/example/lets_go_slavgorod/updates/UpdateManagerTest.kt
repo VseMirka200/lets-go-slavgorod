@@ -154,4 +154,3 @@ class UpdateManagerTest {
         assertNotNull(errorResult.error)
     }
 }
-

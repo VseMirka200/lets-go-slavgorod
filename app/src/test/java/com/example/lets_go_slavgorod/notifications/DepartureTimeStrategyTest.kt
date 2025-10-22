@@ -208,4 +208,3 @@ class DepartureTimeStrategyTest {
         assertEquals(-1L, result, "Disabled strategy should always return -1")
     }
 }
-
