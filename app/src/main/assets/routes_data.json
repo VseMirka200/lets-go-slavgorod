@@ -1,6 +1,6 @@
 {
-  "version": "17",
-  "last_updated": "2025-10-20",
+  "version": "18",
+  "last_updated": "2025-10-22",
   "routes": [
     {
       "id": "102",
@@ -281,44 +281,6 @@
         {"id": "4_rimoniki_2", "stopName": "Районная больница", "departureTime": "09:20", "departurePoint": "Районная больница", "notes": "Пригородный, будни"},
         {"id": "4_rimoniki_3", "stopName": "Районная больница", "departureTime": "16:15", "departurePoint": "Районная больница", "notes": "Пригородный, будни"},
         {"id": "4_rimoniki_4", "stopName": "Районная больница", "departureTime": "18:10", "departurePoint": "Районная больница", "notes": "Пригородный, будни"}
-      ]
-    },
-    {
-      "id": "102B_alt",
-      "routeNumber": "102B",
-      "name": "Автобус №102B",
-      "description": "Рынок (Славгород) — МСЧ-128 (Яровое)",
-      "travelTime": "~40 минут",
-      "pricePrimary": "38₽ город / 55₽ межгород",
-      "paymentMethods": "Наличный / Картой",
-      "color": "#FF2196F3",
-      "schedules": [
-        {"id": "102B_alt_slav_1", "stopName": "Рынок (Славгород)", "departureTime": "06:55", "departurePoint": "Рынок (Славгород)", "notes": "Будни"},
-        {"id": "102B_alt_slav_2", "stopName": "Рынок (Славгород)", "departureTime": "08:05", "departurePoint": "Рынок (Славгород)", "notes": "Будни"},
-        {"id": "102B_alt_slav_3", "stopName": "Рынок (Славгород)", "departureTime": "09:15", "departurePoint": "Рынок (Славгород)", "notes": "Будни"},
-        {"id": "102B_alt_slav_4", "stopName": "Рынок (Славгород)", "departureTime": "14:30", "departurePoint": "Рынок (Славгород)", "notes": "Будни"},
-        {"id": "102B_alt_slav_5", "stopName": "Рынок (Славгород)", "departureTime": "15:40", "departurePoint": "Рынок (Славгород)", "notes": "Будни"},
-        {"id": "102B_alt_slav_6", "stopName": "Рынок (Славгород)", "departureTime": "16:50", "departurePoint": "Рынок (Славгород)", "notes": "Будни"},
-        {"id": "102B_alt_slav_7", "stopName": "Рынок (Славгород)", "departureTime": "08:05", "departurePoint": "Рынок (Славгород)", "notes": "Выходные"},
-        {"id": "102B_alt_slav_8", "stopName": "Рынок (Славгород)", "departureTime": "09:15", "departurePoint": "Рынок (Славгород)", "notes": "Выходные"},
-        {"id": "102B_alt_slav_9", "stopName": "Рынок (Славгород)", "departureTime": "10:25", "departurePoint": "Рынок (Славгород)", "notes": "Выходные"},
-        {"id": "102B_alt_slav_10", "stopName": "Рынок (Славгород)", "departureTime": "12:10", "departurePoint": "Рынок (Славгород)", "notes": "Выходные"},
-        {"id": "102B_alt_slav_11", "stopName": "Рынок (Славгород)", "departureTime": "13:20", "departurePoint": "Рынок (Славгород)", "notes": "Выходные"},
-        {"id": "102B_alt_slav_12", "stopName": "Рынок (Славгород)", "departureTime": "14:30", "departurePoint": "Рынок (Славгород)", "notes": "Выходные"},
-        {"id": "102B_alt_slav_13", "stopName": "Рынок (Славгород)", "departureTime": "15:40", "departurePoint": "Рынок (Славгород)", "notes": "Выходные"},
-        {"id": "102B_alt_yar_1", "stopName": "МСЧ-128 (Яровое)", "departureTime": "07:30", "departurePoint": "МСЧ-128 (Яровое)", "notes": "Будни"},
-        {"id": "102B_alt_yar_2", "stopName": "МСЧ-128 (Яровое)", "departureTime": "08:40", "departurePoint": "МСЧ-128 (Яровое)", "notes": "Будни"},
-        {"id": "102B_alt_yar_3", "stopName": "МСЧ-128 (Яровое)", "departureTime": "09:50", "departurePoint": "МСЧ-128 (Яровое)", "notes": "Будни"},
-        {"id": "102B_alt_yar_4", "stopName": "МСЧ-128 (Яровое)", "departureTime": "15:05", "departurePoint": "МСЧ-128 (Яровое)", "notes": "Будни"},
-        {"id": "102B_alt_yar_5", "stopName": "МСЧ-128 (Яровое)", "departureTime": "16:15", "departurePoint": "МСЧ-128 (Яровое)", "notes": "Будни"},
-        {"id": "102B_alt_yar_6", "stopName": "МСЧ-128 (Яровое)", "departureTime": "17:25", "departurePoint": "МСЧ-128 (Яровое)", "notes": "Будни"},
-        {"id": "102B_alt_yar_7", "stopName": "МСЧ-128 (Яровое)", "departureTime": "08:40", "departurePoint": "МСЧ-128 (Яровое)", "notes": "Выходные"},
-        {"id": "102B_alt_yar_8", "stopName": "МСЧ-128 (Яровое)", "departureTime": "09:50", "departurePoint": "МСЧ-128 (Яровое)", "notes": "Выходные"},
-        {"id": "102B_alt_yar_9", "stopName": "МСЧ-128 (Яровое)", "departureTime": "11:00", "departurePoint": "МСЧ-128 (Яровое)", "notes": "Выходные"},
-        {"id": "102B_alt_yar_10", "stopName": "МСЧ-128 (Яровое)", "departureTime": "12:45", "departurePoint": "МСЧ-128 (Яровое)", "notes": "Выходные"},
-        {"id": "102B_alt_yar_11", "stopName": "МСЧ-128 (Яровое)", "departureTime": "13:55", "departurePoint": "МСЧ-128 (Яровое)", "notes": "Выходные"},
-        {"id": "102B_alt_yar_12", "stopName": "МСЧ-128 (Яровое)", "departureTime": "15:05", "departurePoint": "МСЧ-128 (Яровое)", "notes": "Выходные"},
-        {"id": "102B_alt_yar_13", "stopName": "МСЧ-128 (Яровое)", "departureTime": "16:15", "departurePoint": "МСЧ-128 (Яровое)", "notes": "Выходные"}
       ]
     }
   ]

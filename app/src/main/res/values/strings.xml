@@ -49,7 +49,17 @@
     <string name="about_screen_title">О программе</string>
     <string name="developer_name">Олюшин Владислав Викторович</string>
     <string name="developer_vk_url">https://vk.com/vsemirka200</string>
-    <string name="feedback_email">vladislav-olyushin@yandex.ru</string>
+    <string name="feedback_email">urban-solution@ya.ru</string>
+
+    <!-- ===================================================================================== -->
+    <!--                                      ВИДЖЕТЫ                                           -->
+    <!-- ===================================================================================== -->
+    <string name="widget_description">Виджет расписания автобусов Славгорода</string>
+    <string name="widget_title">Расписание автобусов</string>
+    <string name="widget_loading">Загрузка...</string>
+    <string name="widget_error">Ошибка загрузки</string>
+    <string name="widget_no_data">Нет данных о рейсах</string>
+    <string name="single_route_widget_description">Виджет ближайшего времени отправления маршрута</string>
 
     <!-- ===================================================================================== -->
     <!--                                    ДИАЛОГ ПРЕДУПРЕЖДЕНИЯ                              -->
@@ -159,5 +169,14 @@
     <string name="day_singular">день</string>
     <string name="day_plural_few">дня</string>
     <string name="day_plural_many">дней</string>
+
+    <!-- ===================================================================================== -->
+    <!--                                    ВИДЖЕТЫ МАРШРУТОВ                                  -->
+    <!-- ===================================================================================== -->
+    <string name="route_102_widget_description">Виджет маршрута 102 (Славгород — Яровое)</string>
+    <string name="route_1_widget_description">Виджет маршрута 1 (Вокзал — Совхоз)</string>
+    <string name="route_102b_widget_description">Виджет маршрута 102Б (Славгород — Ст. Зори)</string>
+    <string name="route_3_widget_description">Виджет маршрута 3 (Кольцевой)</string>
+    <string name="route_4_widget_description">Виджет маршрута 4 (Пригородный)</string>
 
 </resources>

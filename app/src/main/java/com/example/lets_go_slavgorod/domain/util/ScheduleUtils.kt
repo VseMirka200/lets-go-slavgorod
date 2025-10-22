@@ -33,7 +33,6 @@ object ScheduleUtils {
         return when (routeId) {
             "102" -> generateRoute102Schedules(currentDayOfWeek)
             "102B" -> generateRoute102BSchedules(currentDayOfWeek)
-            "102B_alt" -> generateRoute102BAltSchedules(currentDayOfWeek)
             "1" -> generateRoute1Schedules(currentDayOfWeek)
             else -> {
                 // Для новых маршрутов (3, 4 и т.д.) возвращаем пустой список
@@ -152,47 +151,6 @@ object ScheduleUtils {
         )
     }
     
-    /**
-     * Генерирует расписание для маршрута №102B альтернативный (Славгород — Яровое через МСЧ-128)
-     * Данные из JSON
-     */
-    private fun generateRoute102BAltSchedules(dayOfWeek: Int): List<BusSchedule> {
-        return listOf(
-            // Рынок (Славгород) - Будни
-            BusSchedule("102B_alt_slav_1", "102B_alt", "Рынок (Славгород)", "06:55", dayOfWeek, notes = "Будни", departurePoint = "Рынок (Славгород)"),
-            BusSchedule("102B_alt_slav_2", "102B_alt", "Рынок (Славгород)", "08:05", dayOfWeek, notes = "Будни", departurePoint = "Рынок (Славгород)"),
-            BusSchedule("102B_alt_slav_3", "102B_alt", "Рынок (Славгород)", "09:15", dayOfWeek, notes = "Будни", departurePoint = "Рынок (Славгород)"),
-            BusSchedule("102B_alt_slav_4", "102B_alt", "Рынок (Славгород)", "14:30", dayOfWeek, notes = "Будни", departurePoint = "Рынок (Славгород)"),
-            BusSchedule("102B_alt_slav_5", "102B_alt", "Рынок (Славгород)", "15:40", dayOfWeek, notes = "Будни", departurePoint = "Рынок (Славгород)"),
-            BusSchedule("102B_alt_slav_6", "102B_alt", "Рынок (Славгород)", "16:50", dayOfWeek, notes = "Будни", departurePoint = "Рынок (Славгород)"),
-            
-            // Рынок (Славгород) - Выходные
-            BusSchedule("102B_alt_slav_7", "102B_alt", "Рынок (Славгород)", "08:05", dayOfWeek, notes = "Выходные", departurePoint = "Рынок (Славгород)"),
-            BusSchedule("102B_alt_slav_8", "102B_alt", "Рынок (Славгород)", "09:15", dayOfWeek, notes = "Выходные", departurePoint = "Рынок (Славгород)"),
-            BusSchedule("102B_alt_slav_9", "102B_alt", "Рынок (Славгород)", "10:25", dayOfWeek, notes = "Выходные", departurePoint = "Рынок (Славгород)"),
-            BusSchedule("102B_alt_slav_10", "102B_alt", "Рынок (Славгород)", "12:10", dayOfWeek, notes = "Выходные", departurePoint = "Рынок (Славгород)"),
-            BusSchedule("102B_alt_slav_11", "102B_alt", "Рынок (Славгород)", "13:20", dayOfWeek, notes = "Выходные", departurePoint = "Рынок (Славгород)"),
-            BusSchedule("102B_alt_slav_12", "102B_alt", "Рынок (Славгород)", "14:30", dayOfWeek, notes = "Выходные", departurePoint = "Рынок (Славгород)"),
-            BusSchedule("102B_alt_slav_13", "102B_alt", "Рынок (Славгород)", "15:40", dayOfWeek, notes = "Выходные", departurePoint = "Рынок (Славгород)"),
-
-            // МСЧ-128 (Яровое) - Будни
-            BusSchedule("102B_alt_yar_1", "102B_alt", "МСЧ-128 (Яровое)", "07:30", dayOfWeek, notes = "Будни", departurePoint = "МСЧ-128 (Яровое)"),
-            BusSchedule("102B_alt_yar_2", "102B_alt", "МСЧ-128 (Яровое)", "08:40", dayOfWeek, notes = "Будни", departurePoint = "МСЧ-128 (Яровое)"),
-            BusSchedule("102B_alt_yar_3", "102B_alt", "МСЧ-128 (Яровое)", "09:50", dayOfWeek, notes = "Будни", departurePoint = "МСЧ-128 (Яровое)"),
-            BusSchedule("102B_alt_yar_4", "102B_alt", "МСЧ-128 (Яровое)", "15:05", dayOfWeek, notes = "Будни", departurePoint = "МСЧ-128 (Яровое)"),
-            BusSchedule("102B_alt_yar_5", "102B_alt", "МСЧ-128 (Яровое)", "16:15", dayOfWeek, notes = "Будни", departurePoint = "МСЧ-128 (Яровое)"),
-            BusSchedule("102B_alt_yar_6", "102B_alt", "МСЧ-128 (Яровое)", "17:25", dayOfWeek, notes = "Будни", departurePoint = "МСЧ-128 (Яровое)"),
-            
-            // МСЧ-128 (Яровое) - Выходные
-            BusSchedule("102B_alt_yar_7", "102B_alt", "МСЧ-128 (Яровое)", "08:40", dayOfWeek, notes = "Выходные", departurePoint = "МСЧ-128 (Яровое)"),
-            BusSchedule("102B_alt_yar_8", "102B_alt", "МСЧ-128 (Яровое)", "09:50", dayOfWeek, notes = "Выходные", departurePoint = "МСЧ-128 (Яровое)"),
-            BusSchedule("102B_alt_yar_9", "102B_alt", "МСЧ-128 (Яровое)", "11:00", dayOfWeek, notes = "Выходные", departurePoint = "МСЧ-128 (Яровое)"),
-            BusSchedule("102B_alt_yar_10", "102B_alt", "МСЧ-128 (Яровое)", "12:45", dayOfWeek, notes = "Выходные", departurePoint = "МСЧ-128 (Яровое)"),
-            BusSchedule("102B_alt_yar_11", "102B_alt", "МСЧ-128 (Яровое)", "13:55", dayOfWeek, notes = "Выходные", departurePoint = "МСЧ-128 (Яровое)"),
-            BusSchedule("102B_alt_yar_12", "102B_alt", "МСЧ-128 (Яровое)", "15:05", dayOfWeek, notes = "Выходные", departurePoint = "МСЧ-128 (Яровое)"),
-            BusSchedule("102B_alt_yar_13", "102B_alt", "МСЧ-128 (Яровое)", "16:15", dayOfWeek, notes = "Выходные", departurePoint = "МСЧ-128 (Яровое)")
-        )
-    }
     
     /**
      * Генерирует расписания для маршрута №1 (Вокзал — Совхоз)

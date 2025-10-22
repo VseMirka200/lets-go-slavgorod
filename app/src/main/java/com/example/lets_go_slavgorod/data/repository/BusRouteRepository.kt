@@ -1,28 +1,24 @@
 ﻿package com.example.lets_go_slavgorod.data.repository
 
 import android.content.Context
-import timber.log.Timber
+import com.example.lets_go_slavgorod.core.search
 import com.example.lets_go_slavgorod.data.local.JsonDataSource
-import com.example.lets_go_slavgorod.data.remote.RemoteDataSource
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.model.BusSchedule
-import com.example.lets_go_slavgorod.core.Constants
-import com.example.lets_go_slavgorod.domain.util.ScheduleUtils
-import com.example.lets_go_slavgorod.core.createBusRoute
-import com.example.lets_go_slavgorod.core.logd
-import com.example.lets_go_slavgorod.core.loge
-import com.example.lets_go_slavgorod.core.search
 import com.example.lets_go_slavgorod.data.network.NetworkMonitor
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.Flow
+import com.example.lets_go_slavgorod.data.remote.RemoteDataSource
+import com.example.lets_go_slavgorod.domain.util.ScheduleUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import timber.log.Timber
 
 /**
  * Репозиторий для управления маршрутами автобусов
@@ -364,6 +360,8 @@ class BusRouteRepository(private val context: Context? = null) {
                 
                 // Обновляем StateFlow - UI автоматически обновится! ✅
                 _routes.value = routes
+                
+                // Обновляем виджет с новыми данными
                 
                 Timber.i("Successfully refreshed ${routes.size} routes from GitHub")
                 Timber.i("All caches cleared and refreshed with new data")

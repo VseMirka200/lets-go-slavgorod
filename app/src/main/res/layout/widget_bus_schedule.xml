@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <!-- Заголовок виджета -->
+    <TextView
+        android:id="@+id/widget_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Расписание автобусов"
+        android:textColor="@color/primary"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Иконка автобуса -->
+    <ImageView
+        android:id="@+id/widget_icon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="center_horizontal"
+        android:src="@drawable/ic_stat_directions_bus"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Содержимое виджета -->
+    <TextView
+        android:id="@+id/widget_content"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="Загрузка..."
+        android:textColor="@color/on_surface"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:lineSpacingExtra="2dp" />
+
+    <!-- Время последнего обновления -->
+    <TextView
+        android:id="@+id/widget_timestamp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/on_surface_variant"
+        android:textSize="10sp"
+        android:gravity="center"
+        android:layout_marginTop="4dp" />
+
+</LinearLayout>

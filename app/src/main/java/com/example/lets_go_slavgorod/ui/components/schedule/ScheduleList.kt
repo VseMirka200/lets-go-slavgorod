@@ -448,8 +448,8 @@ fun ScheduleList(
             }
         }
         
-        // Универсальная логика для маршрутов 102, 102Б, 102B_alt - двухколоночная сетка
-        if ((route.id == "102" || route.id == "102B" || route.id == "102B_alt") && schedulesSlavgorod.isNotEmpty() && schedulesYarovoe.isNotEmpty()) {
+        // Универсальная логика для маршрутов 102, 102Б - двухколоночная сетка
+        if ((route.id == "102" || route.id == "102B") && schedulesSlavgorod.isNotEmpty() && schedulesYarovoe.isNotEmpty()) {
             item(key = "route_${route.id}_schedule_grid") {
                 FilterableScheduleGrid(
                     leftSchedules = schedulesSlavgorod,

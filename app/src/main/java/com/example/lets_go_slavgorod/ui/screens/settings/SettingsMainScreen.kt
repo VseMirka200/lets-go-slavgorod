@@ -84,6 +84,7 @@ fun SettingsMainScreen(
                 onClick = { navController.navigate(Screen.DataManagement.route) }
             )
             
+            
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             
             // О приложении

@@ -55,4 +55,5 @@ sealed class Screen(val route: String) {
     
     /** Экран статистики загрузок */
     object DownloadStats : Screen("download_stats")
+    
 }

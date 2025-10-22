@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
-import androidx.compose.ui.Alignment
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,6 +28,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
@@ -41,6 +41,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.lets_go_slavgorod.core.toFavoriteTime
 import com.example.lets_go_slavgorod.data.local.AppDatabase
 import com.example.lets_go_slavgorod.data.local.DisclaimerManager
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
@@ -52,31 +53,29 @@ import com.example.lets_go_slavgorod.ui.navigation.navigateToRouteNotificationSe
 import com.example.lets_go_slavgorod.ui.screens.HomeScreen
 import com.example.lets_go_slavgorod.ui.screens.RouteNotificationSettingsScreen
 import com.example.lets_go_slavgorod.ui.screens.ScheduleScreen
-import com.example.lets_go_slavgorod.ui.screens.SettingsScreen
-import com.example.lets_go_slavgorod.ui.screens.settings.SettingsMainScreen
 import com.example.lets_go_slavgorod.ui.screens.settings.AboutScreen
-import com.example.lets_go_slavgorod.ui.screens.settings.NotificationSettingsScreen as NotifSettingsScreen
-import com.example.lets_go_slavgorod.ui.screens.settings.DisplaySettingsScreen
-import com.example.lets_go_slavgorod.ui.screens.settings.UpdateSettingsScreen
 import com.example.lets_go_slavgorod.ui.screens.settings.DataManagementScreen
+import com.example.lets_go_slavgorod.ui.screens.settings.DisplaySettingsScreen
 import com.example.lets_go_slavgorod.ui.screens.settings.GlobalNotificationSettingsScreen
+import com.example.lets_go_slavgorod.ui.screens.settings.SettingsMainScreen
+import com.example.lets_go_slavgorod.ui.screens.settings.UpdateSettingsScreen
 import com.example.lets_go_slavgorod.ui.theme.lets_go_slavgorodTheme
 import com.example.lets_go_slavgorod.ui.viewmodel.AndroidViewModelFactory
 import com.example.lets_go_slavgorod.ui.viewmodel.AppTheme
-import com.example.lets_go_slavgorod.ui.viewmodel.FavoritesViewModel
-import com.example.lets_go_slavgorod.ui.viewmodel.ScheduleViewModel
-import com.example.lets_go_slavgorod.ui.viewmodel.ViewModelFactory
-import com.example.lets_go_slavgorod.ui.viewmodel.RoutesViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory
+import com.example.lets_go_slavgorod.ui.viewmodel.FavoritesViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationSettingsViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.RoutesViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.ScheduleViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.ThemeViewModel
 import com.example.lets_go_slavgorod.ui.viewmodel.ThemeViewModelFactory
 import com.example.lets_go_slavgorod.ui.viewmodel.UpdateSettingsViewModel
-import com.example.lets_go_slavgorod.core.toFavoriteTime
+import com.example.lets_go_slavgorod.ui.viewmodel.ViewModelFactory
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
+import com.example.lets_go_slavgorod.ui.screens.settings.NotificationSettingsScreen as NotifSettingsScreen
 
 /**
  * Главная активность приложения "Let's Go Slavgorod"
@@ -306,11 +305,16 @@ class MainActivity : ComponentActivity() {
     
     /**
      * Обрабатывает Intent из уведомления для навигации к конкретному избранному времени
+     * или из виджета для навигации к конкретному маршруту
      */
     private fun handleNotificationIntent(intent: Intent?) {
         intent?.let {
             val fromNotification = it.getBooleanExtra("FROM_NOTIFICATION", false)
+            val fromWidget = it.getBooleanExtra("FROM_WIDGET", false)
             val favoriteId = it.getStringExtra("OPEN_FAVORITE_ID")
+            val navigateToRoute = it.getStringExtra("navigate_to_route")
+            
+            Timber.d("Intent received - fromNotification: $fromNotification, fromWidget: $fromWidget, navigateToRoute: $navigateToRoute")
             
             if (fromNotification && favoriteId != null) {
                 Timber.d("Opening from notification: favoriteId=$favoriteId")
@@ -336,6 +340,14 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+            } else if (fromWidget && navigateToRoute != null) {
+                Timber.d("Opening from widget: routeId=$navigateToRoute")
+                // Устанавливаем навигацию сразу, без задержки
+                pendingNavigationRouteId = navigateToRoute
+            } else if (navigateToRoute != null) {
+                // Fallback для старых виджетов
+                Timber.d("Opening from widget (fallback): routeId=$navigateToRoute")
+                pendingNavigationRouteId = navigateToRoute
             }
         }
     }
@@ -479,18 +491,32 @@ fun BusScheduleApp(
                 }
             )
             
-            // Навигация из уведомления
+            // Навигация из уведомления или виджета
             LaunchedEffect(pendingNavigationRouteId) {
                 pendingNavigationRouteId?.let { routeId ->
-                    Timber.d("Navigating to route from notification: $routeId")
+                    Timber.d("Navigating to route: $routeId")
                     try {
-                        navController.navigate("schedule/$routeId") {
-                            launchSingleTop = true
+                        val destination = "schedule/$routeId"
+                        Timber.d("Navigation destination: $destination")
+                        
+                        // Задержка для полной загрузки приложения
+                        kotlinx.coroutines.delay(500)
+                        
+                        // Проверяем, что мы не на том же экране
+                        val currentRoute = navController.currentDestination?.route
+                        Timber.d("Current route: $currentRoute, target: $destination")
+                        
+                        if (currentRoute != destination) {
+                            navController.navigate(destination)
+                            Timber.d("Navigation completed successfully")
+                        } else {
+                            Timber.d("Already on target route")
                         }
+                        
                         pendingNavigationRouteId = null
                         onNavigationHandled() // Сбрасываем в Activity
                     } catch (e: Exception) {
-                        Timber.e(e, "Navigation error from notification")
+                        Timber.e(e, "Navigation error to route: $routeId")
                     }
                 }
             }
@@ -699,6 +725,7 @@ fun AppNavHost(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
+        
 
     }
 }
