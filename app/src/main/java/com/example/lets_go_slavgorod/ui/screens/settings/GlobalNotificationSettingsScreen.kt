@@ -25,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -95,6 +96,8 @@ fun GlobalNotificationSettingsScreen(
     
     var showModeDialog by remember { mutableStateOf(false) }
     var showDaysDialog by remember { mutableStateOf(false) }
+    var pendingDaysDialog by remember { mutableStateOf(false) }
+    var isProcessingDaysClick by remember { mutableStateOf(false) }
     
     val notificationModeOptions = arrayOf(
         NotificationMode.ALL_DAYS,
@@ -102,6 +105,17 @@ fun GlobalNotificationSettingsScreen(
         NotificationMode.SELECTED_DAYS,
         NotificationMode.DISABLED
     )
+    
+    // Отслеживаем изменения режима и открываем диалог когда режим станет SELECTED_DAYS
+    LaunchedEffect(currentGlobalMode, pendingDaysDialog) {
+        if (pendingDaysDialog && currentGlobalMode == NotificationMode.SELECTED_DAYS) {
+            // Небольшая задержка для завершения обновления StateFlow
+            kotlinx.coroutines.delay(100)
+            showDaysDialog = true
+            pendingDaysDialog = false
+            isProcessingDaysClick = false
+        }
+    }
     
     Scaffold(
         topBar = {
@@ -213,7 +227,21 @@ fun GlobalNotificationSettingsScreen(
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null // Отключена анимация касания
-                        ) { showDaysDialog = true },
+                        ) { 
+                            // Защита от множественных кликов
+                            if (isProcessingDaysClick) return@clickable
+                            
+                            isProcessingDaysClick = true
+                            
+                            // Устанавливаем режим SELECTED_DAYS перед открытием диалога
+                            if (currentGlobalMode != NotificationMode.SELECTED_DAYS) {
+                                notificationSettingsViewModel.setGlobalNotificationMode(NotificationMode.SELECTED_DAYS)
+                                pendingDaysDialog = true
+                            } else {
+                                showDaysDialog = true
+                                isProcessingDaysClick = false
+                            }
+                        },
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
                     ),
@@ -284,7 +312,6 @@ fun GlobalNotificationSettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                // Кликабельность без ripple эффекта
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null // Отключена анимация касания
@@ -297,7 +324,13 @@ fun GlobalNotificationSettingsScreen(
                         ) {
                             RadioButton(
                                 selected = currentGlobalMode == mode,
-                                onClick = null
+                                onClick = {
+                                    // Обработка клика только через RadioButton
+                                    if (currentGlobalMode != mode) {
+                                        notificationSettingsViewModel.setGlobalNotificationMode(mode)
+                                    }
+                                    showModeDialog = false
+                                }
                             )
                             Spacer(modifier = Modifier.width(16.dp))
                             Text(
@@ -372,6 +405,7 @@ fun GlobalNotificationSettingsScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
+                        // Сохраняем дни сразу - режим уже должен быть SELECTED_DAYS
                         notificationSettingsViewModel.setGlobalSelectedDays(tempSelectedDays)
                         showDaysDialog = false
                     }

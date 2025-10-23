@@ -847,7 +847,7 @@ private fun getNextUpcomingScheduleId(schedules: List<BusSchedule>): String? {
                 false
             }
         } catch (e: Exception) {
-            Timber.e(e, "Error parsing time: ${schedule.departureTime}")
+            Timber.e(e, "Ошибка парсинга времени: ${schedule.departureTime}")
             false
         }
     }

@@ -37,7 +37,6 @@ object ScheduleUtils {
             else -> {
                 // Для новых маршрутов (3, 4 и т.д.) возвращаем пустой список
                 // Расписание должно загружаться из JSON (assets или GitHub)
-                Timber.w("⚠️ No hardcoded schedules for route $routeId - should load from JSON")
                 emptyList()
             }
         }

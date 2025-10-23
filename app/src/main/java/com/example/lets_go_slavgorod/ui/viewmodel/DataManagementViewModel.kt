@@ -73,9 +73,8 @@ class DataManagementViewModel(private val context: Context) : ViewModel() {
                 // Проверяем доступность обновлений (без задержки, т.к. это ViewModel для настроек)
                 val hasUpdates = repository.checkForDataUpdates()
                 _scheduleUpdateAvailable.value = hasUpdates
-                Timber.d("DataManagementViewModel init: schedule update available = $hasUpdates")
             } catch (e: Exception) {
-                Timber.e(e, "Error loading data version info")
+                Timber.e(e, "Ошибка загрузки информации о версии данных")
             }
         }
     }
@@ -98,7 +97,6 @@ class DataManagementViewModel(private val context: Context) : ViewModel() {
                 _scheduleRefreshError.value = null
                 _scheduleRefreshSuccess.value = false
                 
-                Timber.i("User initiated schedule refresh from GitHub")
                 
                 val success = repository.refreshRoutesFromRemote()
                 
@@ -113,18 +111,15 @@ class DataManagementViewModel(private val context: Context) : ViewModel() {
                     // Сбрасываем флаг доступности обновления
                     _scheduleUpdateAvailable.value = false
                     
-                    Timber.i("Schedule successfully refreshed from GitHub")
-                    Timber.i("UI will update automatically via StateFlow - no restart needed!")
                     
                     // UI автоматически обновится через StateFlow в BusViewModel
                     // Перезапуск НЕ НУЖЕН - данные обновляются реактивно ✅
                 } else {
                     _scheduleRefreshError.value = "Не удалось загрузить данные с сервера"
-                    Timber.w("Failed to refresh schedule from GitHub")
                 }
             } catch (e: Exception) {
                 _scheduleRefreshError.value = e.message ?: "Неизвестная ошибка"
-                Timber.e(e, "Error refreshing schedule from GitHub")
+                Timber.e(e, "Ошибка обновления расписания с GitHub")
             } finally {
                 _isRefreshingSchedule.value = false
             }
@@ -142,7 +137,7 @@ class DataManagementViewModel(private val context: Context) : ViewModel() {
             _scheduleUpdateAvailable.value = hasUpdates
             hasUpdates
         } catch (e: Exception) {
-            Timber.e(e, "Error checking for schedule updates")
+            Timber.e(e, "Ошибка проверки обновлений расписания")
             false
         }
     }
@@ -170,29 +165,25 @@ class DataManagementViewModel(private val context: Context) : ViewModel() {
     fun resetAllSettings() {
         viewModelScope.launch {
             try {
-                Timber.d("=== Starting reset of all settings ===")
                 
                 withContext(Dispatchers.IO) {
                     // Очищаем все DataStore
                     try {
                         context.dataStore.edit { it.clear() }
-                        Timber.d("Main DataStore cleared")
                     } catch (e: Exception) {
-                        Timber.e(e, "Error clearing main DataStore")
+                        Timber.e(e, "Ошибка очистки основного DataStore")
                     }
                     
                     try {
                         context.themeDataStore.edit { it.clear() }
-                        Timber.d("Theme DataStore cleared")
                     } catch (e: Exception) {
-                        Timber.e(e, "Error clearing theme DataStore")
+                        Timber.e(e, "Ошибка очистки DataStore темы")
                     }
                     
                     try {
                         context.displayDataStore.edit { it.clear() }
-                        Timber.d("Display DataStore cleared")
                     } catch (e: Exception) {
-                        Timber.e(e, "Error clearing display DataStore")
+                        Timber.e(e, "Ошибка очистки DataStore отображения")
                     }
                     
                     // Удаляем файлы DataStore напрямую для полной очистки
@@ -200,17 +191,11 @@ class DataManagementViewModel(private val context: Context) : ViewModel() {
                         val dataStoreDir = File(context.filesDir, "datastore")
                         if (dataStoreDir.exists() && dataStoreDir.isDirectory) {
                             val files = dataStoreDir.listFiles()
-                            Timber.d("Found ${files?.size ?: 0} DataStore files to delete")
                             files?.forEach { file ->
-                                if (file.delete()) {
-                                    Timber.d("Deleted: ${file.name}")
-                                } else {
-                                    Timber.w("Failed to delete: ${file.name}")
-                                }
+                                file.delete()
                             }
                         }
                     } catch (e: Exception) {
-                        Timber.w(e, "Error deleting DataStore files")
                     }
                     
                     // Очищаем SharedPreferences (если есть)
@@ -218,21 +203,14 @@ class DataManagementViewModel(private val context: Context) : ViewModel() {
                         val prefsDir = File(context.filesDir.parent, "shared_prefs")
                         if (prefsDir.exists() && prefsDir.isDirectory) {
                             val files = prefsDir.listFiles()
-                            Timber.d("Found ${files?.size ?: 0} SharedPreferences files to delete")
                             files?.forEach { file ->
-                                if (file.delete()) {
-                                    Timber.d("Deleted: ${file.name}")
-                                } else {
-                                    Timber.w("Failed to delete: ${file.name}")
-                                }
+                                file.delete()
                             }
                         }
                     } catch (e: Exception) {
-                        Timber.w(e, "Error deleting SharedPreferences files")
                     }
                 }
                 
-                Timber.d("=== All settings cleared, restarting app ===")
                 
                 // Даем время на завершение всех операций
                 kotlinx.coroutines.delay(Constants.DATA_OPERATION_COMPLETION_DELAY_MS)
@@ -243,7 +221,7 @@ class DataManagementViewModel(private val context: Context) : ViewModel() {
                 }
                 
             } catch (e: Exception) {
-                Timber.e(e, "Critical error resetting settings")
+                Timber.e(e, "Критическая ошибка сброса настроек")
             }
         }
     }
@@ -267,10 +245,9 @@ class DataManagementViewModel(private val context: Context) : ViewModel() {
                 android.os.Process.killProcess(android.os.Process.myPid())
                 kotlin.system.exitProcess(0)
             } else {
-                Timber.e("Failed to get launch intent for restart")
             }
         } catch (e: Exception) {
-            Timber.e(e, "Error restarting app")
+            Timber.e(e, "Ошибка перезапуска приложения")
             // Принудительный выход
             android.os.Process.killProcess(android.os.Process.myPid())
         }

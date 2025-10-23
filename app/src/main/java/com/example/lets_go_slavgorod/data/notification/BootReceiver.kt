@@ -45,21 +45,18 @@ class BootReceiver : BroadcastReceiver() {
         // goAsync() предотвращает завершение BroadcastReceiver пока не завершится асинхронная работа
         val pendingResult = goAsync()
         
-        Timber.d("Boot event received: ${intent.action}")
         
         when (intent.action) {
             Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_MY_PACKAGE_REPLACED,
             Intent.ACTION_PACKAGE_REPLACED -> {
-                Timber.d("System boot completed or app updated, restoring notifications...")
                 
                 // Восстанавливаем уведомления в фоновом потоке
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         restoreAllNotifications(context)
-                        Timber.d("All notifications restored successfully")
                     } catch (e: Exception) {
-                        Timber.e(e, "Error restoring notifications")
+                        Timber.e(e, "Ошибка восстановления уведомлений")
                     } finally {
                         // ВАЖНО: Сигнализируем что BroadcastReceiver завершил работу
                         pendingResult.finish()
@@ -67,7 +64,6 @@ class BootReceiver : BroadcastReceiver() {
                 }
             }
             else -> {
-                Timber.w("Unknown boot event: ${intent.action}")
                 pendingResult.finish()
             }
         }
@@ -80,7 +76,6 @@ class BootReceiver : BroadcastReceiver() {
      */
     private suspend fun restoreAllNotifications(context: Context) {
         try {
-            Timber.d("Starting notification restoration process...")
             
             // Получаем базу данных и репозиторий
             val database = AppDatabase.getDatabase(context.applicationContext)
@@ -92,7 +87,6 @@ class BootReceiver : BroadcastReceiver() {
             removedRouteIds.forEach { routeId: String ->
                 val deletedCount = favoriteTimeDao.deleteByRouteId(routeId)
                 if (deletedCount > 0) {
-                    Timber.d("Removed $deletedCount favorite times for deleted route: $routeId")
                 }
             }
             
@@ -103,22 +97,19 @@ class BootReceiver : BroadcastReceiver() {
                 .filter { entity: FavoriteTimeEntity -> entity.isActive }
                 .map { entity: FavoriteTimeEntity -> entity.toFavoriteTime(repository) }
             
-            Timber.d("Found ${activeFavoriteTimes.size} active favorite times to restore")
             
             // Восстанавливаем уведомления для каждого активного избранного времени
             activeFavoriteTimes.forEach { favoriteTime: FavoriteTime ->
                 try {
                     AlarmScheduler.checkAndUpdateNotifications(context.applicationContext, favoriteTime)
-                    Timber.d("Notification restored for favorite time: ${favoriteTime.id}")
                 } catch (e: Exception) {
-                    Timber.e(e, "Error restoring notification for ${favoriteTime.id}")
+                    Timber.e(e, "Ошибка восстановления уведомления для ${favoriteTime.id}")
                 }
             }
             
-            Timber.d("Notification restoration completed. Restored ${activeFavoriteTimes.size} notifications.")
             
         } catch (e: Exception) {
-            Timber.e(e, "Critical error during notification restoration")
+            Timber.e(e, "Критическая ошибка при восстановлении уведомлений")
         }
     }
 }

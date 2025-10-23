@@ -23,7 +23,6 @@ class DataSyncWorker(
 ) : CoroutineWorker(context, params) {
     
     override suspend fun doWork(): Result {
-        Timber.d("🔄 DataSyncWorker started")
         
         return try {
             val repository = BusRouteRepository(applicationContext)
@@ -32,7 +31,6 @@ class DataSyncWorker(
             val hasUpdates = repository.checkForDataUpdates()
             
             if (hasUpdates) {
-                Timber.i("✅ Schedule update available")
                 
                 // Получаем версию обновления
                 val newVersion = repository.getRemoteDataVersion()
@@ -43,16 +41,14 @@ class DataSyncWorker(
                         context = applicationContext,
                         dataVersion = newVersion
                     )
-                    Timber.d("📢 Notification shown for version: $newVersion")
                 }
             } else {
-                Timber.d("✓ Schedule data is up to date")
             }
             
             Result.success()
             
         } catch (e: Exception) {
-            Timber.e(e, "❌ DataSyncWorker failed")
+            Timber.e(e, "DataSyncWorker не удался")
             // Повторяем при ошибке
             Result.retry()
         }

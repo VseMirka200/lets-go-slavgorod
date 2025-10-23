@@ -69,11 +69,10 @@ class JsonDataSource(private val context: Context) {
             val validatedRoutes = JsonValidator.validateRoutes(routes)
             
             cachedRoutes = validatedRoutes
-            Timber.d("Loaded and validated ${validatedRoutes.size} routes from JSON")
             
             validatedRoutes
         } catch (e: Exception) {
-            Timber.e(e, "Error loading routes from JSON, falling back to hardcoded data")
+            Timber.e(e, "Ошибка загрузки маршрутов из JSON, переключение на жёстко заданные данные")
             // Fallback на старый метод если JSON не загрузился
             loadFallbackRoutes()
         }
@@ -107,19 +106,16 @@ class JsonDataSource(private val context: Context) {
                     if (schedulesArray != null && schedulesArray.length() > 0) {
                         val schedules = parseSchedules(schedulesArray, routeId, currentDayOfWeek)
                         cachedSchedules[routeId] = schedules
-                        Timber.d("Loaded ${schedules.size} schedules from JSON for route $routeId")
                         return@withContext schedules
                     } else {
-                        Timber.d("No schedules in JSON for route $routeId")
                         return@withContext null
                     }
                 }
             }
             
-            Timber.d("Route $routeId not found in JSON")
             null
         } catch (e: Exception) {
-            Timber.e(e, "Error loading schedules from JSON for route $routeId")
+            Timber.e(e, "Ошибка загрузки расписаний из JSON для маршрута $routeId")
             null
         }
     }
@@ -153,7 +149,6 @@ class JsonDataSource(private val context: Context) {
      * Fallback метод загрузки из hardcoded данных
      */
     private fun loadFallbackRoutes(): List<BusRoute> {
-        Timber.w("Using fallback hardcoded routes")
         return emptyList() // Будет использован существующий ScheduleUtils
     }
     
@@ -162,7 +157,6 @@ class JsonDataSource(private val context: Context) {
      */
     fun clearCache() {
         cachedRoutes = null
-        Timber.d("Routes cache cleared")
     }
     
     /**
@@ -170,7 +164,6 @@ class JsonDataSource(private val context: Context) {
      */
     fun clearScheduleCache(routeId: String) {
         cachedSchedules.remove(routeId)
-        Timber.d("Schedule cache cleared for route $routeId")
     }
     
     /**
@@ -178,7 +171,45 @@ class JsonDataSource(private val context: Context) {
      */
     fun clearAllScheduleCache() {
         cachedSchedules.clear()
-        Timber.d("All schedule cache cleared")
+    }
+    
+    /**
+     * Парсит маршруты из JSON строки
+     * 
+     * @param jsonString JSON строка с данными маршрутов
+     * @return список маршрутов
+     */
+    suspend fun parseRoutesFromJson(jsonString: String): List<BusRoute> = withContext(Dispatchers.IO) {
+        try {
+            val jsonObject = JSONObject(jsonString)
+            val routesArray = jsonObject.getJSONArray("routes")
+            
+            val routes = mutableListOf<BusRoute>()
+            
+            for (i in 0 until routesArray.length()) {
+                val routeJson = routesArray.getJSONObject(i)
+                
+                val route = BusRoute(
+                    id = routeJson.getString("id"),
+                    routeNumber = routeJson.getString("routeNumber"),
+                    name = routeJson.getString("name"),
+                    description = routeJson.getString("description"),
+                    color = routeJson.optString("color").takeIf { it.isNotEmpty() } ?: "#1976D2",
+                    travelTime = routeJson.optString("travelTime").takeIf { it.isNotEmpty() },
+                    pricePrimary = routeJson.optString("pricePrimary").takeIf { it.isNotEmpty() },
+                    priceSecondary = routeJson.optString("priceSecondary").takeIf { it.isNotEmpty() },
+                    paymentMethods = routeJson.optString("paymentMethods").takeIf { it.isNotEmpty() }
+                )
+                
+                routes.add(route)
+            }
+            
+            // Валидируем загруженные данные
+            JsonValidator.validateRoutes(routes)
+        } catch (e: Exception) {
+            Timber.e(e, "Ошибка парсинга JSON: ${e.message}")
+            emptyList()
+        }
     }
 }
 

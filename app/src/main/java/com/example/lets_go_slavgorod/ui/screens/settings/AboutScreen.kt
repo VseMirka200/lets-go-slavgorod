@@ -120,7 +120,7 @@ fun AboutScreen(
                                     val intent = Intent(Intent.ACTION_VIEW, "https://vk.com/urban_solution".toUri())
                                     context.startActivity(intent)
                                 } catch (e: Exception) {
-                                    Timber.e(e, "Could not open VK group")
+                                    Timber.e(e, "Не удалось открыть группу VK")
                                 }
                             }
                         )
@@ -150,7 +150,7 @@ fun AboutScreen(
                                     val intent = Intent(Intent.ACTION_VIEW, developerVkUrl.toUri())
                                     context.startActivity(intent)
                                 } catch (e: Exception) {
-                                    Timber.e(e, "Could not open VK profile")
+                                    Timber.e(e, "Не удалось открыть профиль VK")
                                 }
                             }
                         )
@@ -246,7 +246,7 @@ fun AboutScreen(
                                 try {
                                     context.startActivity(intent)
                                 } catch (e: Exception) {
-                                    Timber.e(e, "Could not open donation link")
+                                    Timber.e(e, "Не удалось открыть ссылку на донат")
                                 }
                             },
                             modifier = Modifier.weight(1f)
@@ -267,7 +267,7 @@ fun AboutScreen(
                                 try {
                                     context.startActivity(intent)
                                 } catch (e: Exception) {
-                                    Timber.e(e, "Could not open GitHub")
+                                    Timber.e(e, "Не удалось открыть GitHub")
                                 }
                             },
                             modifier = Modifier.weight(1f)
@@ -333,7 +333,7 @@ fun AboutScreen(
                     }
                     context.startActivity(intent)
                 } catch (e: Exception) {
-                    Timber.e(e, "Could not open email app")
+                    Timber.e(e, "Не удалось открыть приложение электронной почты")
                     android.widget.Toast.makeText(
                         context,
                         context.getString(R.string.error_open_email),

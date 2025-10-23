@@ -72,11 +72,10 @@ class AddToFavoritesUseCase(
             // Сохраняем в базу данных
             favoriteTimeDao.addFavoriteTime(entity)
             
-            Timber.d("Added to favorites: ${favoriteTime.routeId} at ${favoriteTime.departureTime}")
             
             Result.Success(Unit)
         } catch (e: Exception) {
-            Timber.e(e, "Error adding to favorites")
+            Timber.e(e, "Ошибка добавления в избранное")
             AppError.Database.Generic(
                 message = "Не удалось добавить в избранное",
                 cause = e

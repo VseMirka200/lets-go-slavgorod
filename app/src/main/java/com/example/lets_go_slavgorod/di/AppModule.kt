@@ -53,7 +53,8 @@ val appModule = module {
     
     // База данных
     single<AppDatabase> {
-        AppDatabase.getDatabase(androidContext())
+        val context = androidContext()
+        AppDatabase.getDatabase(context)
     }
     
     // DAO
@@ -77,7 +78,13 @@ val appModule = module {
     single<DataSourceChain> {
         DataSourceChain(
             strategies = listOf(
-                RemoteDataSourceStrategy { get<RemoteDataSource>().getJsonString() },
+                RemoteDataSourceStrategy { 
+                    try {
+                        get<RemoteDataSource>().getJsonString()
+                    } catch (e: Exception) {
+                        null
+                    }
+                },
                 CacheDataSourceStrategy(File(androidContext().cacheDir, "routes_data.json")),
                 AssetsDataSourceStrategy(androidContext(), "routes_data.json")
             )

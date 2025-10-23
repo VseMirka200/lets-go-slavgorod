@@ -5,6 +5,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.model.BusSchedule
+import com.example.lets_go_slavgorod.data.local.JsonDataSource
 import com.example.lets_go_slavgorod.core.Constants
 import com.example.lets_go_slavgorod.core.RetryUtils
 import kotlinx.coroutines.Dispatchers
@@ -90,9 +91,8 @@ class RemoteDataSource(private val context: Context) {
     private fun saveETag(etag: String) {
         try {
             getCacheETagFile().writeText(etag)
-            Timber.d("💾 Saved ETag: $etag")
         } catch (e: Exception) {
-            Timber.e(e, "Error saving ETag")
+            Timber.e(e, "Ошибка сохранения ETag")
         }
     }
     
@@ -108,7 +108,7 @@ class RemoteDataSource(private val context: Context) {
                 null
             }
         } catch (e: Exception) {
-            Timber.e(e, "Error loading ETag")
+            Timber.e(e, "Ошибка загрузки ETag")
             null
         }
     }
@@ -119,9 +119,8 @@ class RemoteDataSource(private val context: Context) {
     private fun saveCacheVersion(version: String) {
         try {
             getCacheVersionFile().writeText(version)
-            Timber.d("Saved cache version: $version")
         } catch (e: Exception) {
-            Timber.e(e, "Error saving cache version")
+            Timber.e(e, "Ошибка сохранения версии кэша")
         }
     }
     
@@ -137,7 +136,7 @@ class RemoteDataSource(private val context: Context) {
                 null
             }
         } catch (e: Exception) {
-            Timber.e(e, "Error loading cache version")
+            Timber.e(e, "Ошибка загрузки версии кэша")
             null
         }
     }
@@ -150,7 +149,7 @@ class RemoteDataSource(private val context: Context) {
             val jsonObject = JSONObject(jsonString)
             jsonObject.optString("version").takeIf { it.isNotEmpty() }
         } catch (e: Exception) {
-            Timber.e(e, "Error extracting version from JSON")
+            Timber.e(e, "Ошибка извлечения версии из JSON")
             null
         }
     }
@@ -163,7 +162,6 @@ class RemoteDataSource(private val context: Context) {
     private suspend fun downloadRemoteJson(): String? = withContext(Dispatchers.IO) {
         // Проверяем качество соединения
         if (!isNetworkAvailable()) {
-            Timber.w("⚠️ No network connection available")
             return@withContext null
         }
         
@@ -178,7 +176,6 @@ class RemoteDataSource(private val context: Context) {
      */
     private suspend fun downloadWithTimeout(): String? = withTimeoutOrNull(DOWNLOAD_TIMEOUT_MS) {
         try {
-            Timber.i("🌐 Downloading routes data from GitHub: ${Constants.REMOTE_JSON_URL}")
             
             val url = URL(Constants.REMOTE_JSON_URL)
             val connection = url.openConnection() as HttpURLConnection
@@ -196,7 +193,6 @@ class RemoteDataSource(private val context: Context) {
                 val savedETag = loadETag()
                 if (savedETag != null) {
                     setRequestProperty("If-None-Match", savedETag)
-                    Timber.d("📋 Using cached ETag: $savedETag")
                 }
                 
                 useCaches = false
@@ -204,7 +200,6 @@ class RemoteDataSource(private val context: Context) {
             }
             
             val responseCode = connection.responseCode
-            Timber.d("📡 GitHub response code: $responseCode")
             
             when (responseCode) {
                 HttpURLConnection.HTTP_OK -> {
@@ -214,23 +209,19 @@ class RemoteDataSource(private val context: Context) {
                     val etag = connection.getHeaderField("ETag")
                     if (etag != null) {
                         saveETag(etag)
-                        Timber.d("💾 Saved new ETag: $etag")
                     }
                     
                     connection.disconnect()
                     
                     // Расширенная валидация
                     if (validateJsonData(jsonString)) {
-                        Timber.i("✅ Successfully downloaded and validated data from GitHub")
                         return@withTimeoutOrNull jsonString
                     } else {
-                        Timber.e("❌ Downloaded data failed validation")
                         return@withTimeoutOrNull null
                     }
                 }
                 HttpURLConnection.HTTP_NOT_MODIFIED -> {
                     // 304 - данные не изменились, используем кэш
-                    Timber.i("✅ Data not modified (ETag match), using cache")
                     connection.disconnect()
                     
                     // Загружаем из кэша
@@ -242,27 +233,27 @@ class RemoteDataSource(private val context: Context) {
                     }
                 }
                 HttpURLConnection.HTTP_NOT_FOUND -> {
-                    Timber.e("❌ File not found on GitHub: $responseCode")
                     return@withTimeoutOrNull null
                 }
                 HttpURLConnection.HTTP_UNAVAILABLE -> {
-                    Timber.e("❌ GitHub service unavailable: $responseCode")
                     return@withTimeoutOrNull null
                 }
                 else -> {
-                    Timber.w("⚠️ Unexpected response code: $responseCode")
                     return@withTimeoutOrNull null
                 }
             }
             
         } catch (e: java.net.UnknownHostException) {
-            Timber.w("⚠️ No internet connection: ${e.message}")
             null
         } catch (e: java.net.SocketTimeoutException) {
-            Timber.w("⚠️ Connection timeout: ${e.message}")
             null
         } catch (e: Exception) {
-            Timber.e(e, "❌ Error downloading from GitHub: ${e.javaClass.simpleName}")
+            try {
+                Timber.e(e, "Ошибка загрузки с GitHub: ${e.javaClass.simpleName}")
+            } catch (logError: Exception) {
+                // Fallback на системное логирование если Timber не работает
+                android.util.Log.e("RemoteDataSource", "Ошибка загрузки с GitHub: ${e.javaClass.simpleName}", e)
+            }
             null
         }
     }
@@ -276,13 +267,11 @@ class RemoteDataSource(private val context: Context) {
             
             // Проверяем обязательные поля
             if (!json.has("routes") || !json.has("version")) {
-                Timber.e("❌ Missing required fields: routes or version")
                 return false
             }
             
             val routes = json.getJSONArray("routes")
             if (routes.length() == 0) {
-                Timber.e("❌ Empty routes array")
                 return false
             }
             
@@ -291,22 +280,18 @@ class RemoteDataSource(private val context: Context) {
             val requiredFields = listOf("id", "routeNumber", "name", "schedules")
             for (field in requiredFields) {
                 if (!firstRoute.has(field)) {
-                    Timber.e("❌ Missing field in route: $field")
                     return false
                 }
             }
             
             // Проверяем размер файла (не слишком большой)
             if (jsonString.length > 10 * 1024 * 1024) { // 10MB
-                Timber.e("❌ File too large: ${jsonString.length} bytes")
                 return false
             }
             
-            Timber.d("✅ JSON validation passed: ${routes.length()} routes, version: ${json.optString("version", "unknown")}")
             true
             
         } catch (e: Exception) {
-            Timber.e(e, "❌ JSON validation failed")
             false
         }
     }
@@ -337,9 +322,8 @@ class RemoteDataSource(private val context: Context) {
                 saveCacheVersion(version)
             }
             
-            Timber.d("Routes data cached successfully to ${cacheFile.absolutePath}")
         } catch (e: Exception) {
-            Timber.e(e, "Error saving routes data to cache")
+            Timber.e(e, "Ошибка сохранения данных маршрутов в кэш")
         }
     }
     
@@ -352,7 +336,6 @@ class RemoteDataSource(private val context: Context) {
         try {
             val cacheFile = getCacheFile()
             if (!cacheFile.exists()) {
-                Timber.d("💾 Cache file does not exist")
                 return@withContext null
             }
             
@@ -363,16 +346,13 @@ class RemoteDataSource(private val context: Context) {
                 val testJson = JSONObject(jsonString)
                 val testRoutes = testJson.getJSONArray("routes")
                 val cachedVersion = testJson.optString("version", "unknown")
-                Timber.d("💾 Cache JSON is valid with ${testRoutes.length()} routes, version: $cachedVersion")
             } catch (e: Exception) {
-                Timber.e(e, "❌ Cache JSON is corrupted, clearing cache")
                 clearCache()
                 return@withContext null
             }
             
             jsonString
         } catch (e: Exception) {
-            Timber.e(e, "❌ Error loading routes data from cache")
             clearCache() // Очищаем кэш при любой ошибке
             null
         }
@@ -392,15 +372,12 @@ class RemoteDataSource(private val context: Context) {
                 val testJson = JSONObject(jsonString)
                 val testRoutes = testJson.getJSONArray("routes")
                 val version = testJson.optString("version", "unknown")
-                Timber.i("✅ Loaded routes data from assets (${jsonString.length} bytes, ${testRoutes.length()} routes, version: $version)")
             } catch (e: Exception) {
-                Timber.e(e, "❌ Assets JSON is invalid")
                 return@withContext null
             }
             
             jsonString
         } catch (e: Exception) {
-            Timber.e(e, "❌ Error loading routes data from assets - FILE NOT FOUND OR INACCESSIBLE")
             null
         }
     }
@@ -412,7 +389,6 @@ class RemoteDataSource(private val context: Context) {
      */
     private suspend fun shouldUpdate(): Pair<Boolean, String?> = withContext(Dispatchers.IO) {
         try {
-            Timber.d("🔍 Checking if update is needed...")
             
             // Получаем локальную версию из кэша
             val cachedVersion = try {
@@ -426,12 +402,10 @@ class RemoteDataSource(private val context: Context) {
             val remoteJson = try {
                 downloadRemoteJson()
             } catch (e: Exception) {
-                Timber.d("⚠️ Cannot check remote version (no internet?): ${e.message}")
                 null
             }
             
             if (remoteJson == null) {
-                Timber.d("⚠️ Remote version unavailable, will use cached data")
                 return@withContext Pair(false, null)
             }
             
@@ -439,21 +413,17 @@ class RemoteDataSource(private val context: Context) {
             
             // Если кэша нет - нужно обновление
             if (cachedVersion == null) {
-                Timber.i("📦 No cached version, update needed")
                 return@withContext Pair(true, remoteJson)
             }
             
             // Сравниваем версии
             val needsUpdate = remoteVersion != null && remoteVersion != cachedVersion
             if (needsUpdate) {
-                Timber.i("🆕 Update available: $cachedVersion → $remoteVersion")
                 return@withContext Pair(true, remoteJson)
             } else {
-                Timber.d("✅ Already on latest version: $cachedVersion")
                 return@withContext Pair(false, null)
             }
         } catch (e: Exception) {
-            Timber.w(e, "⚠️ Error checking for updates: ${e.message}")
             Pair(false, null)
         }
     }
@@ -472,86 +442,70 @@ class RemoteDataSource(private val context: Context) {
      * @return JSON строка или null при ошибке
      */
     suspend fun getJsonString(forceRefresh: Boolean = false): String? {
-        Timber.d("📥 getJsonString called with forceRefresh=$forceRefresh")
-        
-        // ОПТИМИЗАЦИЯ: Проверяем интернет в начале, чтобы не тратить время на таймауты
         val hasInternet = isNetworkAvailable()
-        Timber.d("🌐 Internet connection: ${if (hasInternet) "✅ Available" else "❌ Not available"}")
         
         // Если интернета нет и не force refresh - сразу используем кэш/assets
         if (!hasInternet && !forceRefresh) {
-            Timber.d("⚡ No internet, skipping remote check and using local data...")
             
             // Пробуем загрузить из кэша
             val cachedJson = loadFromCache()
             if (cachedJson != null) {
-                Timber.i("✅ Using cached data (offline mode)")
                 return cachedJson
             }
             
             // Если кэша нет - загружаем из assets
             val assetsJson = loadFromAssets()
             if (assetsJson != null) {
-                Timber.i("✅ Using assets (offline mode)")
                 return assetsJson
             }
             
-            Timber.e("❌ No cached or assets data available in offline mode")
             return null
         }
         
         // Если есть интернет или force refresh - пытаемся обновить
         if (forceRefresh) {
-            Timber.d("🔄 Force refresh requested, attempting GitHub download...")
             val remoteJson = downloadRemoteJson()
             if (remoteJson != null) {
-                Timber.i("✅ Force refresh successful, saving to cache")
                 saveToCache(remoteJson)
                 return remoteJson
             }
-            Timber.w("⚠️ Force refresh failed, falling through to cache/assets")
         } else {
             // Обычная загрузка - проверяем нужно ли обновление
-            Timber.d("🔍 Checking for updates...")
             
             val (needsUpdate, remoteJson) = shouldUpdate()
             if (needsUpdate && remoteJson != null) {
-                Timber.i("✅ Update downloaded, saving to cache")
                 saveToCache(remoteJson)
                 return remoteJson
             } else if (needsUpdate) {
-                Timber.w("⚠️ Update needed but download failed, will use cached data")
             }
         }
         
         // Пробуем загрузить из кэша
-        Timber.d("💾 Loading from cache...")
         val cachedJson = loadFromCache()
         if (cachedJson != null) {
-            Timber.i("✅ Using cached data")
             return cachedJson
         }
-        Timber.d("⚠️ Cache not available, attempting GitHub download...")
         
         // Если в кэше нет и есть интернет, пробуем загрузить с GitHub
         if (hasInternet) {
             val remoteJson = downloadRemoteJson()
             if (remoteJson != null) {
-                Timber.i("✅ Downloaded from GitHub, saving to cache")
                 saveToCache(remoteJson)
                 return remoteJson
             }
-            Timber.w("⚠️ GitHub download failed, falling back to assets...")
         }
         
         // Если всё не удалось, используем assets
         val assetsJson = loadFromAssets()
         if (assetsJson != null) {
-            Timber.i("✅ Using assets as fallback")
             return assetsJson
         }
         
-        Timber.e("❌ ALL DATA SOURCES FAILED - NO DATA AVAILABLE!")
+        try {
+            Timber.e("Все источники данных недоступны")
+        } catch (e: Exception) {
+            android.util.Log.e("RemoteDataSource", "Все источники данных недоступны")
+        }
         return null
     }
     
@@ -563,30 +517,25 @@ class RemoteDataSource(private val context: Context) {
      */
     suspend fun loadRoutes(forceRefresh: Boolean = false): List<BusRoute> = withContext(Dispatchers.IO) {
         val startTime = System.currentTimeMillis()
-        Timber.d("🚌 loadRoutes called with forceRefresh=$forceRefresh")
         
         // Возвращаем кэшированные данные если не требуется обновление
         if (!forceRefresh && cachedRoutes != null) {
-            Timber.d("✅ Returning cached routes in memory: ${cachedRoutes!!.size} routes")
             return@withContext cachedRoutes!!
         }
         
         try {
-            Timber.d("📥 Getting JSON string with retry mechanism...")
             val jsonString = RetryUtils.retryNetwork {
                 getJsonString(forceRefresh)
             }
             
             if (jsonString == null) {
-                Timber.e("❌ getJsonString returned null - NO DATA AVAILABLE")
+                Timber.e("getJsonString вернул null - данные недоступны")
                 return@withContext emptyList()
             }
             
-            Timber.d("📝 Parsing JSON (${jsonString.length} bytes)...")
             val jsonObject = JSONObject(jsonString)
             val routesArray = jsonObject.getJSONArray("routes")
             
-            Timber.d("🔍 Found ${routesArray.length()} routes in JSON, parsing...")
             val routes = mutableListOf<BusRoute>()
             
             for (i in 0 until routesArray.length()) {
@@ -618,7 +567,6 @@ class RemoteDataSource(private val context: Context) {
                 loadTime
             )
             
-            Timber.i("✅ Successfully loaded ${routes.size} routes (forceRefresh=$forceRefresh) in ${loadTime}ms")
             
             routes
         } catch (e: Exception) {
@@ -627,7 +575,48 @@ class RemoteDataSource(private val context: Context) {
                 e.message ?: "Unknown error"
             )
             
-            Timber.e(e, "❌ Error parsing routes JSON: ${e.javaClass.simpleName} - ${e.message}")
+            try {
+                Timber.e(e, "Ошибка парсинга JSON маршрутов: ${e.javaClass.simpleName} - ${e.message}")
+            } catch (logError: Exception) {
+                android.util.Log.e("RemoteDataSource", "Ошибка парсинга JSON маршрутов: ${e.javaClass.simpleName} - ${e.message}", e)
+            }
+            emptyList()
+        }
+    }
+    
+    /**
+     * Fallback загрузка данных при ошибке основного источника
+     * 
+     * Пытается загрузить данные из альтернативных источников:
+     * 1. Локальный кэш файл
+     * 2. Assets файл
+     * 3. Пустой список (последний fallback)
+     */
+    private suspend fun tryFallbackLoad(): List<BusRoute> {
+        return try {
+            
+            // Пытаемся загрузить из кэша
+            val cacheFile = File(context.cacheDir, "routes_data.json")
+            if (cacheFile.exists()) {
+                val cachedJson = cacheFile.readText()
+                val jsonDataSource = JsonDataSource(context)
+                val cachedRoutes = jsonDataSource.parseRoutesFromJson(cachedJson)
+                if (cachedRoutes.isNotEmpty()) {
+                    return cachedRoutes
+                }
+            }
+            
+            // Пытаемся загрузить из assets
+            val jsonDataSource = JsonDataSource(context)
+            val assetsRoutes = jsonDataSource.loadRoutes()
+            if (assetsRoutes.isNotEmpty()) {
+                return assetsRoutes
+            }
+            
+            Timber.e("Все резервные источники недоступны, возвращаем пустой список")
+            emptyList()
+        } catch (e: Exception) {
+            Timber.e(e, "Ошибка резервной загрузки: ${e.message}")
             emptyList()
         }
     }
@@ -660,19 +649,16 @@ class RemoteDataSource(private val context: Context) {
                     if (schedulesArray != null && schedulesArray.length() > 0) {
                         val schedules = parseSchedules(schedulesArray, routeId, currentDayOfWeek)
                         cachedSchedules[routeId] = schedules
-                        Timber.d("Loaded ${schedules.size} schedules for route $routeId")
                         return@withContext schedules
                     } else {
-                        Timber.d("No schedules for route $routeId")
                         return@withContext null
                     }
                 }
             }
             
-            Timber.d("Route $routeId not found")
             null
         } catch (e: Exception) {
-            Timber.e(e, "Error loading schedules for route $routeId")
+            Timber.e(e, "Ошибка загрузки расписания для маршрута $routeId")
             null
         }
     }
@@ -711,7 +697,7 @@ class RemoteDataSource(private val context: Context) {
             val jsonObject = JSONObject(jsonString)
             jsonObject.optString("version").takeIf { it.isNotEmpty() }
         } catch (e: Exception) {
-            Timber.e(e, "Error getting data version")
+            Timber.e(e, "Ошибка получения версии данных")
             null
         }
     }
@@ -727,7 +713,7 @@ class RemoteDataSource(private val context: Context) {
             val jsonObject = JSONObject(remoteJson)
             jsonObject.optString("version").takeIf { it.isNotEmpty() }
         } catch (e: Exception) {
-            Timber.e(e, "Error getting remote data version")
+            Timber.e(e, "Ошибка получения удаленной версии данных")
             null
         }
     }
@@ -741,7 +727,7 @@ class RemoteDataSource(private val context: Context) {
             val jsonObject = JSONObject(jsonString)
             jsonObject.optString("last_updated").takeIf { it.isNotEmpty() }
         } catch (e: Exception) {
-            Timber.e(e, "Error getting last updated date")
+            Timber.e(e, "Ошибка получения даты последнего обновления")
             null
         }
     }
@@ -753,20 +739,16 @@ class RemoteDataSource(private val context: Context) {
      */
     suspend fun checkForUpdates(): Boolean = withContext(Dispatchers.IO) {
         try {
-            Timber.d("🔍 Checking for updates from GitHub...")
             val remoteJson = downloadRemoteJson()
             
             if (remoteJson == null) {
-                Timber.w("❌ Failed to download remote JSON - no internet or server error")
                 return@withContext false
             }
             
-            Timber.d("✓ Successfully downloaded remote JSON")
             val cachedJson = loadFromCache()
             
             if (cachedJson == null) {
                 // Если кэша нет, есть обновление
-                Timber.i("📦 No cache found - update available")
                 return@withContext true
             }
             
@@ -777,17 +759,14 @@ class RemoteDataSource(private val context: Context) {
                            cachedVersion.isNotEmpty() && 
                            remoteVersion != cachedVersion
             
-            Timber.i("📊 Update check: remote=$remoteVersion, cached=$cachedVersion, hasUpdate=$hasUpdate")
             
             if (hasUpdate) {
-                Timber.i("🎉 New version available: $remoteVersion (current: $cachedVersion)")
             } else {
-                Timber.d("✓ Already on latest version: $cachedVersion")
             }
             
             hasUpdate
         } catch (e: Exception) {
-            Timber.e(e, "❌ Error checking for updates")
+            Timber.e(e, "Ошибка проверки обновлений")
             false
         }
     }
@@ -803,16 +782,14 @@ class RemoteDataSource(private val context: Context) {
             val cacheFile = getCacheFile()
             if (cacheFile.exists()) {
                 cacheFile.delete()
-                Timber.d("Cache file deleted")
             }
             
             val versionFile = getCacheVersionFile()
             if (versionFile.exists()) {
                 versionFile.delete()
-                Timber.d("Cache version file deleted")
             }
         } catch (e: Exception) {
-            Timber.e(e, "Error deleting cache file")
+            Timber.e(e, "Ошибка удаления файла кэша")
         }
     }
     
@@ -823,7 +800,6 @@ class RemoteDataSource(private val context: Context) {
      */
     fun clearRoutesMemoryCache() {
         cachedRoutes = null
-        Timber.d("Routes memory cache cleared (file preserved)")
     }
     
     /**
@@ -831,7 +807,6 @@ class RemoteDataSource(private val context: Context) {
      */
     fun clearSchedulesCache() {
         cachedSchedules.clear()
-        Timber.d("Schedules cache cleared")
     }
     
     /**
@@ -839,7 +814,6 @@ class RemoteDataSource(private val context: Context) {
      */
     fun clearScheduleCache(routeId: String) {
         cachedSchedules.remove(routeId)
-        Timber.d("Cleared schedule cache for route $routeId")
     }
     
     /**

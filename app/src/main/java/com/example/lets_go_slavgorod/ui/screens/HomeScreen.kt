@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -45,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -68,10 +70,19 @@ import timber.log.Timber
  * Отображает индикатор загрузки с центрированием на экране
  * и информативным текстом для пользователя.
  * 
- * Показывается во время:
- * - Первоначальной загрузки маршрутов
- * - Обновления данных
- * - Любых асинхронных операций
+ * Использование:
+ * - Первоначальная загрузка маршрутов при запуске
+ * - Обновление данных при pull-to-refresh
+ * - Асинхронные операции поиска и фильтрации
+ * 
+ * Дизайн:
+ * - Центрированный CircularProgressIndicator
+ * - Информативный текст "Загрузка маршрутов..."
+ * - Соответствует Material Design 3
+ * 
+ * @author VseMirka200
+ * @version 3.1
+ * @since 1.0
  */
 @Composable
 fun LoadingState() {
@@ -110,7 +121,10 @@ fun LoadingState() {
  * @param errorMessage сообщение об ошибке для отображения пользователю
  */
 @Composable
-fun ErrorState(errorMessage: String) {
+fun ErrorState(
+    errorMessage: String,
+    onRetry: () -> Unit = {}
+) {
     Box(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         contentAlignment = Alignment.Center
@@ -133,8 +147,19 @@ fun ErrorState(errorMessage: String) {
             Text(
                 text = errorMessage.ifEmpty { stringResource(id = R.string.unknown_error) },
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
             )
+            
+            // Кнопка повтора при ошибке
+            if (onRetry != {}) {
+                Button(
+                    onClick = onRetry,
+                    modifier = Modifier.padding(top = 8.dp)
+                ) {
+                    Text("Попробовать снова")
+                }
+            }
         }
     }
 }
@@ -232,6 +257,7 @@ fun EmptyState(searchQuery: String) {
 private fun navigateToSchedule(navController: NavController, route: BusRoute) {
     try {
         ConditionalLogging.debug("Navigation") { "Route clicked: ${route.id} - ${route.name}" }
+        
         navController.navigate("schedule/${route.id}") {
             launchSingleTop = true
             restoreState = true
@@ -295,6 +321,7 @@ fun RoutesListState(
                     key = { route -> route.id },
                     contentType = { BusRoute::class }
                 ) { route ->
+                    // Оптимизация: мемоизация карточки маршрута
                     BusRouteCard(
                         route = route,
                         isGridMode = true,
@@ -378,7 +405,6 @@ fun HomeScreen(
         factory = ViewModelFactory(appContext.applicationContext as android.app.Application)
     )
     
-    Timber.d("HomeScreen is being displayed")
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     
@@ -488,7 +514,10 @@ fun HomeScreen(
             ) {
                 when {
                     uiState.isLoading -> LoadingState()
-                    uiState.error != null -> ErrorState(errorMessage = uiState.error!!)
+                    uiState.error != null -> ErrorState(
+                        errorMessage = uiState.error!!,
+                        onRetry = { viewModel.refresh() }
+                    )
                     uiState.routes.isEmpty() -> EmptyState(searchQuery = searchQuery)
                     else -> RoutesListState(
                         routes = uiState.routes,

@@ -77,7 +77,6 @@ object DisclaimerManager {
             val disclaimerShown = preferences[Keys.DISCLAIMER_SHOWN] ?: false
             val dontShowAgain = preferences[Keys.DISCLAIMER_DONT_SHOW] ?: false
             
-            Timber.d("Disclaimer check: shown=$disclaimerShown, dontShow=$dontShowAgain")
             
             // Показываем диалог если:
             // 1. Пользователь еще не видел его (!disclaimerShown) ИЛИ
@@ -103,7 +102,6 @@ object DisclaimerManager {
             preferences[Keys.DISCLAIMER_SHOWN] = true
             // Намеренно НЕ устанавливаем DISCLAIMER_DONT_SHOW
         }
-        Timber.d("Disclaimer accepted by user")
     }
     
     /**
@@ -125,6 +123,5 @@ object DisclaimerManager {
             preferences[Keys.DISCLAIMER_SHOWN] = true
             preferences[Keys.DISCLAIMER_DONT_SHOW] = true
         }
-        Timber.d("Disclaimer marked as 'don't show again'")
     }
 }

@@ -37,11 +37,10 @@ class RemoveFromFavoritesUseCase(
             // Удаляем из базы данных
             favoriteTimeDao.removeFavoriteTime(favoriteId)
             
-            Timber.d("Removed from favorites: $favoriteId")
             
             Result.Success(Unit)
         } catch (e: Exception) {
-            Timber.e(e, "Error removing from favorites")
+            Timber.e(e, "Ошибка удаления из избранного")
             AppError.Database.Generic(
                 message = "Не удалось удалить из избранного",
                 cause = e

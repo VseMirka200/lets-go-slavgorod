@@ -66,30 +66,30 @@ fun NextNotificationTimer(
     // Пересчитывается при изменении nextNotificationTime ИЛИ leadTimeMinutes
     val nextDepartureTime = remember(nextNotificationTime, leadTimeMinutes) {
         val result = nextNotificationTime?.plusMinutes(leadTimeMinutes.toLong())
-        Timber.d("🕐 NextDepartureTime recalculated:")
-        Timber.d("   Notification time: $nextNotificationTime")
-        Timber.d("   Lead time: $leadTimeMinutes min")
-        Timber.d("   Departure time: $result")
         result
     }
     
     // Логируем при изменении nextNotificationTime
     LaunchedEffect(nextNotificationTime, leadTimeMinutes) {
         if (nextNotificationTime != null && nextDepartureTime != null) {
-            Timber.d("═══════════════════════════════════════════════════")
-            Timber.d("🔔 NextNotificationTimer updated:")
-            Timber.d("  Current time: ${LocalDateTime.now()}")
-            Timber.d("  Notification time: $nextNotificationTime")
-            Timber.d("  Departure time: $nextDepartureTime")
-            Timber.d("  Lead time: $leadTimeMinutes min")
             
             val now = LocalDateTime.now()
             val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(now.toLocalDate(), nextDepartureTime.toLocalDate())
             val hoursDiff = java.time.temporal.ChronoUnit.HOURS.between(now, nextDepartureTime) % 24
             val minDiff = java.time.temporal.ChronoUnit.MINUTES.between(now, nextDepartureTime) % 60
             
-            Timber.d("  Time until departure: $daysDiff days, $hoursDiff hours, $minDiff minutes")
-            Timber.d("═══════════════════════════════════════════════════")
+            
+            // Проверяем, если уведомление должно сработать в ближайшие 5 минут
+            val minutesUntilNotification = java.time.temporal.ChronoUnit.MINUTES.between(now, nextNotificationTime)
+            if (minutesUntilNotification <= 5 && minutesUntilNotification > 0) {
+            }
+            
+            // КРИТИЧЕСКИ ВАЖНО: Если время уведомления в прошлом или сейчас
+            val secondsUntilNotification = java.time.temporal.ChronoUnit.SECONDS.between(now, nextNotificationTime)
+            if (secondsUntilNotification <= 0) {
+                Timber.e("Время уведомления в прошлом или сейчас")
+            }
+            
         }
     }
     
@@ -211,7 +211,6 @@ fun NextNotificationTimer(
  */
 private fun formatTimeUntil(now: LocalDateTime, target: LocalDateTime): String {
     if (target.isBefore(now)) {
-        Timber.w("Target time $target is before current time $now")
         return "Просрочено"
     }
     
@@ -219,7 +218,6 @@ private fun formatTimeUntil(now: LocalDateTime, target: LocalDateTime): String {
     val totalHours = ChronoUnit.HOURS.between(now, target)
     val totalMinutes = ChronoUnit.MINUTES.between(now, target)
     
-    Timber.d("formatTimeUntil: now=$now, target=$target -> total: $totalHours hours, $totalMinutes min")
     
     return when {
         totalHours >= 24 -> {
@@ -260,7 +258,6 @@ private fun formatTimeUntil(now: LocalDateTime, target: LocalDateTime): String {
  */
 private fun formatTimeUntilWithSeconds(now: LocalDateTime, target: LocalDateTime): String {
     if (target.isBefore(now)) {
-        Timber.w("Target time $target is before current time $now")
         return "Просрочено"
     }
     
@@ -268,7 +265,6 @@ private fun formatTimeUntilWithSeconds(now: LocalDateTime, target: LocalDateTime
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
     
-    Timber.d("formatTimeUntilWithSeconds: $minutes min $seconds sec (total: $totalSeconds sec)")
     
     return when {
         minutes > 0 -> "Через $minutes мин. $seconds сек."

@@ -29,10 +29,9 @@ import com.example.lets_go_slavgorod.core.Constants
 import com.example.lets_go_slavgorod.data.local.NotificationTimePreferences
 import com.example.lets_go_slavgorod.ui.components.NotificationTimeSelector
 import com.example.lets_go_slavgorod.ui.components.SettingsTopBar
-// Временно убраны проблемные ViewModels
-// import com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory
-// import com.example.lets_go_slavgorod.ui.viewmodel.QuietModeViewModel
-// import com.example.lets_go_slavgorod.ui.viewmodel.VibrationSettingsViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.ContextViewModelFactory
+import com.example.lets_go_slavgorod.ui.viewmodel.QuietModeViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.VibrationSettingsViewModel
 import kotlinx.coroutines.launch
 
 /**
@@ -50,10 +49,22 @@ fun NotificationSettingsScreen(
 ) {
     val context = LocalContext.current
     
-    // Временно упрощаем - убираем проблемные ViewModels
+    // Восстанавливаем ViewModels
     val timePreferences = remember { NotificationTimePreferences(context) }
     val globalLeadTime by timePreferences.globalLeadTime.collectAsState(initial = Constants.DEFAULT_NOTIFICATION_LEAD_TIME)
     val coroutineScope = rememberCoroutineScope()
+    
+    // ViewModels для настроек
+    val quietModeViewModel: QuietModeViewModel = viewModel(
+        factory = ContextViewModelFactory.create(context) { QuietModeViewModel(it) }
+    )
+    val vibrationViewModel: VibrationSettingsViewModel = viewModel(
+        factory = ContextViewModelFactory.create(context) { VibrationSettingsViewModel(it) }
+    )
+    
+    // Состояния ViewModels
+    val quietMode by quietModeViewModel.quietMode.collectAsState()
+    val vibrationEnabled by vibrationViewModel.vibrationEnabled.collectAsState()
     
     Scaffold(
         topBar = {
@@ -89,7 +100,7 @@ fun NotificationSettingsScreen(
                 }
             }
             
-            // Настройки вибрации (временно отключены)
+            // Настройки вибрации
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -107,14 +118,16 @@ fun NotificationSettingsScreen(
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Text(
-                            text = "При получении уведомления (временно недоступно)",
+                            text = "При получении уведомления",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Switch(
-                        checked = true, // Временно всегда включено
-                        onCheckedChange = { /* Временно отключено */ }
+                        checked = vibrationEnabled,
+                        onCheckedChange = { enabled ->
+                            vibrationViewModel.setVibrationEnabled(enabled)
+                        }
                     )
                 }
             }

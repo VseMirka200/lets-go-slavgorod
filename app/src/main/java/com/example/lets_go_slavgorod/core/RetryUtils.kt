@@ -45,11 +45,9 @@ object RetryUtils {
         
         repeat(times) { attempt ->
             try {
-                Timber.d("🔄 Retry attempt ${attempt + 1}/$times")
                 return operation()
             } catch (e: Exception) {
                 lastException = e
-                Timber.w(e, "❌ Attempt ${attempt + 1} failed: ${e.message}")
                 
                 // Если это последняя попытка, не ждем
                 if (attempt == times - 1) {
@@ -57,7 +55,6 @@ object RetryUtils {
                 }
                 
                 // Ждем перед следующей попыткой
-                Timber.d("⏳ Waiting ${currentDelay}ms before next attempt...")
                 delay(currentDelay)
                 
                 // Увеличиваем задержку для следующей попытки
@@ -66,7 +63,7 @@ object RetryUtils {
         }
         
         // Если все попытки исчерпаны, выбрасываем последнее исключение
-        Timber.e(lastException, "💥 All $times attempts failed")
+        Timber.e(lastException, "Все $times попыток не удались")
         throw lastException ?: Exception("All retry attempts failed")
     }
     

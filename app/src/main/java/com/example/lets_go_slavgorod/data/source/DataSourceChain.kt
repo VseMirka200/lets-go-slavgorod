@@ -47,16 +47,9 @@ class RemoteDataSourceStrategy(
     
     override suspend fun load(): String? = withContext(Dispatchers.IO) {
         try {
-            Timber.d("Attempting to load from $name")
-            val result = downloadFunction()
-            if (result != null) {
-                Timber.i("Successfully loaded from $name (${result.length} bytes)")
-            } else {
-                Timber.w("$name returned null")
-            }
-            result
+            downloadFunction()
         } catch (e: Exception) {
-            Timber.e(e, "Error loading from $name")
+            Timber.e(e, "Ошибка загрузки из $name")
             null
         }
     }
@@ -75,24 +68,20 @@ class CacheDataSourceStrategy(
     override suspend fun load(): String? = withContext(Dispatchers.IO) {
         try {
             if (!cacheFile.exists()) {
-                Timber.d("$name file does not exist")
                 return@withContext null
             }
             
-            Timber.d("Attempting to load from $name")
             val content = cacheFile.readText()
             
             // Валидация
             if (!validator(content)) {
-                Timber.w("$name validation failed, clearing")
                 cacheFile.delete()
                 return@withContext null
             }
             
-            Timber.i("Successfully loaded from $name (${content.length} bytes)")
             content
         } catch (e: Exception) {
-            Timber.e(e, "Error loading from $name")
+            Timber.e(e, "Ошибка загрузки из $name")
             null
         }
     }
@@ -110,15 +99,13 @@ class AssetsDataSourceStrategy(
     
     override suspend fun load(): String? = withContext(Dispatchers.IO) {
         try {
-            Timber.d("Attempting to load from $name")
             val content = context.assets.open(assetFileName)
                 .bufferedReader()
                 .use { it.readText() }
             
-            Timber.i("Successfully loaded from $name (${content.length} bytes)")
             content
         } catch (e: Exception) {
-            Timber.e(e, "Error loading from $name")
+            Timber.e(e, "Ошибка загрузки из $name")
             null
         }
     }
@@ -140,12 +127,11 @@ class DataSourceChain(private val strategies: List<DataSourceStrategy>) {
         for (strategy in strategies) {
             val result = strategy.load()
             if (result != null) {
-                Timber.i("Data loaded successfully from ${strategy.name}")
                 return result
             }
         }
         
-        Timber.e("All data sources failed: ${strategies.map { it.name }}")
+        Timber.e("Все источники данных недоступны")
         return null
     }
     
@@ -163,9 +149,8 @@ class DataSourceChain(private val strategies: List<DataSourceStrategy>) {
                 if (index == 0 && strategy is RemoteDataSourceStrategy) {
                     try {
                         onCache(result)
-                        Timber.d("Cached result from ${strategy.name}")
                     } catch (e: Exception) {
-                        Timber.e(e, "Error caching result")
+                        Timber.e(e, "Ошибка кэширования результата")
                     }
                 }
                 return result

@@ -139,7 +139,7 @@ fun DataManagementScreen(
                     
                     if (refreshSuccess) {
                         Text(
-                            text = "✅ Расписание успешно обновлено",
+                            text = "Расписание успешно обновлено",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -186,7 +186,7 @@ fun DataManagementScreen(
                     
                     if (cacheCleared) {
                         Text(
-                            text = "✅ Кэш успешно очищен",
+                            text = "Кэш успешно очищен",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -280,9 +280,8 @@ fun DataManagementScreen(
                             val cacheDir = context.cacheDir
                             cacheDir.deleteRecursively()
                             cacheCleared = true
-                            Timber.d("Cache cleared successfully")
                         } catch (e: Exception) {
-                            Timber.e(e, "Error clearing cache")
+                            Timber.e(e, "Ошибка очистки кэша")
                         }
                     }
                 ) {

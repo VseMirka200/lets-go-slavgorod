@@ -48,7 +48,6 @@ object DataSyncManager {
             syncRequest
         )
         
-        Timber.d("📅 Periodic data sync scheduled: every $SYNC_INTERVAL_HOURS hours")
     }
     
     /**
@@ -65,7 +64,6 @@ object DataSyncManager {
         
         WorkManager.getInstance(context).enqueue(syncRequest)
         
-        Timber.d("🔄 One-time data sync started")
     }
     
     /**
@@ -73,6 +71,5 @@ object DataSyncManager {
      */
     fun cancelSync(context: Context) {
         WorkManager.getInstance(context).cancelUniqueWork(SYNC_WORK_NAME)
-        Timber.d("❌ Periodic data sync cancelled")
     }
 }

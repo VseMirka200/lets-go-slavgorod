@@ -38,13 +38,11 @@ object RetryPolicy {
         for (attempt in 0 until MAX_RETRIES) {
             try {
                 if (attempt > 0) {
-                    Timber.d("🔄 Retry attempt ${attempt + 1}/$MAX_RETRIES")
                 }
                 
                 val result = operation(attempt)
                 if (result != null) {
                     if (attempt > 0) {
-                        Timber.i("✅ Operation succeeded on attempt ${attempt + 1}")
                     }
                     return result
                 }
@@ -52,28 +50,24 @@ object RetryPolicy {
                 // Если результат null, но нет исключения, считаем это временной проблемой
                 if (attempt < MAX_RETRIES - 1) {
                     val delayMs = calculateDelay(attempt)
-                    Timber.d("⏳ Waiting ${delayMs}ms before retry...")
                     delay(delayMs)
                 }
                 
             } catch (e: Exception) {
                 lastException = e
-                Timber.w("❌ Attempt ${attempt + 1} failed: ${e.message}")
                 
                 if (!isRetryable(e)) {
-                    Timber.e("❌ Non-retryable error, aborting: ${e.javaClass.simpleName}")
                     return null
                 }
                 
                 if (attempt < MAX_RETRIES - 1) {
                     val delayMs = calculateDelay(attempt)
-                    Timber.d("⏳ Waiting ${delayMs}ms before retry...")
                     delay(delayMs)
                 }
             }
         }
         
-        Timber.e("❌ All retry attempts exhausted. Last error: ${lastException?.message}")
+        Timber.e("Все попытки повтора исчерпаны. Последняя ошибка: ${lastException?.message}")
         return null
     }
     

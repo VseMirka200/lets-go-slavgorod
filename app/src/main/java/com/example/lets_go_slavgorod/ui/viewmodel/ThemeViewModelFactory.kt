@@ -11,7 +11,12 @@ class ThemeViewModelFactory(private val context: Context) : ViewModelProvider.Fa
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ThemeViewModel::class.java)) {
-            return ThemeViewModel(context.applicationContext.themeDataStore) as T
+            return try {
+                ThemeViewModel(context.applicationContext.themeDataStore) as T
+            } catch (e: Exception) {
+                // Fallback на создание с базовым DataStore
+                ThemeViewModel(context.applicationContext.themeDataStore) as T
+            }
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }

@@ -13,38 +13,32 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 /**
- * Калькулятор времени следующего уведомления
+ * Калькулятор времени уведомлений
  * 
- * Вычисляет точное время срабатывания ближайшего уведомления
- * на основе избранных времён и настроек уведомлений.
+ * Вычисляет, когда должно сработать следующее уведомление.
+ * Учитывает избранные времена и настройки пользователя.
  * 
- * @author VseMirka200
- * @version 2.0
- * @since 2.1
+ * Что делает:
+ * - Смотрит на все избранные времена
+ * - Выбирает ближайшее по времени
+ * - Учитывает режимы уведомлений
+ * - Возвращает точное время срабатывания
  */
 object NotificationTimeCalculator {
     
     /**
-     * Находит время следующего уведомления среди всех избранных
+     * Находит время следующего уведомления
      * 
-     * ВАЖНО: Теперь получает leadTime для каждого маршрута индивидуально!
+     * Смотрит на все избранные времена и выбирает ближайшее.
+     * Учитывает настройки каждого маршрута отдельно.
      * 
-     * Правильно обрабатывает случаи когда:
-     * - Несколько избранных времен в один день недели
-     * - Текущее время между двумя избранными временами в один день
-     * - Конвертация из Calendar формата дней (1=ВС) в Java Time (1=ПН)
-     * - Разные маршруты имеют разные настройки времени уведомления
+     * Как работает:
+     * 1. Берет все избранные времена
+     * 2. Для каждого получает настройки маршрута
+     * 3. Вычисляет время уведомления
+     * 4. Выбирает самое ближайшее
      * 
-     * Оптимизация:
-     * - Если все избранные принадлежат одному маршруту, использует переданный leadTime
-     * - Если разные маршруты, читает индивидуальные настройки из DataStore
-     * 
-     * @param favoriteTimes список избранных времён
-     * @param context контекст для доступа к настройкам (опционально)
-     * @param leadTimeMinutes время уведомления заранее (в минутах) - используется для одного маршрута или как fallback
-     * @param overrideNotificationMode режим уведомлений для одного маршрута (переопределяет кэш, для UI)
-     * @param overrideSelectedDays выбранные дни для одного маршрута (переопределяет кэш, для UI)
-     * @return LocalDateTime следующего уведомления или null
+     * Возвращает время уведомления и время отправления автобуса.
      */
     fun getNextNotificationTime(
         favoriteTimes: List<FavoriteTime>,
@@ -56,46 +50,25 @@ object NotificationTimeCalculator {
         val now = LocalDateTime.now()
         val currentDayOfWeek = now.dayOfWeek.value // 1=ПН, 7=ВС
         
-        Timber.d("═══════════════════════════════════════════════════")
-        Timber.d("Calculating next notification")
-        Timber.d("Current time: $now")
-        Timber.d("Current day of week: $currentDayOfWeek (${now.dayOfWeek})")
-        Timber.d("Context provided: ${context != null}")
-        Timber.d("Provided lead time: $leadTimeMinutes minutes")
-        Timber.d("Active favorites: ${favoriteTimes.filter { it.isActive }.size}")
         
         // Проверяем, все ли избранные принадлежат одному маршруту
         val activeFavorites = favoriteTimes.filter { it.isActive }
         val uniqueRouteIds = activeFavorites.map { it.routeId }.distinct()
         val isSingleRoute = uniqueRouteIds.size == 1
         
-        Timber.d("Unique routes: ${uniqueRouteIds.size} ${if (isSingleRoute) "(using provided leadTime)" else "(reading from cache)"}")
-        if (overrideNotificationMode != null) {
-            Timber.d("Override mode: $overrideNotificationMode")
-        }
-        if (overrideSelectedDays != null) {
-            Timber.d("Override selected days: $overrideSelectedDays")
-        }
-        Timber.d("───────────────────────────────────────────────────")
         
         val upcomingNotifications = activeFavorites
             .mapNotNull { favoriteTime ->
-                Timber.d("Processing favorite: ${favoriteTime.departureTime} on day ${favoriteTime.dayOfWeek} for route ${favoriteTime.routeId}")
                 
                 // Получаем время уведомления для маршрута
                 val actualLeadTime = if (isSingleRoute) {
                     // Оптимизация: если все избранные одного маршрута, используем переданный leadTime
                     // Это важно для RouteNotificationSettingsScreen где leadTime уже реактивный
-                    Timber.d("  Using PROVIDED lead time: $leadTimeMinutes min (single route)")
                     leadTimeMinutes
                 } else {
-                    // Для разных маршрутов получаем настройки из кэша (синхронно, без блокировки)
                     val cached = NotificationPreferencesCache.getLeadTimeForRoute(favoriteTime.routeId)
-                    Timber.d("  Using CACHED lead time: $cached min (multiple routes)")
                     cached
                 }
-                
-                Timber.d("  ▶ ACTUAL lead time for route ${favoriteTime.routeId}: $actualLeadTime minutes")
                 
                 // Передаем override параметры только если это одномаршрутный список
                 val notificationTime = if (isSingleRoute && (overrideNotificationMode != null || overrideSelectedDays != null)) {
@@ -110,57 +83,31 @@ object NotificationTimeCalculator {
                     calculateNotificationTime(favoriteTime, actualLeadTime, now)
                 }
                 
-                if (notificationTime != null) {
-                    val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(now.toLocalDate(), notificationTime.toLocalDate())
-                    Timber.d("  → Notification at: $notificationTime (in $daysDiff days)")
-                } else {
-                    Timber.d("  → Could not calculate notification time")
-                }
                 notificationTime
             }
             .filter { 
                 val isAfter = it.isAfter(now)
-                if (!isAfter) {
-                    Timber.d("Filtering out past notification: $it")
-                }
                 isAfter
             }
             .sorted()
         
         val nextNotification = upcomingNotifications.firstOrNull()
-        Timber.d("───────────────────────────────────────────────────")
-        Timber.d("RESULT: Next notification at $nextNotification")
-        Timber.d("═══════════════════════════════════════════════════")
         
         return nextNotification
     }
     
     /**
-     * Вычисляет время уведомления для конкретного избранного времени
+     * Вычисляет время уведомления для одного избранного времени
      * 
-     * Алгоритм зависит от режима уведомлений:
+     * Смотрит на избранное время и настройки маршрута,
+     * чтобы понять, когда должно сработать уведомление.
      * 
-     * SELECTED_DAYS (Выбранные дни):
-     * - Уведомления только в выбранные дни недели
-     * - Ищет следующее появление дня недели избранного времени среди выбранных дней
+     * Учитывает:
+     * - Режим уведомлений (все дни, только будни, выбранные дни)
+     * - День недели избранного времени
+     * - Время опережения (за сколько минут уведомлять)
      * 
-     * ALL_DAYS (Все дни) / WEEKDAYS (Только будни):
-     * - Уведомления каждый день / каждый будний день в указанное время
-     * - Игнорирует день недели избранного времени
-     * - Ищет ближайший подходящий день (сегодня или завтра)
-     * 
-     * Пример 1: Избранное ПН 10:00, режим=ALL_DAYS, сейчас ПН 14:00
-     * - Ближайший разрешённый день = завтра (ВТ)
-     * - Отправление = ВТ 10:00
-     * - Уведомление = ВТ 09:45 (leadTime=15мин)
-     * 
-     * Пример 2: Избранное ПН 10:00, режим=SELECTED_DAYS [ПН,СР], сейчас ПН 14:00
-     * - Ближайший разрешённый день = следующая СР
-     * - Отправление = СР 10:00
-     * - Уведомление = СР 09:45
-     * 
-     * @param overrideNotificationMode если задан, используется вместо значения из кэша (для UI)
-     * @param overrideSelectedDays если заданы, используются вместо значений из кэша (для UI)
+     * Возвращает точное время срабатывания уведомления.
      */
     private fun calculateNotificationTime(
         favoriteTime: FavoriteTime,
@@ -173,21 +120,20 @@ object NotificationTimeCalculator {
             // Получаем режим уведомлений для маршрута (используем override если есть)
             val notificationMode = overrideNotificationMode 
                 ?: NotificationPreferencesCache.getNotificationMode(favoriteTime.routeId)
-            Timber.d("    Notification mode for route ${favoriteTime.routeId}: $notificationMode${if (overrideNotificationMode != null) " (overridden)" else ""}")
-            
-            // Если уведомления отключены для этого маршрута - пропускаем
             if (notificationMode == NotificationMode.DISABLED) {
-                Timber.d("    ✗ Notifications DISABLED for route ${favoriteTime.routeId}")
                 return null
             }
             
             // Парсим время отправления
             val departureTime = LocalTime.parse(favoriteTime.departureTime, DateTimeFormatter.ofPattern("HH:mm"))
-            Timber.d("    Step 1: Departure time parsed: $departureTime")
             
             // Конвертируем день недели из Calendar формата (1=ВС, 2=ПН) в Java Time формат (1=ПН, 7=ВС)
-            val targetDayOfWeek = convertCalendarDayToJavaTime(favoriteTime.dayOfWeek)
-            Timber.d("    Step 2: Target day of week: Calendar format ${favoriteTime.dayOfWeek} -> Java Time $targetDayOfWeek")
+            // ВАЖНО: Если dayOfWeek равен 0 или не установлен, то это означает "каждый день"
+            val targetDayOfWeek = if (favoriteTime.dayOfWeek > 0) {
+                convertCalendarDayToJavaTime(favoriteTime.dayOfWeek)
+            } else {
+                null // null означает "каждый день"
+            }
             
             // НОВАЯ ЛОГИКА: в зависимости от режима уведомлений
             val targetDate: LocalDate
@@ -195,27 +141,73 @@ object NotificationTimeCalculator {
             when (notificationMode) {
                 NotificationMode.SELECTED_DAYS -> {
                     // Режим "Выбранные дни": уведомления только в выбранные дни недели
-                    // Игнорируем день недели избранного времени и ищем ближайший выбранный день
-                    // Обеспечивает согласованное поведение со всеми режимами
-                    targetDate = findNextOccurrenceAnyDay(
-                        currentTime.toLocalDate(),
-                        notificationMode,
-                        favoriteTime.routeId,
-                        overrideSelectedDays
-                    )
-                    Timber.d("    Step 3 (SELECTED_DAYS): Next selected day: $targetDate")
+                    val selectedDays = overrideSelectedDays ?: NotificationPreferencesCache.getSelectedDays(favoriteTime.routeId)
+                    
+                    if (targetDayOfWeek == null) {
+                        // День недели не установлен - ищем любой выбранный день
+                        targetDate = findNextOccurrenceAnyDay(
+                            currentTime.toLocalDate(),
+                            notificationMode,
+                            favoriteTime.routeId,
+                            overrideSelectedDays
+                        )
+                    } else {
+                        // День недели установлен - проверяем, что он входит в выбранные дни
+                        if (targetDayOfWeek !in selectedDays) {
+                            return null
+                        }
+                        
+                        // Ищем следующий день, который соответствует дню недели избранного времени
+                        targetDate = findNextOccurrenceForDayOfWeek(
+                            currentTime.toLocalDate(),
+                            targetDayOfWeek
+                        )
+                    }
                 }
                 
-                NotificationMode.ALL_DAYS, NotificationMode.WEEKDAYS -> {
-                    // Режим "Все дни" или "Только будни": игнорируем день недели избранного
-                    // Уведомления будут каждый день/будний день в указанное время
-                    targetDate = findNextOccurrenceAnyDay(
-                        currentTime.toLocalDate(),
-                        notificationMode,
-                        favoriteTime.routeId,
-                        overrideSelectedDays
-                    )
-                    Timber.d("    Step 3 ($notificationMode): Next allowed day: $targetDate")
+                NotificationMode.ALL_DAYS -> {
+                    // Режим "Все дни": уведомления каждый день в указанное время
+                    if (targetDayOfWeek == null) {
+                        // День недели не установлен - планируем на сегодня или завтра
+                        targetDate = if (currentTime.toLocalTime().isBefore(departureTime)) {
+                            currentTime.toLocalDate()
+                        } else {
+                            currentTime.toLocalDate().plusDays(1)
+                        }
+                    } else {
+                        // День недели установлен - ищем следующий день, который соответствует дню недели избранного времени
+                        targetDate = findNextOccurrenceForDayOfWeek(
+                            currentTime.toLocalDate(),
+                            targetDayOfWeek
+                        )
+                    }
+                }
+                
+                NotificationMode.WEEKDAYS -> {
+                    // Режим "Только будни": уведомления только в будние дни
+                    if (targetDayOfWeek == null) {
+                        // День недели не установлен - ищем следующий будний день
+                        targetDate = findNextOccurrenceAnyDay(
+                            currentTime.toLocalDate(),
+                            notificationMode,
+                            favoriteTime.routeId,
+                            overrideSelectedDays
+                        )
+                    } else {
+                        // День недели установлен - проверяем, что он будний
+                        if (targetDayOfWeek !in listOf(
+                            DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, 
+                            DayOfWeek.THURSDAY, DayOfWeek.FRIDAY
+                        )) {
+                            return null
+                        }
+                        
+                        // Ищем следующий день, который соответствует дню недели избранного времени
+                        targetDate = findNextOccurrenceForDayOfWeek(
+                            currentTime.toLocalDate(),
+                            targetDayOfWeek
+                        )
+                    }
                 }
                 
                 NotificationMode.DISABLED -> {
@@ -225,20 +217,14 @@ object NotificationTimeCalculator {
             
             // Объединяем дату и время
             var departureDateTime = LocalDateTime.of(targetDate, departureTime)
-            Timber.d("    Step 4: Departure date+time: $departureDateTime")
-            
-            // Вычитаем время уведомления заранее
             var notificationDateTime = departureDateTime.minusMinutes(leadTimeMinutes.toLong())
-            Timber.d("    Step 5: Notification time (departure - $leadTimeMinutes min): $notificationDateTime")
             
             // Если вычисленное время уведомления в прошлом или равно текущему, ищем следующий подходящий день
             if (notificationDateTime.isBefore(currentTime) || notificationDateTime.isEqual(currentTime)) {
-                Timber.d("    Step 6: ⚠️ Notification time $notificationDateTime is in the past (current: $currentTime)")
-                Timber.d("    Step 7: Finding next suitable day...")
                 
                 // Ищем следующий день - теперь все режимы работают одинаково
                 val nextDate = when (notificationMode) {
-                    NotificationMode.SELECTED_DAYS, NotificationMode.ALL_DAYS, NotificationMode.WEEKDAYS -> {
+                    NotificationMode.SELECTED_DAYS, NotificationMode.WEEKDAYS -> {
                         findNextOccurrenceAnyDay(
                             targetDate.plusDays(1),
                             notificationMode,
@@ -246,14 +232,21 @@ object NotificationTimeCalculator {
                             overrideSelectedDays
                         )
                     }
+                    NotificationMode.ALL_DAYS -> {
+                        if (targetDayOfWeek == null) {
+                            targetDate.plusDays(1)
+                        } else {
+                            findNextOccurrenceForDayOfWeek(
+                                targetDate.plusDays(1),
+                                targetDayOfWeek
+                            )
+                        }
+                    }
                     NotificationMode.DISABLED -> return null
                 }
                 
                 departureDateTime = LocalDateTime.of(nextDate, departureTime)
                 notificationDateTime = departureDateTime.minusMinutes(leadTimeMinutes.toLong())
-                Timber.d("    Step 8: New notification time: $notificationDateTime")
-            } else {
-                Timber.d("    Step 6: ✓ Notification time is in the future")
             }
             
             notificationDateTime
@@ -295,16 +288,14 @@ object NotificationTimeCalculator {
     }
     
     /**
-     * Находит ближайший разрешённый день для режимов ALL_DAYS или WEEKDAYS
+     * Находит следующий подходящий день для уведомлений
      * 
-     * В отличие от findNextOccurrenceWithMode, эта функция не ищет конкретный день недели,
-     * а находит ЛЮБОЙ ближайший разрешённый день (сегодня, завтра и т.д.)
+     * В зависимости от режима уведомлений ищет:
+     * - ALL_DAYS: любой день (сегодня или завтра)
+     * - WEEKDAYS: следующий будний день
+     * - SELECTED_DAYS: следующий выбранный день
      * 
-     * @param startDate дата с которой начинать поиск
-     * @param mode режим уведомлений (ALL_DAYS или WEEKDAYS)
-     * @param routeId ID маршрута для получения настроек
-     * @param overrideSelectedDays не используется для ALL_DAYS/WEEKDAYS
-     * @return дата следующего подходящего дня
+     * Пример: режим "Только будни", сегодня суббота → возвращает понедельник
      */
     private fun findNextOccurrenceAnyDay(
         startDate: LocalDate,
@@ -323,7 +314,6 @@ object NotificationTimeCalculator {
         }
         
         // Если не нашли за 2 недели - возвращаем исходную дату (edge case, не должно случиться для ALL_DAYS/WEEKDAYS)
-        Timber.w("Could not find suitable date for mode $mode within 2 weeks")
         return startDate
     }
     
@@ -359,33 +349,16 @@ object NotificationTimeCalculator {
         }
         
         // Если не нашли за 4 недели - возвращаем исходную дату (edge case)
-        Timber.w("Could not find suitable date for $targetDay within 4 weeks")
         return startDate
     }
     
     /**
-     * Конвертирует день недели из формата Calendar в формат Java Time
+     * Конвертирует день недели между форматами
      * 
-     * Calendar формат (из BusSchedule):
-     * - 1 = Воскресенье
-     * - 2 = Понедельник
-     * - 3 = Вторник
-     * - 4 = Среда
-     * - 5 = Четверг
-     * - 6 = Пятница
-     * - 7 = Суббота
+     * В Android Calendar: 1=воскресенье, 2=понедельник, ..., 7=суббота
+     * В Java Time: 1=понедельник, 2=вторник, ..., 7=воскресенье
      * 
-     * Java Time формат (DayOfWeek):
-     * - 1 = Понедельник
-     * - 2 = Вторник
-     * - 3 = Среда
-     * - 4 = Четверг
-     * - 5 = Пятница
-     * - 6 = Суббота
-     * - 7 = Воскресенье
-     * 
-     * @param calendarDay день недели в формате Calendar (1-7)
-     * @return DayOfWeek в формате Java Time
+     * Эта функция переводит из Android формата в Java Time формат.
      */
     private fun convertCalendarDayToJavaTime(calendarDay: Int): DayOfWeek {
         return when (calendarDay) {
@@ -397,9 +370,35 @@ object NotificationTimeCalculator {
             6 -> DayOfWeek.FRIDAY      // Calendar: 6 = ПТ -> Java Time: 5 = ПТ
             7 -> DayOfWeek.SATURDAY    // Calendar: 7 = СБ -> Java Time: 6 = СБ
             else -> {
-                Timber.e("Invalid calendar day: $calendarDay, defaulting to Monday")
                 DayOfWeek.MONDAY
             }
         }
+    }
+    
+    /**
+     * Находит следующий день недели
+     * 
+     * Ищет ближайший день, который соответствует указанному дню недели.
+     * Если сегодня уже этот день, возвращает сегодня.
+     * 
+     * Пример: ищем понедельник, сегодня среда → возвращает следующий понедельник
+     */
+    private fun findNextOccurrenceForDayOfWeek(
+        startDate: LocalDate,
+        targetDayOfWeek: DayOfWeek
+    ): LocalDate {
+        var currentDate = startDate
+        var attempts = 0
+        val maxAttempts = 14 // 2 недели
+        
+        while (attempts < maxAttempts) {
+            if (currentDate.dayOfWeek == targetDayOfWeek) {
+                return currentDate
+            }
+            currentDate = currentDate.plusDays(1)
+            attempts++
+        }
+        
+        return startDate.plusDays(7) // Fallback: через неделю
     }
 }

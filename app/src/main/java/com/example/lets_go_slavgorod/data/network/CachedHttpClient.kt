@@ -53,11 +53,13 @@ object CachedHttpClient {
             .readTimeout(15, TimeUnit.SECONDS)
             .writeTimeout(15, TimeUnit.SECONDS)
             .retryOnConnectionFailure(true)
+            // Улучшенная безопасность
+            .followRedirects(false) // Отключаем автоматические редиректы для безопасности
+            .followSslRedirects(false) // Отключаем SSL редиректы
         
         // Добавляем логирование в debug режиме
         if (BuildConfig.DEBUG) {
             val loggingInterceptor = HttpLoggingInterceptor { message ->
-                Timber.d("🌐 HTTP: $message")
             }.apply {
                 level = HttpLoggingInterceptor.Level.BODY
             }
@@ -69,9 +71,7 @@ object CachedHttpClient {
             try {
                 val certificatePinner = com.example.lets_go_slavgorod.security.CertificatePinning.createGitHubPinner()
                 builder.certificatePinner(certificatePinner)
-                Timber.d("🔒 Certificate pinning enabled for production")
             } catch (e: Exception) {
-                Timber.w(e, "Failed to enable certificate pinning")
             }
         }
         
@@ -96,10 +96,9 @@ object CachedHttpClient {
             val cacheDirectory = File(context.cacheDir, "http_cache")
             if (cacheDirectory.exists()) {
                 cacheDirectory.deleteRecursively()
-                Timber.d("🧹 HTTP cache cleared")
             }
         } catch (e: Exception) {
-            Timber.e(e, "Error clearing HTTP cache")
+            Timber.e(e, "Ошибка очистки HTTP кэша")
         }
     }
     
@@ -118,7 +117,7 @@ object CachedHttpClient {
                 0L
             }
         } catch (e: Exception) {
-            Timber.e(e, "Error getting cache size")
+            Timber.e(e, "Ошибка получения размера кэша")
             0L
         }
     }

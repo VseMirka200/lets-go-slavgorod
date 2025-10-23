@@ -60,12 +60,10 @@ object NetworkMonitor {
         
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
-                Timber.d("Network available: $network")
                 trySend(true)
             }
 
             override fun onLost(network: Network) {
-                Timber.d("Network lost: $network")
                 trySend(false)
             }
 
@@ -78,7 +76,6 @@ object NetworkMonitor {
                 ) && networkCapabilities.hasCapability(
                     NetworkCapabilities.NET_CAPABILITY_VALIDATED
                 )
-                Timber.d("Network capabilities changed: hasInternet=$hasInternet")
                 trySend(hasInternet)
             }
         }
@@ -95,7 +92,6 @@ object NetworkMonitor {
 
         // Отписываемся при закрытии Flow
         awaitClose {
-            Timber.d("Unregistering network callback")
             connectivityManager.unregisterNetworkCallback(callback)
         }
     }.distinctUntilChanged() // Избегаем дублирующихся событий

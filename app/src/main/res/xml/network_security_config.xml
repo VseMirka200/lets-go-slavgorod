@@ -20,6 +20,18 @@
         </trust-anchors>
     </base-config>
     
+    <!-- Certificate pinning для GitHub доменов -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">github.com</domain>
+        <domain includeSubdomains="true">api.github.com</domain>
+        <domain includeSubdomains="true">raw.githubusercontent.com</domain>
+        <pin-set>
+            <!-- Certificate pinning для GitHub -->
+            <pin digest="SHA-256">YLh1dUR9y6Kja30RrAn5JfQ8gG8d1P0p2HXkWEV42H4=</pin>
+            <pin digest="SHA-256">++MBgDH5WGvL9Bcn5Be30cRcL0f5O+NyoXuWtQdX1aI=</pin>
+        </pin-set>
+    </domain-config>
+    
     <!-- Конфигурация для отладки (только в debug сборках) -->
     <debug-overrides>
         <trust-anchors>

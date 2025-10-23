@@ -109,12 +109,9 @@ fun FavoriteTimeEntity.toFavoriteTime(routeRepository: Any? = null): FavoriteTim
                 route?.let {
                     routeNumber = it.routeNumber
                     routeName = it.name
-                    Timber.d("Found route info from repository: number='$routeNumber', name='$routeName'")
                 } ?: run {
-                    Timber.w("Route not found for routeId: ${this.routeId}")
                 }
             } else {
-                Timber.w("Invalid repository type provided: ${routeRepository.javaClass.simpleName}")
             }
         } catch (e: Exception) {
             loge("Error getting route info for routeId: ${this.routeId}", e)
@@ -124,7 +121,6 @@ fun FavoriteTimeEntity.toFavoriteTime(routeRepository: Any? = null): FavoriteTim
     // Fallback: если routeNumber все еще пустой, используем routeId
     if (routeNumber.isBlank()) {
         routeNumber = this.routeId.takeIf { it.isNotBlank() } ?: "Неизвестный"
-        Timber.w("Using routeId as fallback routeNumber: '$routeNumber'")
     }
     
     if (routeName.isBlank()) {
@@ -133,7 +129,6 @@ fun FavoriteTimeEntity.toFavoriteTime(routeRepository: Any? = null): FavoriteTim
     
     // Валидация времени добавления
     val addedDate = if (this.addedDate <= 0L) {
-        Timber.w("Invalid addedDate for ID: ${this.id}, using current time")
         System.currentTimeMillis()
     } else {
         this.addedDate
@@ -311,7 +306,6 @@ fun List<BusRoute>.search(query: String): List<BusRoute> {
     
     // Валидация входных данных
     if (this.isEmpty()) {
-        Timber.d("search: Empty route list provided")
         return emptyList()
     }
     
@@ -321,7 +315,6 @@ fun List<BusRoute>.search(query: String): List<BusRoute> {
         return this.filter { route ->
             // Проверяем, что маршрут валиден
             if (!route.isValid()) {
-                Timber.w("search: Invalid route found: ${route.id}")
                 return@filter false
             }
             

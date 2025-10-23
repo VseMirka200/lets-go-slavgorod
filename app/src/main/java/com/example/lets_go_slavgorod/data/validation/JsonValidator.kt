@@ -24,7 +24,6 @@ object JsonValidator {
      * @throws IllegalArgumentException если нет валидных маршрутов
      */
     fun validateRoutes(routes: List<BusRoute>): List<BusRoute> {
-        Timber.d("🔍 Validating ${routes.size} routes")
         
         val validRoutes = routes.filter { route ->
             isValidRoute(route)
@@ -36,10 +35,8 @@ object JsonValidator {
         
         val invalidCount = routes.size - validRoutes.size
         if (invalidCount > 0) {
-            Timber.w("⚠️ Found $invalidCount invalid routes, filtered out")
         }
         
-        Timber.d("✅ Validated ${validRoutes.size} routes")
         return validRoutes
     }
     
@@ -50,7 +47,6 @@ object JsonValidator {
      * @return список валидных расписаний
      */
     fun validateSchedules(schedules: List<BusSchedule>): List<BusSchedule> {
-        Timber.d("🔍 Validating ${schedules.size} schedules")
         
         val validSchedules = schedules.filter { schedule ->
             isValidSchedule(schedule)
@@ -58,10 +54,8 @@ object JsonValidator {
         
         val invalidCount = schedules.size - validSchedules.size
         if (invalidCount > 0) {
-            Timber.w("⚠️ Found $invalidCount invalid schedules, filtered out")
         }
         
-        Timber.d("✅ Validated ${validSchedules.size} schedules")
         return validSchedules
     }
     

@@ -119,12 +119,10 @@ class UpdateSettingsViewModel(private val context: Context) : ViewModel() {
                             notes = result.update.releaseNotes
                         )
                         _updateCheckStatus.value = "Доступна новая версия ${result.update.versionName}"
-                        Timber.d("Найдено обновление: ${result.update.versionName}")
                     } else {
                         // Очищаем информацию о доступном обновлении
                         updatePreferences.clearAvailableUpdate()
                         _updateCheckStatus.value = "У вас установлена последняя версия"
-                        Timber.d("Обновления не найдены - у пользователя последняя версия")
                     }
                     
                     // Обновляем время последней проверки

@@ -53,7 +53,6 @@ fun NavController.navigateOptimized(
     builder: NavOptionsBuilder.() -> Unit = {}
 ) {
     try {
-        Timber.d("Navigating to: $route")
         navigate(route) {
             launchSingleTop = true
             restoreState = true
@@ -64,7 +63,7 @@ fun NavController.navigateOptimized(
             builder()
         }
     } catch (e: Exception) {
-        Timber.e(e, "Navigation error to route: $route")
+        Timber.e(e, "Ошибка навигации к маршруту: $route")
     }
 }
 
@@ -87,12 +86,11 @@ fun NavController.navigateToSchedule(routeId: String) {
  */
 fun NavController.navigateToRouteNotificationSettings(routeId: String) {
     try {
-        Timber.d("Navigating to route notification settings for routeId: $routeId")
         navigate("route_notifications/$routeId") {
             launchSingleTop = true
         }
     } catch (e: Exception) {
-        Timber.e(e, "Failed to navigate to route notification settings for routeId: $routeId")
+        Timber.e(e, "Ошибка навигации к настройкам уведомлений маршрута: $routeId")
     }
 }
 
@@ -103,10 +101,9 @@ fun NavController.navigateToRouteNotificationSettings(routeId: String) {
  */
 fun NavController.navigateBackSafe(): Boolean {
     return try {
-        Timber.d("Navigating back")
         popBackStack()
     } catch (e: Exception) {
-        Timber.e(e, "Error navigating back")
+        Timber.e(e, "Ошибка возврата назад")
         false
     }
 }

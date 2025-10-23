@@ -139,7 +139,6 @@ fun CountdownTimer(
         }
     }
     
-    Timber.d("Formatted time: $formattedTime, minutes: $minutes")
     
     if (isNextDeparture && showLabel) {
         // Для ближайшего рейса показываем только плашку

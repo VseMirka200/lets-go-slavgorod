@@ -37,8 +37,8 @@ import java.util.Calendar
  * 
  * Режимы работы:
  * - ENABLED: уведомления работают (по умолчанию)
- * - DISABLED: все уведомления отключены
- * - CUSTOM_DAYS: уведомления отключены на N дней
+ * - DISABLED: тихий режим включен, но уведомления ВСЕ РАВНО приходят
+ * - CUSTOM_DAYS: тихий режим на N дней, но уведомления ВСЕ РАВНО приходят
  * 
  * @param context контекст для доступа к DataStore и базе данных
  * 
@@ -105,7 +105,6 @@ class QuietModeViewModel(private val context: Context) : ViewModel() {
                         _customDays.value = customDaysStr?.toIntOrNull() ?: 0
                     }
                 } catch (e: IllegalArgumentException) {
-                    Timber.w("Invalid quiet mode: $modeString, resetting to ENABLED")
                     _quietMode.value = QuietMode.ENABLED
                 }
             }
@@ -148,7 +147,6 @@ class QuietModeViewModel(private val context: Context) : ViewModel() {
                 _quietUntilTime.value = untilTime
                 _customDays.value = customDays
                 
-                Timber.d("Notifications mode set to: $mode, days: $customDays, until: $untilTime")
                 
                 // ВАЖНО: Обновляем кэш перед обновлением будильников
                 NotificationPreferencesCache.updateCache(context)
@@ -156,7 +154,7 @@ class QuietModeViewModel(private val context: Context) : ViewModel() {
                 // Обновляем все уведомления в соответствии с новым режимом
                 updateAllAlarms()
             } catch (e: Exception) {
-                Timber.e(e, "Error setting quiet mode")
+                Timber.e(e, "Ошибка установки тихого режима")
             }
         }
     }
@@ -181,9 +179,8 @@ class QuietModeViewModel(private val context: Context) : ViewModel() {
                     .map { entity: FavoriteTimeEntity -> entity.toFavoriteTime(repository) }
                 
                 AlarmScheduler.updateAllAlarmsBasedOnSettings(context, activeFavoriteTimes)
-                Timber.d("Updated all alarms based on quiet mode change")
             } catch (e: Exception) {
-                Timber.e(e, "Error updating alarms after quiet mode change")
+                Timber.e(e, "Ошибка обновления будильников после изменения тихого режима")
             }
         }
     }

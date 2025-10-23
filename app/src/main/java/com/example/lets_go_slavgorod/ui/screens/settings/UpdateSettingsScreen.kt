@@ -167,7 +167,7 @@ fun UpdateSettingsScreen(
                                                 val intent = Intent(Intent.ACTION_VIEW, availableUpdateUrl!!.toUri())
                                                 context.startActivity(intent)
                                             } catch (e: Exception) {
-                                                Timber.e(e, "Failed to open update URL")
+                                                Timber.e(e, "Не удалось открыть URL обновления")
                                             }
                                         }
                                     ) {

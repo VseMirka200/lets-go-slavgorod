@@ -5,20 +5,15 @@ import java.time.DayOfWeek
 import java.util.Calendar
 
 /**
- * Стратегия вычисления следующего времени отправления
+ * Стратегии для вычисления времени отправления
  * 
- * Паттерн Strategy для разделения сложной логики вычисления времени отправления
- * на отдельные стратегии для каждого режима уведомлений.
+ * Разные способы вычисления времени в зависимости от режима уведомлений.
+ * Каждая стратегия знает, как найти следующее время отправления для своего режима.
  * 
- * Преимущества:
- * - Упрощение AlarmScheduler (снижение CC с 18 до 5)
+ * Зачем нужно:
+ * - Код стал проще и понятнее
  * - Легко тестировать каждую стратегию отдельно
- * - Легко добавлять новые режимы уведомлений
- * - Соответствие Open/Closed Principle
- * 
- * @author VseMirka200
- * @version 1.0
- * @since 2.1
+ * - Легко добавлять новые режимы
  */
 sealed class DepartureTimeStrategy {
     
@@ -47,26 +42,35 @@ sealed class DepartureTimeStrategy {
 }
 
 /**
- * Стратегия для режима ALL_DAYS - каждый день
+ * Стратегия "Все дни"
+ * 
+ * Планирует уведомления каждый день в указанное время.
+ * Если время уже прошло сегодня, планирует на завтра.
  */
 class AllDaysStrategy : DepartureTimeStrategy() {
     override fun calculateNextTime(baseTime: Calendar, now: Calendar): Long {
         val nextDeparture = (baseTime.clone() as Calendar).apply {
+            // ИСПРАВЛЕНО: Планируем на сегодня, если время еще не прошло
+            // Если время уже прошло сегодня, планируем на завтра
             if (!after(now)) {
                 add(Calendar.DAY_OF_YEAR, 1)
+            } else {
             }
         }
         
-        Timber.d("AllDaysStrategy: Next departure at ${formatForLog(nextDeparture)}")
         return nextDeparture.timeInMillis
     }
 }
 
 /**
- * Стратегия для режима WEEKDAYS - только будние дни (пн-пт)
+ * Стратегия "Только будни"
+ * 
+ * Планирует уведомления только в будние дни (понедельник-пятница).
+ * Пропускает выходные и ищет следующий будний день.
  */
 class WeekdaysStrategy : DepartureTimeStrategy() {
     override fun calculateNextTime(baseTime: Calendar, now: Calendar): Long {
+        
         // Проверяем 2 недели вперед
         for (i in 0..14) {
             val candidateDeparture = (baseTime.clone() as Calendar).apply {
@@ -76,66 +80,81 @@ class WeekdaysStrategy : DepartureTimeStrategy() {
             val candidateDay = candidateDeparture.get(Calendar.DAY_OF_WEEK)
             val isWeekday = candidateDay in Calendar.MONDAY..Calendar.FRIDAY
             
+            
             if (isWeekday && candidateDeparture.after(now)) {
-                Timber.d("WeekdaysStrategy: Next departure at ${formatForLog(candidateDeparture)} (day $candidateDay)")
                 return candidateDeparture.timeInMillis
             }
         }
         
-        Timber.e("WeekdaysStrategy: Could not find suitable weekday within 2 weeks")
+        Timber.e("Не удалось найти подходящий будний день в течение 2 недель")
         return -1L
     }
 }
 
 /**
- * Стратегия для режима SELECTED_DAYS - выбранные дни недели
+ * Стратегия "Выбранные дни"
  * 
- * ИСПРАВЛЕНО v2.2: Теперь работает согласованно с ALL_DAYS/WEEKDAYS
- * Игнорирует день недели избранного времени и ищет ЛЮБОЙ ближайший выбранный день.
+ * Планирует уведомления только в дни, которые выбрал пользователь.
  * 
  * Пример:
  * - Избранное: Понедельник 10:00
- * - Выбранные дни: [Среда, Пятница]
- * - Результат: Уведомления в Среду и Пятницу в 10:00 ✅
+ * - Выбранные дни: [Понедельник, Среда, Пятница]
+ * - Результат: Уведомления в Понедельник, Среду и Пятницу в 10:00
  * 
- * @param selectedDays набор выбранных дней недели для уведомлений
- * @param targetDayOfWeek (устаревший параметр, игнорируется)
+ * @param selectedDays дни недели, которые выбрал пользователь
+ * @param targetDayOfWeek день недели избранного времени (null = каждый день)
  */
 class SelectedDaysStrategy(
     private val selectedDays: Set<DayOfWeek>,
-    @Suppress("UNUSED_PARAMETER")
     private val targetDayOfWeek: DayOfWeek? = null
 ) : DepartureTimeStrategy() {
     
     override fun calculateNextTime(baseTime: Calendar, now: Calendar): Long {
         if (selectedDays.isEmpty()) {
-            Timber.w("SelectedDaysStrategy: No days selected")
             return -1L
         }
         
-        // В режиме "Выбранные дни" игнорируем день недели избранного времени
-        // Уведомления должны приходить в ЛЮБОЙ выбранный день, не только в день избранного
-        // Это согласуется с поведением ALL_DAYS и WEEKDAYS
-        
-        Timber.d("SelectedDaysStrategy: Searching for next selected day. Selected days: $selectedDays")
-        
-        // Ищем ЛЮБОЙ ближайший выбранный день
-        for (i in 0..14) { // 2 недели
-            val candidateDeparture = (baseTime.clone() as Calendar).apply {
-                add(Calendar.DAY_OF_YEAR, i)
+        // ВАЖНО: Если день недели не установлен (null), то планируем на любой выбранный день
+        if (targetDayOfWeek == null) {
+            
+            // Ищем любой ближайший выбранный день
+            for (i in 0..14) { // 2 недели
+                val candidateDeparture = (baseTime.clone() as Calendar).apply {
+                    add(Calendar.DAY_OF_YEAR, i)
+                }
+                
+                val candidateDay = candidateDeparture.get(Calendar.DAY_OF_WEEK)
+                val candidateDayOfWeek = mapCalendarDayToDayOfWeek(candidateDay)
+                val isSelectedDay = candidateDayOfWeek != null && candidateDayOfWeek in selectedDays
+                
+                if (isSelectedDay && candidateDeparture.after(now)) {
+                    return candidateDeparture.timeInMillis
+                }
+            }
+        } else {
+            // День недели установлен - проверяем, что он входит в выбранные дни
+            if (targetDayOfWeek !in selectedDays) {
+                return -1L
             }
             
-            val candidateDay = candidateDeparture.get(Calendar.DAY_OF_WEEK)
-            val candidateDayOfWeek = mapCalendarDayToDayOfWeek(candidateDay)
-            val isSelectedDay = candidateDayOfWeek != null && candidateDayOfWeek in selectedDays
             
-            if (isSelectedDay && candidateDeparture.after(now)) {
-                Timber.d("SelectedDaysStrategy: Next departure at ${formatForLog(candidateDeparture)} ($candidateDayOfWeek)")
-                return candidateDeparture.timeInMillis
+            // Ищем ближайший день, который соответствует дню недели избранного времени
+            for (i in 0..14) { // 2 недели
+                val candidateDeparture = (baseTime.clone() as Calendar).apply {
+                    add(Calendar.DAY_OF_YEAR, i)
+                }
+                
+                val candidateDay = candidateDeparture.get(Calendar.DAY_OF_WEEK)
+                val candidateDayOfWeek = mapCalendarDayToDayOfWeek(candidateDay)
+                val isSelectedDay = candidateDayOfWeek != null && candidateDayOfWeek in selectedDays
+                
+                if (isSelectedDay && candidateDeparture.after(now)) {
+                    return candidateDeparture.timeInMillis
+                }
             }
         }
         
-        Timber.e("SelectedDaysStrategy: Could not find selected day within 2 weeks. Selected: $selectedDays")
+        Timber.e("Не удалось найти выбранный день в течение 2 недель")
         return -1L
     }
     
@@ -157,11 +176,13 @@ class SelectedDaysStrategy(
 }
 
 /**
- * Стратегия для режима DISABLED - уведомления отключены
+ * Стратегия "Отключено"
+ * 
+ * Уведомления отключены, поэтому всегда возвращает -1.
+ * Нужна для единообразия API.
  */
 class DisabledStrategy : DepartureTimeStrategy() {
     override fun calculateNextTime(baseTime: Calendar, now: Calendar): Long {
-        Timber.d("DisabledStrategy: Notifications disabled")
         return -1L
     }
 }

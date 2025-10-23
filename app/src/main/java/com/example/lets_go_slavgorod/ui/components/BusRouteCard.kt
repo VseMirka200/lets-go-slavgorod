@@ -1,7 +1,10 @@
 ﻿package com.example.lets_go_slavgorod.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -106,6 +110,14 @@ fun BusRouteCardGrid(
     // Кэшируем InteractionSource отдельно
     val interactionSource = remember { MutableInteractionSource() }
     
+    // Анимация нажатия
+    val isPressed = interactionSource.collectIsPressedAsState().value
+    val scale = animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = tween(durationMillis = 150),
+        label = "card_scale"
+    ).value
+    
     // Кэшируем модификаторы для избежания пересоздания
     val cardModifier = remember(modifier, route.id) {
         modifier
@@ -115,6 +127,10 @@ fun BusRouteCardGrid(
                 interactionSource = interactionSource
             ) {
                 onRouteClick()
+            }
+            .semantics {
+                role = Role.Button
+                contentDescription = "Маршрут ${route.routeNumber}: ${route.name}. Нажмите для просмотра расписания"
             }
     }
     
@@ -134,6 +150,10 @@ fun BusRouteCardGrid(
             .semantics {
                 role = Role.Button
                 contentDescription = "Маршрут ${route.routeNumber}: ${route.name}. Нажмите для просмотра расписания"
+            }
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
             },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         shape = RoundedCornerShape(16.dp),

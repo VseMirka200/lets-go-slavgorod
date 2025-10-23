@@ -155,7 +155,7 @@ class UpdateManager(private val context: Context) {
      * 
      * Использует exponential backoff для повторных попыток:
      * - 1-я попытка: немедленно
-     * - 2-я попытка: через 1 секунду
+     * - 2-я попытка: через 1 секунда
      * - 3-я попытка: через 2 секунды
      * 
      * @return UpdateInfo или null если все попытки неудачны
@@ -163,38 +163,41 @@ class UpdateManager(private val context: Context) {
     private suspend fun fetchLatestReleaseWithRetry(): UpdateInfo? {
         repeat(MAX_RETRIES) { attempt ->
             try {
-                Timber.d("Fetching latest release (attempt ${attempt + 1}/$MAX_RETRIES)")
+                Timber.d("Попытка ${attempt + 1} из $MAX_RETRIES: запрос к GitHub API")
                 
                 val result = withTimeoutOrNull(TIMEOUT_MS) {
                     fetchLatestRelease()
                 }
                 
                 if (result != null) {
-                    Timber.d("Successfully fetched release info on attempt ${attempt + 1}")
+                    Timber.d("Успешно получена информация о релизе: ${result.versionName}")
                     return result
+                } else {
+                    Timber.w("Попытка ${attempt + 1}: получен null результат")
                 }
                 
                 // Если это не последняя попытка, ждем перед следующей
                 if (attempt < MAX_RETRIES - 1) {
                     val delayMs = INITIAL_RETRY_DELAY_MS * (1 shl attempt) // Exponential backoff
-                    Timber.d("Retrying in ${delayMs}ms...")
+                    Timber.d("Ожидание ${delayMs}ms перед следующей попыткой")
                     delay(delayMs)
                 }
             } catch (e: Exception) {
-                Timber.e(e, "Attempt ${attempt + 1} failed")
+                Timber.e(e, "Попытка ${attempt + 1} не удалась: ${e.message}")
                 
                 // Если это не последняя попытка, ждем перед следующей
                 if (attempt < MAX_RETRIES - 1) {
                     val delayMs = INITIAL_RETRY_DELAY_MS * (1 shl attempt)
+                    Timber.d("Ожидание ${delayMs}ms перед следующей попыткой после ошибки")
                     delay(delayMs)
                 } else {
                     // Это была последняя попытка
-                    throw e
+                    Timber.e("Все попытки исчерпаны, возвращаем null")
                 }
             }
         }
         
-        Timber.w("All $MAX_RETRIES attempts failed")
+        Timber.w("Не удалось получить информацию о релизе после $MAX_RETRIES попыток")
         return null
     }
     
@@ -240,79 +243,85 @@ class UpdateManager(private val context: Context) {
             }
             
             val responseCode = connection.responseCode
-            Timber.d("GitHub API response code: $responseCode")
+            Timber.d("GitHub API ответ: HTTP $responseCode")
             
             when (responseCode) {
                 HttpURLConnection.HTTP_OK -> {
                     val response = connection.inputStream.bufferedReader().use { it.readText() }
                     if (response.isBlank()) {
-                        Timber.w("Empty response from GitHub API")
+                        Timber.w("Получен пустой ответ от GitHub API")
                         return@withContext null
                     }
                     
-                    val json = JSONObject(response)
-                    
-                    val versionName = json.optString("tag_name", "").trim()
-                    val assets = json.optJSONArray("assets")
-                    val downloadUrl = if (assets != null && assets.length() > 0) {
-                        assets.getJSONObject(0).optString("browser_download_url", "").trim()
-                    } else {
-                        ""
+                    try {
+                        val json = JSONObject(response)
+                        
+                        val versionName = json.optString("tag_name", "").trim()
+                        val assets = json.optJSONArray("assets")
+                        val downloadUrl = if (assets != null && assets.length() > 0) {
+                            assets.getJSONObject(0).optString("browser_download_url", "").trim()
+                        } else {
+                            ""
+                        }
+                        val releaseNotes = json.optString("body", "").trim()
+                        
+                        Timber.d("Парсинг релиза: версия='$versionName', URL='$downloadUrl'")
+                        
+                        // Валидация полученных данных
+                        if (versionName.isBlank()) {
+                            Timber.w("Версия релиза пустая")
+                            return@withContext null
+                        }
+                        
+                        // Валидация URL скачивания
+                        if (downloadUrl.isNotBlank() && !ValidationUtils.isValidUrl(downloadUrl)) {
+                            Timber.w("Некорректный URL скачивания: $downloadUrl")
+                            return@withContext null
+                        }
+                        
+                        Timber.d("Успешно создан UpdateInfo: $versionName")
+                        UpdateInfo(versionName, downloadUrl, releaseNotes)
+                    } catch (e: Exception) {
+                        Timber.e(e, "Ошибка парсинга JSON ответа от GitHub API")
+                        null
                     }
-                    val releaseNotes = json.optString("body", "").trim()
-                    
-                    // Валидация полученных данных
-                    if (versionName.isBlank()) {
-                        Timber.w("Empty version name in response")
-                        return@withContext null
-                    }
-                    
-                    // Валидация URL скачивания
-                    if (downloadUrl.isNotBlank() && !ValidationUtils.isValidUrl(downloadUrl)) {
-                        Timber.w("Invalid download URL format: '$downloadUrl'")
-                        return@withContext null
-                    }
-                    
-                    Timber.d("Successfully parsed release info: version=$versionName, hasDownloadUrl=${downloadUrl.isNotBlank()}")
-                    UpdateInfo(versionName, downloadUrl, releaseNotes)
                 }
                 HttpURLConnection.HTTP_NOT_FOUND -> {
-                    Timber.w("Repository not found (404)")
+                    Timber.w("GitHub API: репозиторий не найден (404)")
                     null
                 }
                 HttpURLConnection.HTTP_FORBIDDEN -> {
-                    Timber.w("Access forbidden (403) - rate limit or permissions")
+                    Timber.w("GitHub API: доступ запрещен (403) - возможно rate limit")
                     null
                 }
                 HttpURLConnection.HTTP_UNAVAILABLE -> {
-                    Timber.w("Service unavailable (503)")
+                    Timber.w("GitHub API: сервис недоступен (503)")
                     null
                 }
                 else -> {
-                    Timber.w("GitHub API returned unexpected error code: $responseCode")
+                    Timber.w("GitHub API: неожиданный код ответа $responseCode")
                     null
                 }
             }
         } catch (e: java.net.SocketTimeoutException) {
-            Timber.e(e, "Timeout while fetching latest release")
+            Timber.e(e, "Таймаут при получении последнего релиза")
             null
         } catch (e: java.net.UnknownHostException) {
-            Timber.e(e, "Unknown host while fetching latest release")
+            Timber.e(e, "Неизвестный хост при получении последнего релиза")
             null
         } catch (e: java.net.ConnectException) {
-            Timber.e(e, "Connection failed while fetching latest release")
+            Timber.e(e, "Соединение не удалось при получении последнего релиза")
             null
         } catch (e: org.json.JSONException) {
-            Timber.e(e, "JSON parsing error while fetching latest release")
+            Timber.e(e, "Ошибка парсинга JSON при получении последнего релиза")
             null
         } catch (e: Exception) {
-            Timber.e(e, "Unexpected error while fetching latest release")
+            Timber.e(e, "Неожиданная ошибка при получении последнего релиза")
             null
         } finally {
             try {
                 connection?.disconnect()
             } catch (e: Exception) {
-                Timber.w(e, "Error disconnecting from GitHub API")
             }
         }
     }
@@ -337,7 +346,7 @@ class UpdateManager(private val context: Context) {
             }
             false
         } catch (e: Exception) {
-            Timber.e(e, "Error comparing versions")
+            Timber.e(e, "Ошибка сравнения версий")
             false
         }
     }
@@ -370,7 +379,7 @@ class UpdateManager(private val context: Context) {
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             packageInfo.versionName
         } catch (e: Exception) {
-            Timber.e(e, "Error getting current version")
+            Timber.e(e, "Ошибка получения текущей версии")
             "1.0.0"
         }.toString()
     }
@@ -415,52 +424,44 @@ class UpdateManager(private val context: Context) {
     suspend fun checkForUpdatesWithResult(): UpdateResult = withContext(Dispatchers.IO) {
         try {
             if (!isNetworkAvailable()) {
-                Timber.w("No network connection available")
                 return@withContext UpdateResult(false, error = "Нет интернет-соединения")
             }
             
             val currentVersion = getCurrentVersion()
-            Timber.d("Current version: $currentVersion")
             
             // Попытка получить информацию с повторными попытками
             val latestRelease = fetchLatestReleaseWithRetry()
             
             if (latestRelease == null) {
-                Timber.w("Failed to fetch latest release information")
                 return@withContext UpdateResult(false, error = "Не удалось получить информацию об обновлениях")
             }
             
             // Валидация полученных данных
             if (latestRelease.versionName.isBlank()) {
-                Timber.w("Invalid version name received: '${latestRelease.versionName}'")
                 return@withContext UpdateResult(false, error = "Получена некорректная информация о версии")
             }
             
             if (latestRelease.downloadUrl.isBlank()) {
-                Timber.w("No download URL available for version: ${latestRelease.versionName}")
                 return@withContext UpdateResult(false, error = "Ссылка для загрузки недоступна")
             }
             
-            Timber.d("Latest version: ${latestRelease.versionName}")
             
             if (compareVersions(currentVersion, latestRelease.versionName)) {
-                Timber.i("Update available: ${latestRelease.versionName}")
                 UpdateResult(true, latestRelease)
             } else {
-                Timber.i("No updates available")
                 UpdateResult(true, null)
             }
         } catch (e: java.net.SocketTimeoutException) {
-            Timber.e(e, "Network timeout during update check")
+            Timber.e(e, "Сетевой таймаут при проверке обновлений")
             UpdateResult(false, error = "Превышено время ожидания. Проверьте соединение.")
         } catch (e: java.net.UnknownHostException) {
-            Timber.e(e, "Unknown host during update check")
+            Timber.e(e, "Неизвестный хост при проверке обновлений")
             UpdateResult(false, error = "Не удалось подключиться к серверу обновлений")
         } catch (e: java.net.ConnectException) {
-            Timber.e(e, "Connection failed during update check")
+            Timber.e(e, "Соединение не удалось при проверке обновлений")
             UpdateResult(false, error = "Ошибка подключения к серверу")
         } catch (e: Exception) {
-            Timber.e(e, "Unexpected error during update check")
+            Timber.e(e, "Неожиданная ошибка при проверке обновлений")
             UpdateResult(false, error = "Неожиданная ошибка при проверке обновлений: ${e.message}")
         }
     }

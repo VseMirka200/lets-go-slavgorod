@@ -54,6 +54,7 @@ import com.example.lets_go_slavgorod.ui.components.NotificationTimeSelector
 import com.example.lets_go_slavgorod.ui.util.TextFormattingUtils
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationMode
 import com.example.lets_go_slavgorod.ui.viewmodel.NotificationSettingsViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.DayOfWeek
@@ -106,6 +107,8 @@ fun RouteNotificationSettingsScreen(
     
     var showModeDropdown by remember { mutableStateOf(false) }
     var showDaysDialog by remember { mutableStateOf(false) }
+    var pendingDaysDialog by remember { mutableStateOf(false) }
+    var isProcessingDaysClick by remember { mutableStateOf(false) }
 
     val notificationModeOptions = arrayOf(
         NotificationMode.ALL_DAYS,
@@ -115,6 +118,17 @@ fun RouteNotificationSettingsScreen(
     )
     
     val dayOptions = DayOfWeek.entries
+    
+    // Отслеживаем изменения режима и открываем диалог когда режим станет SELECTED_DAYS
+    LaunchedEffect(currentNotificationMode, pendingDaysDialog) {
+        if (pendingDaysDialog && currentNotificationMode == NotificationMode.SELECTED_DAYS) {
+            // Небольшая задержка для завершения обновления StateFlow
+            kotlinx.coroutines.delay(100)
+            showDaysDialog = true
+            pendingDaysDialog = false
+            isProcessingDaysClick = false
+        }
+    }
     
     Scaffold(
         topBar = {
@@ -166,11 +180,6 @@ fun RouteNotificationSettingsScreen(
             val leadTime by timePreferences.getLeadTimeForRoute(route.id).collectAsState(initial = Constants.DEFAULT_NOTIFICATION_LEAD_TIME)
             val coroutineScope = rememberCoroutineScope()
             
-            // Отслеживаем изменения leadTime для диагностики
-            LaunchedEffect(leadTime) {
-                Timber.d("🔔 Lead time changed to: $leadTime min")
-                Timber.d("   This should trigger nextNotificationTime recalculation")
-            }
             
             // ═══════════════════════════════════════════════════════════
             // ЗАГРУЗКА И ФИЛЬТРАЦИЯ ИЗБРАННЫХ ВРЕМЕН
@@ -182,62 +191,16 @@ fun RouteNotificationSettingsScreen(
                     .favoriteTimeDao()
                     .getAllFavoriteTimes()  // Flow автоматически обновляется при изменениях в БД
             } catch (e: Exception) {
-                Timber.e(e, "❌ Failed to get favorites from database")
+                Timber.e(e, "Ошибка получения избранных времен из базы данных")
                 kotlinx.coroutines.flow.flowOf(emptyList())  // Fallback на пустой список
             }.collectAsState(initial = emptyList())
             
             // Фильтруем избранные для ЭТОГО маршрута (с детальной диагностикой)
-            // derivedStateOf автоматически пересчитывает при изменении allFavoriteTimes
             val routeFavoriteTimes by remember {
                 derivedStateOf {
-                    Timber.d("═══════════════════════════════════════════════════")
-                    Timber.d("📊 FAVORITE TIMES DIAGNOSTIC [${System.currentTimeMillis()}]")
-                    Timber.d("Route: ${route.id} (${route.name})")
-                    Timber.d("Total favorites in DB: ${allFavoriteTimes.size}")
-                    
-                    if (allFavoriteTimes.isEmpty()) {
-                        Timber.w("⚠️ No favorites found in database!")
-                        Timber.w("   Possible reasons:")
-                        Timber.w("   1. User hasn't added any favorites yet")
-                        Timber.w("   2. Database is empty or corrupted")
-                        Timber.w("   3. Database connection failed")
-                    }
-                    
-                    allFavoriteTimes.forEachIndexed { index, entity ->
-                        val matchesRoute = entity.routeId == route.id
-                        val isActive = entity.isActive
-                        val symbol = if (matchesRoute && isActive) "✓" else "✗"
-                        
-                        Timber.d("  [$index] $symbol Favorite ${entity.id}:")
-                        Timber.d("      routeId: ${entity.routeId} (matches: $matchesRoute)")
-                        Timber.d("      time: ${entity.departureTime} on day ${entity.dayOfWeek}")
-                        Timber.d("      isActive: $isActive")
-                        Timber.d("      addedDate: ${entity.addedDate}")
-                    }
-                    
-                    // Фильтруем по routeId И isActive (только активные избранные)
-                    val filtered = allFavoriteTimes.filter { entity ->
+                    allFavoriteTimes.filter { entity ->
                         entity.routeId == route.id && entity.isActive
                     }
-                    
-                    Timber.d("─────────────────────────────────────────────────")
-                    Timber.d("✓ Filtered ACTIVE favorites for route ${route.id}: ${filtered.size}")
-                    
-                    if (filtered.isEmpty()) {
-                        Timber.w("⚠️ No active favorites for this route!")
-                        Timber.w("   routeId in DB: ${allFavoriteTimes.map { it.routeId }.distinct()}")
-                        Timber.w("   Current route.id: ${route.id}")
-                        
-                        val inactiveCount = allFavoriteTimes.count { 
-                            it.routeId == route.id && !it.isActive 
-                        }
-                        if (inactiveCount > 0) {
-                            Timber.w("   Found $inactiveCount inactive favorites (soft deleted)")
-                        }
-                    }
-                    Timber.d("═══════════════════════════════════════════════════")
-                    
-                    filtered
                 }
             }
             
@@ -259,18 +222,9 @@ fun RouteNotificationSettingsScreen(
                 currentNotificationMode,
                 selectedDays
             ) {
-                Timber.d("═══════════════════════════════════════════════════")
-                Timber.d("⏰ RECALCULATING nextNotificationTime [${System.currentTimeMillis()}]")
-                Timber.d("Triggered by change in dependencies:")
-                Timber.d("  Mode: $currentNotificationMode")
-                Timber.d("  Selected days: $selectedDays")
-                Timber.d("  Lead time: $leadTime min ← TIME SETTING")
-                Timber.d("  Total favorites: ${routeFavoriteTimes.size}")
-                
                 val convertedTimes = routeFavoriteTimes.mapNotNull { entity ->
                     try {
                         val routeData = repository.getRouteById(entity.routeId)
-                        Timber.d("  Converting favorite: ${entity.departureTime} on day ${entity.dayOfWeek}")
                         com.example.lets_go_slavgorod.data.model.FavoriteTime(
                             id = entity.id,
                             routeId = entity.routeId,
@@ -284,36 +238,30 @@ fun RouteNotificationSettingsScreen(
                             isActive = entity.isActive
                         )
                     } catch (e: Exception) {
-                        Timber.e(e, "Failed to convert favorite time ${entity.id}")
+                        Timber.e(e, "Ошибка конвертации избранного времени ${entity.id}")
                         null
                     }
                 }
                 
-                Timber.d("Converted ${convertedTimes.size} favorites")
-                Timber.d("Calling NotificationTimeCalculator.getNextNotificationTime...")
-                Timber.d("  leadTimeMinutes = $leadTime")
-                Timber.d("  overrideNotificationMode = $currentNotificationMode")
-                Timber.d("  overrideSelectedDays = $selectedDays")
-                
-                val result = NotificationTimeCalculator.getNextNotificationTime(
+                NotificationTimeCalculator.getNextNotificationTime(
                     favoriteTimes = convertedTimes,
                     context = context,
                     leadTimeMinutes = leadTime,
                     overrideNotificationMode = currentNotificationMode,
                     overrideSelectedDays = selectedDays
                 )
-                
-                Timber.d("✅ Next notification time calculated: $result")
-                Timber.d("═══════════════════════════════════════════════════")
-                
-                result
             }
             
             if (routeFavoriteTimes.isNotEmpty()) {
-                NextNotificationTimer(
-                    nextNotificationTime = nextNotificationTime,
-                    leadTimeMinutes = leadTime
-                )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    NextNotificationTimer(
+                        nextNotificationTime = nextNotificationTime,
+                        leadTimeMinutes = leadTime
+                    )
+                    
+                }
             } else {
                 // Сообщение если нет избранных времен
                 Card(
@@ -329,7 +277,7 @@ fun RouteNotificationSettingsScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "ℹ️ Нет запланированных уведомлений",
+                            text = "Нет запланированных уведомлений",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -351,17 +299,8 @@ fun RouteNotificationSettingsScreen(
                     NotificationTimeSelector(
                         selectedMinutes = leadTime,
                         onMinutesSelected = { minutes ->
-                            Timber.d("═══════════════════════════════════════════════════")
-                            Timber.d("⚙️ USER CHANGED LEAD TIME")
-                            Timber.d("   Route: ${route.id}")
-                            Timber.d("   Old value: $leadTime min")
-                            Timber.d("   New value: $minutes min")
-                            Timber.d("   Saving to DataStore...")
-                            
                             coroutineScope.launch {
                                 timePreferences.setLeadTimeForRoute(route.id, minutes)
-                                Timber.d("   ✅ Saved! Flow should emit new value now")
-                                Timber.d("═══════════════════════════════════════════════════")
                             }
                         },
                         useGlobal = !hasCustomTime,
@@ -429,7 +368,21 @@ fun RouteNotificationSettingsScreen(
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null
-                                ) { showDaysDialog = true }
+                                ) { 
+                                    // Защита от множественных кликов
+                                    if (isProcessingDaysClick) return@clickable
+                                    
+                                    isProcessingDaysClick = true
+                                    
+                                    // Устанавливаем режим SELECTED_DAYS перед открытием диалога
+                                    if (currentNotificationMode != NotificationMode.SELECTED_DAYS) {
+                                        notificationSettingsViewModel.setRouteNotificationMode(route.id, NotificationMode.SELECTED_DAYS)
+                                        pendingDaysDialog = true
+                                    } else {
+                                        showDaysDialog = true
+                                        isProcessingDaysClick = false
+                                    }
+                                }
                                 .padding(vertical = 12.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
@@ -486,6 +439,7 @@ fun RouteNotificationSettingsScreen(
         DaysSelectionDialog(
             selectedDays = selectedDays,
             onDaysSelected = { days ->
+                // Сохраняем дни сразу - режим уже должен быть SELECTED_DAYS
                 notificationSettingsViewModel.setRouteSelectedDays(route.id, days)
                 showDaysDialog = false
             },
@@ -535,18 +489,16 @@ private fun NotificationModeDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) {
-                                onModeSelected(mode)
-                            }
                             .padding(vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
                             selected = mode == currentMode,
-                            onClick = null
+                            onClick = {
+                                if (mode != currentMode) {
+                                    onModeSelected(mode)
+                                }
+                            }
                         )
                         Spacer(Modifier.width(16.dp))
                         Text(

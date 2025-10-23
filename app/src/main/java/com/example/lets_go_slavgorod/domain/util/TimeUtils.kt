@@ -54,7 +54,6 @@ object TimeUtils {
      */
     fun getTimeUntilDeparture(departureTime: String, currentTime: Calendar = Calendar.getInstance()): Int? {
         return try {
-            Timber.d("Calculating time until departure: $departureTime")
             val departureCalendar = parseTime(departureTime)
             val current = currentTime.clone() as Calendar
             
@@ -62,28 +61,23 @@ object TimeUtils {
             current.set(Calendar.SECOND, 0)
             current.set(Calendar.MILLISECOND, 0)
             
-            Timber.d("Current time: ${current.get(Calendar.HOUR_OF_DAY)}:${current.get(Calendar.MINUTE)}")
-            Timber.d("Departure time: ${departureCalendar.get(Calendar.HOUR_OF_DAY)}:${departureCalendar.get(Calendar.MINUTE)}")
             
             // Если время отправления уже прошло сегодня, считаем его на завтра
             if (departureCalendar.before(current)) {
-                Timber.d("Departure time is in the past, adding one day")
                 departureCalendar.add(Calendar.DAY_OF_MONTH, 1)
             }
             
             val diffInMillis = departureCalendar.timeInMillis - current.timeInMillis
             val diffInMinutes = (diffInMillis / (1000 * 60)).toInt()
             
-            Timber.d("Time difference in minutes: $diffInMinutes")
             
             if (diffInMinutes >= 0) {
                 diffInMinutes
             } else {
-                Timber.d("Departure time is in the past, returning null")
                 null
             }
         } catch (e: Exception) {
-            Timber.e(e, "Error calculating time until departure")
+            Timber.e(e, "Ошибка вычисления времени до отправления")
             null
         }
     }
@@ -126,7 +120,7 @@ object TimeUtils {
                 null
             }
         } catch (e: Exception) {
-            Timber.e(e, "Error calculating time until departure with seconds")
+            Timber.e(e, "Ошибка вычисления времени до отправления с секундами")
             null
         }
     }
@@ -153,7 +147,7 @@ object TimeUtils {
             }
             calendar
         } catch (e: Exception) {
-            Timber.e(e, "Error parsing time: $timeString")
+            Timber.e(e, "Ошибка парсинга времени: $timeString")
             Calendar.getInstance()
         }
     }

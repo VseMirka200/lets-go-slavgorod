@@ -40,10 +40,15 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 
 /**
- * Экран расписания конкретного маршрута
+ * Экран расписания конкретного маршрута (v3.1)
  * 
  * Отображает полное расписание автобусного маршрута с детальной информацией,
  * разделением по точкам отправления и интерактивными элементами.
+ * 
+ * Новые возможности v3.1:
+ * - **Принудительное обновление**: Автоматическое обновление данных при навигации
+ * - **Актуальность данных**: Гарантия свежести информации о рейсах
+ * - **Улучшенная производительность**: Оптимизированная загрузка расписаний
  * 
  * Структура экрана:
  * 1. Заголовок (UnifiedScheduleHeader):
@@ -140,11 +145,25 @@ fun ScheduleScreen(
             isLoading = true
             ConditionalLogging.debug("Schedule") { "Starting schedule generation for route ${route.id}" }
             
+            // Принудительно обновляем данные маршрутов для актуальности
+            // Это гарантирует, что расписание будет основано на самых свежих данных
+            try {
+                actualRoutesViewModel.refreshRoutes()
+                ConditionalLogging.debug("Schedule") { "Routes refreshed for schedule loading" }
+
+                // Небольшая задержка для завершения обновления маршрутов
+                // Позволяет Repository завершить загрузку данных с GitHub
+                delay(500)
+            } catch (e: Exception) {
+                ConditionalLogging.error("Schedule", e) { "Error refreshing routes" }
+            }
+            
             val startTime = System.currentTimeMillis()
             
-            // Загружаем расписание через ScheduleViewModel
-            // Логика загрузки: сначала пытаемся загрузить из JSON, потом fallback на hardcoded
-            val allSchedules = scheduleViewModel.getSchedulesForRoute(route.id)
+            // Загружаем расписание через ScheduleViewModel с принудительным обновлением
+            // Логика загрузки: принудительно обновляем для актуальности данных
+            // refreshSchedulesForRoute() очищает кэш и загружает свежие данные
+            val allSchedules = scheduleViewModel.refreshSchedulesForRoute(route.id)
             ConditionalLogging.debug("Schedule") { "Loaded ${allSchedules.size} schedules for route ${route.id}" }
             if (route.id == "102B") {
                 ConditionalLogging.debug("Schedule") { "102B schedules: ${allSchedules.map { "${it.departurePoint} - ${it.departureTime}" }}" }
@@ -352,7 +371,7 @@ private fun getNextUpcomingScheduleId(schedules: List<BusSchedule>): String? {
                 false
             }
         } catch (e: Exception) {
-            Timber.e(e, "Error parsing time: ${schedule.departureTime}")
+            Timber.e(e, "Ошибка парсинга времени: ${schedule.departureTime}")
             false
         }
     }

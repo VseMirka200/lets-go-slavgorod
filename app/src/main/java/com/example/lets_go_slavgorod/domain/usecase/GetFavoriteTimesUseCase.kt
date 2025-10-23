@@ -39,7 +39,7 @@ class GetFavoriteTimesUseCase(
                 }
             }
             .catch { exception ->
-                Timber.e(exception, "Error loading favorite times")
+                Timber.e(exception, "Ошибка загрузки избранных времен")
                 emit(emptyList())
             }
     }

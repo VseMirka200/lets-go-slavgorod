@@ -45,10 +45,6 @@ class AlarmReceiver : BroadcastReceiver() {
         // goAsync() предотвращает завершение BroadcastReceiver пока не завершится асинхронная работа
         val pendingResult = goAsync()
         
-        Timber.d("═══════════════════════════════════════════════════")
-        Timber.d("Alarm received: ${intent.action}")
-        
-        // Получаем данные из Intent
         val favoriteId = intent.getStringExtra("FAVORITE_ID")
         val routeId = intent.getStringExtra("ROUTE_ID")
         val routeInfo = intent.getStringExtra("ROUTE_INFO")
@@ -56,36 +52,16 @@ class AlarmReceiver : BroadcastReceiver() {
         val destinationInfo = intent.getStringExtra("DESTINATION_INFO")
         val departurePointInfo = intent.getStringExtra("DEPARTURE_POINT_INFO")
         
-        Timber.d("Alarm data:")
-        Timber.d("  favoriteId: $favoriteId")
-        Timber.d("  routeId: $routeId")
-        Timber.d("  routeInfo: $routeInfo")
-        Timber.d("  departureTime: $departureTimeInfo")
-        Timber.d("  departurePoint: $departurePointInfo")
-        
         // Отправляем уведомление
         if (favoriteId != null) {
-            // Проверяем настройки уведомлений перед отправкой
-            Timber.d("───────────────────────────────────────────────────")
-            Timber.d("Checking notification settings...")
-            
             val shouldSend = AlarmScheduler.shouldSendNotification(context, routeId)
-            
-            Timber.d("Should send notification: $shouldSend")
-            Timber.d("───────────────────────────────────────────────────")
             
             if (shouldSend) {
                 val safeRouteInfo = if (routeInfo.isNullOrBlank()) "Автобус" else routeInfo
                 val safeDepartureTimeInfo = if (departureTimeInfo.isNullOrBlank()) "Время отправления" else departureTimeInfo
                 val safeDeparturePointInfo = if (departurePointInfo.isNullOrBlank()) "Пункт отправления" else departurePointInfo
                 
-                // Получаем настройки вибрации из кэша (без runBlocking)
                 val vibrationEnabled = NotificationPreferencesCache.isVibrationEnabled()
-                
-                Timber.d("✓ Sending notification:")
-                Timber.d("  Route: $safeRouteInfo")
-                Timber.d("  Departure: $safeDepartureTimeInfo at $safeDeparturePointInfo")
-                Timber.d("  Vibration: $vibrationEnabled")
                 
                 NotificationHelper.showDepartureNotification(
                     context = context,
@@ -96,21 +72,12 @@ class AlarmReceiver : BroadcastReceiver() {
                     enableVibration = vibrationEnabled
                 )
                 
-                Timber.d("✓ Notification sent successfully")
             } else {
-                Timber.d("✗ Notification SKIPPED")
-                Timber.d("  Reason: Current settings don't allow notification")
-                Timber.d("  FavoriteId: $favoriteId")
-                Timber.d("  RouteId: $routeId")
             }
             
             // ВАЖНО: Перепланируем уведомление на следующий раз
-            Timber.d("───────────────────────────────────────────────────")
-            Timber.d("Rescheduling notification for next occurrence...")
             rescheduleNotification(context, favoriteId, pendingResult)
         } else {
-            Timber.w("✗ No favoriteId found in alarm intent - cannot process")
-            Timber.d("═══════════════════════════════════════════════════")
             pendingResult.finish()  // Завершаем BroadcastReceiver
         }
     }
@@ -144,32 +111,13 @@ class AlarmReceiver : BroadcastReceiver() {
                 val favoriteEntity = favoriteTimeDao.getAllFavoriteTimes().firstOrNull()
                     ?.find { it.id == favoriteId }
                 
-                if (favoriteEntity != null) {
-                    if (favoriteEntity.isActive) {
-                        val favoriteTime = favoriteEntity.toFavoriteTime(repository)
-                        
-                        Timber.d("Rescheduling:")
-                        Timber.d("  FavoriteId: $favoriteId")
-                        Timber.d("  Route: ${favoriteTime.routeNumber}")
-                        Timber.d("  Time: ${favoriteTime.departureTime}")
-                        Timber.d("  Day: ${favoriteTime.dayOfWeek}")
-                        Timber.d("  Active: ${favoriteEntity.isActive}")
-                        
-                        // Планируем следующее уведомление
-                        AlarmScheduler.scheduleAlarm(context, favoriteTime)
-                        
-                        Timber.d("✓ Rescheduled successfully for next week")
-                    } else {
-                        Timber.w("✗ FavoriteTime is inactive, not rescheduling: $favoriteId")
-                    }
+                if (favoriteEntity != null && favoriteEntity.isActive) {
+                    val favoriteTime = favoriteEntity.toFavoriteTime(repository)
+                    AlarmScheduler.scheduleAlarm(context, favoriteTime)
                 } else {
-                    Timber.w("✗ FavoriteTime not found in database: $favoriteId")
                 }
-                
-                Timber.d("═══════════════════════════════════════════════════")
             } catch (e: Exception) {
-                Timber.e(e, "✗ Error rescheduling notification for $favoriteId")
-                Timber.d("═══════════════════════════════════════════════════")
+                Timber.e(e, "Ошибка перепланирования уведомления для $favoriteId")
             } finally {
                 // ВАЖНО: Сигнализируем что BroadcastReceiver завершил работу
                 pendingResult.finish()

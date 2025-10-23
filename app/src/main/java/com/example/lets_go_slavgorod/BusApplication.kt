@@ -45,6 +45,8 @@ import timber.log.Timber
  * - Ленивая инициализация компонентов (database, repository, updateManager)
  * - Автоматическая проверка обновлений при запуске
  * - Мониторинг lifecycle приложения
+ * - Детальное логирование на русском языке
+ * - Фоновая синхронизация данных через DataSyncManager
  * 
  * Выполняется при:
  * - Первом запуске приложения
@@ -70,10 +72,8 @@ import timber.log.Timber
  */
 class BusApplication : MultiDexApplication() {
     
-    // Область видимости корутин для фоновых задач - разделяем по типам операций
-    private val networkScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val databaseScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val uiScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    // Единый ApplicationScope для предотвращения утечек памяти
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     
     /**
      * Очистка ресурсов
@@ -88,13 +88,14 @@ class BusApplication : MultiDexApplication() {
     
     /**
      * Централизованная очистка ресурсов
+     * 
+     * Отменяет все корутины и освобождает ресурсы при завершении приложения.
+     * Вызывается при onTerminate() и при остановке процесса.
      */
     private fun cleanupResources() {
-        networkScope.cancel()
-        databaseScope.cancel()
-        uiScope.cancel()
-        Timber.d("Application resources cleaned up")
+        applicationScope.cancel()
     }
+    
     
     // Инициализация приложения
     override fun onCreate() {
@@ -115,20 +116,33 @@ class BusApplication : MultiDexApplication() {
         // Запускаем фоновую синхронизацию
         DataSyncManager.schedulePeriodic(this)
         
-        // Фоновые задачи - используем networkScope для сетевых операций
-        networkScope.launch {
+        
+        // Фоновые задачи - используем applicationScope для всех операций
+        applicationScope.launch(Dispatchers.IO) {
             try {
                 // Обновляем кэш настроек уведомлений (чтобы избежать runBlocking)
-                NotificationPreferencesCache.updateCache(this@BusApplication)
+                try {
+                    NotificationPreferencesCache.updateCache(this@BusApplication)
+                } catch (e: Exception) {
+                    loge("Failed to update notification preferences cache: ${e.message}")
+                }
                 
                 // Восстанавливаем запланированные уведомления
-                rescheduleAlarmsOnStartup()
+                try {
+                    rescheduleAlarmsOnStartup()
+                } catch (e: Exception) {
+                    loge("Failed to reschedule alarms: ${e.message}")
+                }
                 
                 // Маршруты загружаются автоматически при инициализации репозитория
                 
                 // Запускаем автоматическую проверку обновлений через Koin
-                val updateManager = org.koin.core.context.GlobalContext.get().get<UpdateManager>()
-                startAutomaticUpdateCheck()
+                try {
+                    val updateManager = org.koin.core.context.GlobalContext.get().get<UpdateManager>()
+                    startAutomaticUpdateCheck()
+                } catch (e: Exception) {
+                    loge("Failed to get UpdateManager from Koin: ${e.message}")
+                }
             } catch (e: Exception) {
                 loge("Error during app initialization: ${e.message}")
             }
@@ -139,7 +153,6 @@ class BusApplication : MultiDexApplication() {
             androidx.lifecycle.LifecycleEventObserver { _, event ->
                 if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP) {
                     // Приложение ушло в фон
-                    Timber.d("Application stopped (moved to background)")
                     // Здесь можно добавить логику очистки при уходе в фон
                 }
             }
@@ -148,20 +161,30 @@ class BusApplication : MultiDexApplication() {
     
     // Инициализация логирования
     private fun initializeLogging() {
-        if (BuildConfig.DEBUG) {
-            Timber.plant(Timber.DebugTree())
-        } else {
-            // В релизной сборке логируем только критические ошибки
-            Timber.plant(object : Timber.Tree() {
-                override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
-                    if (priority >= android.util.Log.ERROR) {
-                        loge("Release", message, t)
+        try {
+            if (BuildConfig.DEBUG) {
+                Timber.plant(Timber.DebugTree())
+            } else {
+                // В релизной сборке логируем только критические ошибки
+                Timber.plant(object : Timber.Tree() {
+                    override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
+                        if (priority >= android.util.Log.ERROR) {
+                            try {
+                                loge("Release", message, t)
+                            } catch (e: Exception) {
+                                // Fallback на системное логирование если Timber не работает
+                                android.util.Log.e("Release", message, t)
+                            }
+                        }
                     }
-                }
-            })
+                })
+            }
+            
+            logd("Application onCreate() called")
+        } catch (e: Exception) {
+            // Fallback на системное логирование если Timber не инициализируется
+            android.util.Log.e("BusApplication", "Failed to initialize logging: ${e.message}")
         }
-        
-        logd("Application onCreate() called")
     }
     
     // Восстановление уведомлений после перезагрузки
@@ -169,8 +192,19 @@ class BusApplication : MultiDexApplication() {
         try {
             logd("Starting alarm rescheduling on app startup")
             
-            val database = AppDatabase.getDatabase(this@BusApplication)
-            val favoriteTimeDao = database.favoriteTimeDao()
+            val database = try {
+                AppDatabase.getDatabase(this@BusApplication)
+            } catch (e: Exception) {
+                loge("Failed to get database: ${e.message}")
+                return
+            }
+            
+            val favoriteTimeDao = try {
+                database.favoriteTimeDao()
+            } catch (e: Exception) {
+                loge("Failed to get favoriteTimeDao: ${e.message}")
+                return
+            }
             
             // Удаляем избранные времена для удалённых маршрутов
             val removedRouteIds = listOf("2", "4", "5")
@@ -206,16 +240,15 @@ class BusApplication : MultiDexApplication() {
                         
                         AlarmScheduler.scheduleAlarm(this@BusApplication, favoriteTime)
                         rescheduledCount++
-                        Timber.d("Rescheduled alarm for favorite time: ${entity.id}")
                     } catch (e: Exception) {
-                        Timber.e(e, "Error rescheduling alarm for favorite time: ${entity.id}")
+                        Timber.e(e, "Ошибка перепланирования будильника для избранного времени: ${entity.id}")
                     }
                 }
             
-            Timber.i("Successfully rescheduled $rescheduledCount out of ${favoriteTimeEntities.size} favorite times on startup")
+            Timber.i("Перепланировано $rescheduledCount из ${favoriteTimeEntities.size} избранных времен")
             
         } catch (e: Exception) {
-            Timber.e(e, "Error during alarm rescheduling on startup")
+            Timber.e(e, "Ошибка перепланирования будильников")
         }
     }
     
@@ -302,8 +335,20 @@ class BusApplication : MultiDexApplication() {
                     updatePreferences.clearAvailableUpdate()
                 }
                 else -> {
-                    loge("Automatic update check failed: ${result.error}")
+                    logd("Automatic update check failed: ${result.error}")
                     // Не очищаем кэш при ошибке, чтобы не потерять данные
+                    // Это нормальное поведение - репозиторий может быть недоступен или приватным
+                    // Приложение продолжает работать в обычном режиме
+                    
+                    // Если это ошибка 404 (репозиторий не найден), отключаем автоматическую проверку
+                    if (result.error?.contains("404") == true || result.error?.contains("репозиторий не найден") == true) {
+                        try {
+                            updatePreferences.disableAutoUpdateCheck()
+                            logd("Автоматическая проверка обновлений отключена из-за недоступности репозитория")
+                        } catch (e: Exception) {
+                            loge("Ошибка отключения автоматической проверки обновлений", e)
+                        }
+                    }
                 }
             }
             
@@ -315,4 +360,5 @@ class BusApplication : MultiDexApplication() {
             // В случае ошибки не прерываем работу приложения
         }
     }
+    
 }

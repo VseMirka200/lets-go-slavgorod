@@ -77,13 +77,12 @@ class VibrationSettingsViewModel(private val context: Context) : ViewModel() {
                 context.dataStore.edit { preferences ->
                     preferences[VIBRATION_ENABLED_KEY] = enabled
                 }
-                Timber.d("Vibration settings updated: enabled=$enabled")
                 
                 // ВАЖНО: Обновляем кэш настроек для синхронного доступа
                 // Это необходимо для AlarmReceiver, который не может использовать suspend функции
                 NotificationPreferencesCache.updateCache(context)
             } catch (e: Exception) {
-                Timber.e(e, "Error saving vibration settings")
+                Timber.e(e, "Ошибка сохранения настроек вибрации")
             }
         }
     }

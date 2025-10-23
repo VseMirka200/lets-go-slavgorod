@@ -115,4 +115,14 @@ class UpdatePreferences(private val context: Context) {
             preferences.remove(UpdatePreferencesKeys.AVAILABLE_UPDATE_NOTES)
         }
     }
+    
+    /**
+     * Отключает автоматическую проверку обновлений
+     * Используется при постоянных ошибках доступа к репозиторию
+     */
+    suspend fun disableAutoUpdateCheck() {
+        context.updatePreferencesDataStore.edit { preferences ->
+            preferences[UpdatePreferencesKeys.AUTO_UPDATE_CHECK_ENABLED] = false
+        }
+    }
 }

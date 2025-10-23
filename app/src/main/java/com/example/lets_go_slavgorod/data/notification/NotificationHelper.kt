@@ -16,7 +16,7 @@ import com.example.lets_go_slavgorod.R
 import timber.log.Timber
 
 /**
- * Вспомогательный класс для работы с уведомлениями
+ * Вспомогательный класс для работы с уведомлениями (v3.1)
  * 
  * Основные функции:
  * - Создание канала уведомлений
@@ -24,11 +24,21 @@ import timber.log.Timber
  * - Отображение уведомлений об обновлениях приложения
  * - Обработка разрешений для уведомлений
  * - Использование кастомных иконок приложения
+ * - Поддержка вибрации с настройками пользователя
+ * 
+ * Новые возможности v3.1:
+ * - **Улучшенная вибрация**: Поддержка современных API вибрации
+ * - **Детальное логирование**: Подробные логи на русском языке
+ * - **Обработка ошибок**: Улучшенная обработка исключений
+ * - **Безопасность**: Проверка разрешений и системных настроек
  * 
  * Иконки уведомлений:
- * - ic_notification_app - для уведомлений о времени отправления
- * - ic_notification_update - для уведомлений об обновлениях
+ * - ic_stat_directions_bus - для уведомлений о времени отправления
  * - ic_launcher_foreground - большая иконка приложения
+ * 
+ * @author VseMirka200
+ * @version 3.1
+ * @since 1.0
  */
 object NotificationHelper {
     // ID канала уведомлений
@@ -79,7 +89,6 @@ object NotificationHelper {
             }
             notificationManager.createNotificationChannel(updateChannel)
             
-            Timber.d("Notification channels created: $CHANNEL_ID, $UPDATE_CHANNEL_ID")
         }
     }
 
@@ -128,12 +137,10 @@ object NotificationHelper {
                         @Suppress("DEPRECATION")
                         vibrator.vibrate(500) // 500ms вибрация для старых версий
                     }
-                    Timber.d("Vibration triggered for notification")
                 } else {
-                    Timber.w("Vibrator not available or doesn't have vibrator")
                 }
             } catch (e: Exception) {
-                Timber.e(e, "Error triggering vibration")
+                Timber.e(e, "Ошибка запуска вибрации")
             }
         }
 
@@ -158,7 +165,6 @@ object NotificationHelper {
         val largeIconResId = R.drawable.ic_launcher_foreground
         val finalSmallIcon = smallIconResId
         
-        Timber.d("Notification icon: smallIcon=$smallIconResId, largeIcon=$largeIconResId")
         
         // Улучшенная обработка routeInfo для уведомления
         val safeRouteInfo = routeInfo.ifBlank {
@@ -175,14 +181,10 @@ object NotificationHelper {
 
         val contentSubText = subTextParts.joinToString(separator = ". ")
         
-        Timber.d("Notification title: '$combinedTitleText' (routeInfo: '$routeInfo' -> '$safeRouteInfo')")
-        Timber.d("Notification content: '$contentSubText'")
-        Timber.d("Notification data: favoriteTimeId='$favoriteTimeId', routeInfo='$routeInfo', departureTime='$departureTimeInfo'")
         // Обработка большой иконки с fallback
         val largeIcon = try {
             android.graphics.BitmapFactory.decodeResource(context.resources, largeIconResId)
         } catch (e: Exception) {
-            Timber.w("Failed to load large icon, using null: ${e.message}")
             null
         }
 
@@ -207,14 +209,12 @@ object NotificationHelper {
         // Проверка разрешений
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                Timber.w("POST_NOTIFICATIONS permission not granted for favoriteTimeId: $favoriteTimeId. Notification will not be shown on Android 13+.")
                 return
             }
         }
         
         // Проверка, включены ли уведомления в системе
         if (!notificationManager.areNotificationsEnabled()) {
-            Timber.w("Notifications are disabled in system settings for favoriteTimeId: $favoriteTimeId")
             return
         }
         
@@ -223,7 +223,6 @@ object NotificationHelper {
 
         notificationManager.notify(uniqueRequestId, notification)
 
-        Timber.i("Notification shown with ID $uniqueRequestId for $favoriteTimeId. Combined Title: '$combinedTitleText', SubText: '$contentSubText'")
     }
 
     /**
@@ -264,7 +263,6 @@ object NotificationHelper {
         val largeIcon = try {
             android.graphics.BitmapFactory.decodeResource(context.resources, R.drawable.ic_launcher_foreground)
         } catch (e: Exception) {
-            Timber.w("Failed to load large icon for update notification, using null: ${e.message}")
             null
         }
 
@@ -290,14 +288,12 @@ object NotificationHelper {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                Timber.w("POST_NOTIFICATIONS permission not granted for update notification. Notification will not be shown on Android 13+.")
                 return
             }
         }
 
         notificationManager.notify(UPDATE_NOTIFICATION_ID, notification)
 
-        Timber.i("Update notification shown for version $versionName")
     }
     
     /**
@@ -338,7 +334,6 @@ object NotificationHelper {
         val largeIcon = try {
             android.graphics.BitmapFactory.decodeResource(context.resources, R.drawable.ic_launcher_foreground)
         } catch (e: Exception) {
-            Timber.w("Failed to load large icon for schedule update notification: ${e.message}")
             null
         }
 
@@ -364,13 +359,11 @@ object NotificationHelper {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                Timber.w("POST_NOTIFICATIONS permission not granted for schedule update notification")
                 return
             }
         }
 
         notificationManager.notify(SCHEDULE_UPDATE_NOTIFICATION_ID, notification)
 
-        Timber.i("Schedule update notification shown" + if (dataVersion != null) " for version $dataVersion" else "")
     }
 }

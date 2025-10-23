@@ -61,7 +61,6 @@ abstract class BaseViewModel : ViewModel() {
      */
     override fun onCleared() {
         super.onCleared()
-        Timber.d("🧹 ${this::class.simpleName} cleared, cleaning up resources")
         
         // Отменяем все корутины
         supervisorJob.cancel()

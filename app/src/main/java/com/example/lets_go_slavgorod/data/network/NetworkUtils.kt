@@ -56,7 +56,6 @@ object NetworkUtils {
         return try {
             // Проверяем подключение к интернету перед вызовом
             if (!NetworkMonitor.isConnected(context)) {
-                Timber.w("No internet connection available")
                 return NetworkResult.NetworkUnavailable
             }
             
@@ -66,12 +65,10 @@ object NetworkUtils {
             
         } catch (e: UnknownHostException) {
             // DNS не может разрешить имя хоста - обычно означает отсутствие интернета
-            Timber.e(e, "Unknown host - network unavailable")
             NetworkResult.NetworkUnavailable
             
         } catch (e: SocketTimeoutException) {
             // Таймаут соединения
-            Timber.e(e, "Socket timeout")
             NetworkResult.Error(
                 exception = e,
                 message = "Превышено время ожидания ответа сервера"
@@ -79,7 +76,6 @@ object NetworkUtils {
             
         } catch (e: IOException) {
             // Общие I/O ошибки сети
-            Timber.e(e, "Network I/O error")
             NetworkResult.Error(
                 exception = e,
                 message = "Ошибка сети: ${e.localizedMessage ?: "Unknown I/O error"}"
@@ -87,7 +83,6 @@ object NetworkUtils {
             
         } catch (e: Exception) {
             // Все остальные ошибки
-            Timber.e(e, "API call failed")
             NetworkResult.Error(
                 exception = e,
                 message = e.localizedMessage ?: "Неизвестная ошибка"
@@ -113,25 +108,21 @@ object NetworkUtils {
             NetworkResult.Success(result)
             
         } catch (e: UnknownHostException) {
-            Timber.e(e, "Unknown host")
             NetworkResult.NetworkUnavailable
             
         } catch (e: SocketTimeoutException) {
-            Timber.e(e, "Socket timeout")
             NetworkResult.Error(
                 exception = e,
                 message = "Превышено время ожидания ответа сервера"
             )
             
         } catch (e: IOException) {
-            Timber.e(e, "Network I/O error")
             NetworkResult.Error(
                 exception = e,
                 message = "Ошибка сети: ${e.localizedMessage ?: "Unknown I/O error"}"
             )
             
         } catch (e: Exception) {
-            Timber.e(e, "API call failed")
             NetworkResult.Error(
                 exception = e,
                 message = e.localizedMessage ?: "Неизвестная ошибка"

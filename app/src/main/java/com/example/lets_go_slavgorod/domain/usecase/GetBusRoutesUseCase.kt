@@ -32,14 +32,12 @@ class GetBusRoutesUseCase(
             val routes = repository.getAllRoutes()
             
             if (routes.isEmpty()) {
-                Timber.w("No routes available")
                 AppError.Database.NotFound("routes").toResultError()
             } else {
-                Timber.d("Loaded ${routes.size} routes")
                 Result.Success(routes)
             }
         } catch (e: Exception) {
-            Timber.e(e, "Error loading routes")
+            Timber.e(e, "Ошибка загрузки маршрутов")
             AppError.Unknown(
                 message = "Не удалось загрузить маршруты",
                 cause = e

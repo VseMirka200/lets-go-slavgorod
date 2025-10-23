@@ -39,13 +39,11 @@ object ValidationUtils {
      */
     fun isValidTime(time: String): Boolean {
         if (time.isBlank()) {
-            Timber.w("Time is blank")
             return false
         }
         
         val timeParts = time.split(":")
         if (timeParts.size != 2) {
-            Timber.w("Invalid time format: '$time' - expected HH:MM")
             return false
         }
         
@@ -55,11 +53,9 @@ object ValidationUtils {
             
             val isValid = hour in 0..23 && minute in 0..59
             if (!isValid) {
-                Timber.w("Invalid time values: hour=$hour, minute=$minute")
             }
             isValid
         } catch (e: NumberFormatException) {
-            Timber.w(e, "Invalid number format in time: '$time'")
             false
         }
     }
@@ -70,7 +66,6 @@ object ValidationUtils {
     fun isValidDayOfWeek(dayOfWeek: Int): Boolean {
         val isValid = dayOfWeek in Calendar.SUNDAY..Calendar.SATURDAY
         if (!isValid) {
-            Timber.w("Invalid day of week: $dayOfWeek - expected ${Calendar.SUNDAY}-${Calendar.SATURDAY}")
         }
         return isValid
     }
@@ -80,13 +75,11 @@ object ValidationUtils {
      */
     fun isValidRouteId(routeId: String?): Boolean {
         if (routeId.isNullOrBlank()) {
-            Timber.w("Route ID is null or blank")
             return false
         }
         
         val isValid = routeId.trim().isNotBlank()
         if (!isValid) {
-            Timber.w("Route ID is empty after trimming: '$routeId'")
         }
         return isValid
     }
@@ -96,14 +89,12 @@ object ValidationUtils {
      */
     fun isValidStopName(stopName: String?): Boolean {
         if (stopName.isNullOrBlank()) {
-            Timber.w("Stop name is null or blank")
             return false
         }
         
         val trimmed = stopName.trim()
         val isValid = trimmed.isNotBlank() && trimmed.length >= 2
         if (!isValid) {
-            Timber.w("Stop name is too short or empty: '$stopName'")
         }
         return isValid
     }
@@ -113,14 +104,12 @@ object ValidationUtils {
      */
     fun isValidRouteName(routeName: String?): Boolean {
         if (routeName.isNullOrBlank()) {
-            Timber.w("Route name is null or blank")
             return false
         }
         
         val trimmed = routeName.trim()
         val isValid = trimmed.isNotBlank() && trimmed.length >= 3
         if (!isValid) {
-            Timber.w("Route name is too short or empty: '$routeName'")
         }
         return isValid
     }
@@ -130,7 +119,6 @@ object ValidationUtils {
      */
     fun isValidRouteNumber(routeNumber: String?): Boolean {
         if (routeNumber.isNullOrBlank()) {
-            Timber.w("Route number is null or blank")
             return false
         }
         
@@ -138,7 +126,6 @@ object ValidationUtils {
         val trimmed = routeNumber.trim()
         val isValid = trimmed.isNotBlank()
         if (!isValid) {
-            Timber.w("Route number is empty: '$routeNumber'")
         }
         return isValid
     }
@@ -155,7 +142,6 @@ object ValidationUtils {
      */
     fun isValidEmail(email: String?): Boolean {
         if (email.isNullOrBlank()) {
-            Timber.w("Email is null or blank")
             return false
         }
         
@@ -163,7 +149,6 @@ object ValidationUtils {
         val isValid = emailRegex.matches(email.trim())
         
         if (!isValid) {
-            Timber.w("Invalid email format: '$email'")
         }
         return isValid
     }
@@ -173,7 +158,6 @@ object ValidationUtils {
      */
     fun isValidUrl(url: String?): Boolean {
         if (url.isNullOrBlank()) {
-            Timber.w("URL is null or blank")
             return false
         }
         
@@ -181,11 +165,9 @@ object ValidationUtils {
             val urlObj = java.net.URL(url.trim())
             val isValid = urlObj.protocol in listOf("http", "https")
             if (!isValid) {
-                Timber.w("Invalid URL protocol: '$url'")
             }
             isValid
         } catch (e: Exception) {
-            Timber.w(e, "Invalid URL format: '$url'")
             false
         }
     }
@@ -195,7 +177,6 @@ object ValidationUtils {
      */
     fun isValidColor(color: String?): Boolean {
         if (color.isNullOrBlank()) {
-            Timber.w("Color is null or blank")
             return false
         }
         
@@ -203,7 +184,6 @@ object ValidationUtils {
         val isValid = colorRegex.matches(color.trim())
         
         if (!isValid) {
-            Timber.w("Invalid color format: '$color' - expected #AARRGGBB")
         }
         return isValid
     }

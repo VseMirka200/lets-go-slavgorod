@@ -21,31 +21,42 @@ import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
 /**
- * Репозиторий для управления маршрутами автобусов
+ * Центральный репозиторий для управления маршрутами автобусов
  * 
- * Центральный источник данных о маршрутах автобусов в приложении.
- * Реализует паттерн Repository для абстракции источников данных.
+ * Реализует паттерн Repository для централизованного управления данными
+ * о маршрутах автобусов с многоуровневым кэшированием и валидацией.
  * 
- * Основные функции:
- * - Загрузка и кэширование маршрутов
- * - Поиск маршрутов по различным критериям
- * - Валидация данных маршрутов
- * - Управление состоянием через StateFlow
- * - Интеграция с локальным кэшем
+ * Основные возможности:
+ * - **Многоуровневое кэширование**: Память → Диск → Сеть → Assets
+ * - **Реактивные данные**: StateFlow для автоматического обновления UI
+ * - **Умный поиск**: Поиск по номеру, названию, описанию маршрута
+ * - **Валидация данных**: Проверка корректности всех входящих данных
+ * - **Сетевая интеграция**: Автоматическая загрузка обновлений
+ * - **Офлайн поддержка**: Работа без интернета с локальными данными
+ * - **Принудительное обновление**: Методы для актуальности данных
+ * - **Умная загрузка**: Приоритетные источники данных с fallback
  * 
- * Архитектура:
- * - Single Source of Truth для данных маршрутов
- * - Двухуровневое кэширование (память + диск)
- * - Реактивное обновление через Flow
- * - Валидация всех входящих данных
+ * Архитектура данных:
+ * ```
+ * UI Layer (ViewModels) 
+ *     ↓
+ * Repository (BusRouteRepository) ← Single Source of Truth
+ *     ↓
+ * Data Sources: Memory Cache → Disk Cache → Network → Assets
+ * ```
  * 
- * @param context контекст приложения для доступа к кэшу (опционально)
+ * Потоки данных:
+ * - **routes**: Flow<List<BusRoute>> - основной поток маршрутов
+ * - **isLoading**: Flow<Boolean> - состояние загрузки
+ * - **error**: Flow<String?> - ошибки загрузки
+ * 
+ * @param context Контекст приложения для доступа к кэшу (опционально)
  * 
  * @author VseMirka200
- * @version 2.0
+ * @version 3.0
  * @since 1.0
  */
-class BusRouteRepository(private val context: Context? = null) {
+class BusRouteRepository(private val context: Context) {
     
     // Потоки данных и кэширование
     private val _routes = MutableStateFlow<List<BusRoute>>(emptyList())
@@ -53,10 +64,10 @@ class BusRouteRepository(private val context: Context? = null) {
     private val routesCache = mutableMapOf<String, BusRoute>()
     
     // JSON источник данных (локальный assets)
-    private val jsonDataSource = context?.let { JsonDataSource(it) }
+    private val jsonDataSource = JsonDataSource(context)
     
     // Удалённый источник данных (GitHub)
-    private val remoteDataSource = context?.let { RemoteDataSource(it) }
+    private val remoteDataSource = RemoteDataSource(context)
     
     // Scope для асинхронной загрузки
     private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -74,12 +85,7 @@ class BusRouteRepository(private val context: Context? = null) {
      * @return Flow<Boolean> true если есть соединение, false иначе
      */
     fun observeConnectivity(): Flow<Boolean> {
-        return if (context != null) {
-            NetworkMonitor.observeConnectivity(context)
-        } else {
-            // Если контекст не доступен, считаем что всегда online
-            kotlinx.coroutines.flow.flowOf(true)
-        }
+        return NetworkMonitor.observeConnectivity(context)
     }
     
     /**
@@ -90,29 +96,21 @@ class BusRouteRepository(private val context: Context? = null) {
      * @return true если есть соединение, false иначе
      */
     fun isOnline(): Boolean {
-        return if (context != null) {
-            NetworkMonitor.isConnected(context)
-        } else {
-            true // По умолчанию считаем что online
-        }
+        return NetworkMonitor.isConnected(context)
     }
     
     init {
-        Timber.i("🚀 Repository initializing...")
         // Очищаем JSON кэш при инициализации
-        jsonDataSource?.clearCache()
-        Timber.d("🗑️ Cleared JSON cache on initialization")
+        jsonDataSource.clearCache()
         
         // Очищаем кэш памяти RemoteDataSource (но не файл кэша)
         // Файл кэша будет проверен на валидность при loadFromCache()
-        remoteDataSource?.clearRoutesMemoryCache()
-        Timber.d("🗑️ Cleared RemoteDataSource memory cache")
+        remoteDataSource.clearRoutesMemoryCache()
         
         // Запускаем асинхронную загрузку
         repositoryScope.launch {
             loadInitialRoutes()
         }
-        Timber.i("⏳ Repository initialization started (async)")
     }
     
     /**
@@ -128,76 +126,52 @@ class BusRouteRepository(private val context: Context? = null) {
     private suspend fun loadInitialRoutes() {
         loadMutex.withLock {
             if (isInitialized) {
-                Timber.d("⚠️ Already initialized, skipping")
                 return
             }
             
-            Timber.i("🔄 Starting initial routes loading...")
             
             try {
                 // Приоритет 1: Пытаемся загрузить из RemoteDataSource (умная загрузка)
-                Timber.d("📡 Priority 1: Attempting RemoteDataSource (GitHub/Cache/Assets)...")
-                val remoteRoutes = if (remoteDataSource != null) {
-                    try {
-                        remoteDataSource.loadRoutes(forceRefresh = false)
-                    } catch (e: Exception) {
-                        Timber.w(e, "❌ RemoteDataSource failed: ${e.message}")
-                        null
-                    }
-                } else {
-                    Timber.w("⚠️ RemoteDataSource is null (no context?)")
+                val remoteRoutes = try {
+                    remoteDataSource.loadRoutes(forceRefresh = false)
+                } catch (e: Exception) {
                     null
                 }
                 
                 // Если удалённая загрузка успешна, используем её
                 if (remoteRoutes != null && remoteRoutes.isNotEmpty()) {
-                    Timber.i("✅ SUCCESS! Using routes from RemoteDataSource: ${remoteRoutes.size} routes")
                     remoteRoutes.forEach { route ->
                         routesCache[route.id] = route
                     }
                     _routes.value = remoteRoutes
                     isInitialized = true
-                    Timber.i("🎉 Repository initialized successfully with ${remoteRoutes.size} routes")
                     return
                 }
                 
                 // Приоритет 2: Пытаемся загрузить из JsonDataSource (assets)
-                Timber.d("📄 Priority 2: RemoteDataSource failed, trying JsonDataSource (assets)...")
-                val jsonRoutes = if (jsonDataSource != null) {
-                    try {
-                        jsonDataSource.loadRoutes()
-                    } catch (e: Exception) {
-                        Timber.w(e, "❌ JsonDataSource failed: ${e.message}")
-                        null
-                    }
-                } else {
-                    Timber.w("⚠️ JsonDataSource is null (no context?)")
+                val jsonRoutes = try {
+                    jsonDataSource.loadRoutes()
+                } catch (e: Exception) {
                     null
                 }
                 
                 // Если JSON загрузился успешно, используем его
                 if (jsonRoutes != null && jsonRoutes.isNotEmpty()) {
-                    Timber.i("✅ SUCCESS! Using routes from JsonDataSource: ${jsonRoutes.size} routes")
                     jsonRoutes.forEach { route ->
                         routesCache[route.id] = route
                     }
                     _routes.value = jsonRoutes
                     isInitialized = true
-                    Timber.i("🎉 Repository initialized successfully with ${jsonRoutes.size} routes")
                     return
                 }
                 
                 // Приоритет 3: Если всё не удалось - возвращаем пустой список
-                Timber.e("❌❌❌ ALL DATA SOURCES FAILED - NO ROUTES LOADED ❌❌❌")
-                Timber.e("Please check:")
-                Timber.e("  1) Internet connection")
-                Timber.e("  2) app/src/main/assets/routes_data.json exists")
-                Timber.e("  3) GitHub repository accessible: https://github.com/VseMirka200/lets-go-slavgorod")
+                Timber.e("ВСЕ ИСТОЧНИКИ ДАННЫХ НЕ УДАЛИСЬ - МАРШРУТЫ НЕ ЗАГРУЖЕНЫ")
                 _routes.value = emptyList()
                 isInitialized = true
             
             } catch (e: Exception) {
-                Timber.e(e, "❌ FATAL ERROR loading initial routes: ${e.javaClass.simpleName} - ${e.message}")
+                Timber.e(e, "КРИТИЧЕСКАЯ ОШИБКА загрузки начальных маршрутов: ${e.javaClass.simpleName} - ${e.message}")
                 _routes.value = emptyList()
                 isInitialized = true // Даже при ошибке считаем инициализированным
             }
@@ -215,19 +189,15 @@ class BusRouteRepository(private val context: Context? = null) {
     fun getRouteById(routeId: String?): BusRoute? {
         // Валидация входных данных
         if (routeId == null) {
-            Timber.w("getRouteById called with null routeId")
             return null
         }
         if (routeId.isBlank()) {
-            Timber.w("getRouteById called with blank routeId")
             return null
         }
         
         val route = routesCache[routeId]
         if (route == null) {
-            Timber.w("Route not found in cache for routeId: $routeId")
         } else {
-            Timber.d("Route found in cache: ${route.id} - ${route.name}")
         }
         return route
     }
@@ -273,55 +243,41 @@ class BusRouteRepository(private val context: Context? = null) {
         
         // Если требуется принудительное обновление, очищаем кэш для этого маршрута
         if (forceRefresh) {
-            remoteDataSource?.clearScheduleCache(routeId)
-            jsonDataSource?.clearScheduleCache(routeId)
-            Timber.d("Force refresh: cleared schedule cache for route $routeId")
+            remoteDataSource.clearScheduleCache(routeId)
+            jsonDataSource.clearScheduleCache(routeId)
         }
         
         // Приоритет 1: Пытаемся загрузить из RemoteDataSource (GitHub)
         // ВАЖНО: передаём forceRefresh чтобы принудительно загрузить с GitHub
-        val remoteSchedules = if (remoteDataSource != null) {
-            try {
-                remoteDataSource.loadSchedules(routeId, forceRefresh = forceRefresh)
-            } catch (e: Exception) {
-                Timber.w(e, "Failed to load schedules from RemoteDataSource for route $routeId")
-                null
-            }
-        } else {
+        val remoteSchedules = try {
+            remoteDataSource.loadSchedules(routeId, forceRefresh = forceRefresh)
+        } catch (e: Exception) {
             null
         }
         
         // Если удалённая загрузка успешна, используем её
         if (remoteSchedules != null && remoteSchedules.isNotEmpty()) {
-            Timber.d("Using schedules from RemoteDataSource for route $routeId: ${remoteSchedules.size} schedules")
             return remoteSchedules
         }
         
         // Приоритет 2: Пытаемся загрузить из JsonDataSource (assets)
-        val jsonSchedules = if (jsonDataSource != null) {
-            try {
-                jsonDataSource.loadSchedules(routeId)
-            } catch (e: Exception) {
-                Timber.w(e, "Failed to load schedules from JsonDataSource for route $routeId")
-                null
-            }
-        } else {
+        val jsonSchedules = try {
+            jsonDataSource.loadSchedules(routeId)
+        } catch (e: Exception) {
             null
         }
         
         // Если JSON загрузился успешно, используем его
         if (jsonSchedules != null && jsonSchedules.isNotEmpty()) {
-            Timber.d("Using schedules from JsonDataSource for route $routeId: ${jsonSchedules.size} schedules")
             return jsonSchedules
         }
         
         // Приоритет 3: Fallback на hardcoded данные
-        Timber.d("Using hardcoded schedules for route $routeId")
         return ScheduleUtils.generateSchedules(routeId)
     }
     
     /**
-     * Принудительно обновляет данные расписания из GitHub (v2.1)
+     * Принудительно обновляет данные расписания из GitHub (v3.1)
      * 
      * Улучшенная версия с реактивным обновлением UI:
      * - Загружает актуальные данные с GitHub
@@ -329,24 +285,31 @@ class BusRouteRepository(private val context: Context? = null) {
      * - Обновляет StateFlow для автоматического обновления UI
      * - Больше НЕ требует перезапуска приложения ✅
      * 
+     * Алгоритм обновления:
+     * 1. Проверяет доступность RemoteDataSource
+     * 2. Очищает все кэши в памяти (маршруты + расписания)
+     * 3. Принудительно загружает данные с GitHub
+     * 4. Обновляет внутренний кэш и StateFlow
+     * 5. Уведомляет все подписчиков об изменениях
+     * 
+     * Применение:
+     * - При переходе к ScheduleScreen для актуальности
+     * - При обновлении данных в настройках
+     * - При восстановлении после ошибок сети
+     * 
      * @return true если обновление прошло успешно
+     * @see RemoteDataSource.loadRoutes()
+     * @see _routes.value
      */
     suspend fun refreshRoutesFromRemote(): Boolean {
         return try {
-            if (remoteDataSource == null) {
-                Timber.w("RemoteDataSource is null, cannot refresh")
-                return false
-            }
-            
-            Timber.i("Starting manual refresh from GitHub...")
-            
             // ВАЖНО: Очищаем ВСЕ кэши В ПАМЯТИ перед загрузкой
             // Это гарантирует, что мы загрузим свежие данные с GitHub
             // НО НЕ удаляем файл кэша, т.к. туда будут сохранены новые данные
             remoteDataSource.clearRoutesMemoryCache()  // Очищаем кэш маршрутов в памяти
             remoteDataSource.clearSchedulesCache()  // Очищаем кэш расписаний в памяти
-            jsonDataSource?.clearCache()  // Очищаем кэш маршрутов в JsonDataSource
-            jsonDataSource?.clearAllScheduleCache()  // Очищаем кэш расписаний в JsonDataSource
+            jsonDataSource.clearCache()  // Очищаем кэш маршрутов в JsonDataSource
+            jsonDataSource.clearAllScheduleCache()  // Очищаем кэш расписаний в JsonDataSource
             
             // Загружаем свежие данные с GitHub (forceRefresh = true принудительно скачивает)
             val routes = remoteDataSource.loadRoutes(forceRefresh = true)
@@ -363,16 +326,12 @@ class BusRouteRepository(private val context: Context? = null) {
                 
                 // Обновляем виджет с новыми данными
                 
-                Timber.i("Successfully refreshed ${routes.size} routes from GitHub")
-                Timber.i("All caches cleared and refreshed with new data")
-                Timber.i("StateFlow updated - all subscribed UI will refresh automatically")
                 true
             } else {
-                Timber.w("No routes received from GitHub")
                 false
             }
         } catch (e: Exception) {
-            Timber.e(e, "Error refreshing routes from GitHub")
+            Timber.e(e, "Ошибка обновления маршрутов из GitHub")
             false
         }
     }
@@ -384,14 +343,9 @@ class BusRouteRepository(private val context: Context? = null) {
      */
     suspend fun checkForDataUpdates(): Boolean {
         return try {
-            if (remoteDataSource == null) {
-                Timber.d("RemoteDataSource is null, no updates available")
-                return false
-            }
-            
             remoteDataSource.checkForUpdates()
         } catch (e: Exception) {
-            Timber.e(e, "Error checking for data updates")
+            Timber.e(e, "Ошибка проверки обновлений данных")
             false
         }
     }
@@ -403,9 +357,9 @@ class BusRouteRepository(private val context: Context? = null) {
      */
     suspend fun getDataVersion(): String? {
         return try {
-            remoteDataSource?.getDataVersion()
+            remoteDataSource.getDataVersion()
         } catch (e: Exception) {
-            Timber.e(e, "Error getting data version")
+            Timber.e(e, "Ошибка получения версии данных")
             null
         }
     }
@@ -421,7 +375,7 @@ class BusRouteRepository(private val context: Context? = null) {
         return try {
             remoteDataSource?.getRemoteDataVersion()
         } catch (e: Exception) {
-            Timber.e(e, "Error getting remote data version")
+            Timber.e(e, "Ошибка получения версии удалённых данных")
             null
         }
     }
@@ -435,7 +389,7 @@ class BusRouteRepository(private val context: Context? = null) {
         return try {
             remoteDataSource?.getLastUpdated()
         } catch (e: Exception) {
-            Timber.e(e, "Error getting last updated date")
+            Timber.e(e, "Ошибка получения даты последнего обновления")
             null
         }
     }

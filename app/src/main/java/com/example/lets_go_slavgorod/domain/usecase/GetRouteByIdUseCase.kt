@@ -24,7 +24,6 @@ class GetRouteByIdUseCase(
      * @return маршрут или null если не найден
      */
     suspend operator fun invoke(routeId: String): BusRoute? {
-        Timber.d("🔍 Getting route by ID: $routeId")
         
         return repository.getRouteById(routeId)
     }

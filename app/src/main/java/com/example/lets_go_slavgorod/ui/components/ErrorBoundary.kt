@@ -31,7 +31,7 @@ fun ErrorBoundary(
     content: @Composable () -> Unit
 ) {
     if (error != null) {
-        Timber.e(error, "Error boundary caught exception")
+        Timber.e(error, "Граница ошибок поймала исключение")
         ErrorState(
             errorMessage = error.message ?: "Произошла неизвестная ошибка",
             onRetry = onRetry,

@@ -150,9 +150,7 @@ object NotificationPreferencesCache {
                     if (modeString != null) {
                         try {
                             tempRouteModes[routeId] = NotificationMode.valueOf(modeString)
-                            Timber.d("Loaded route mode: $routeId -> $modeString")
                         } catch (e: IllegalArgumentException) {
-                            Timber.w("Invalid NotificationMode for route $routeId: $modeString")
                         }
                     }
                 }
@@ -167,12 +165,10 @@ object NotificationPreferencesCache {
                             try {
                                 DayOfWeek.valueOf(dayName)
                             } catch (e: IllegalArgumentException) {
-                                Timber.w("Invalid DayOfWeek for route $routeId: $dayName")
                                 null
                             }
                         }.toSet()
                         tempRouteDays[routeId] = days
-                        Timber.d("Loaded route days: $routeId -> $days")
                     }
                 }
                 
@@ -182,7 +178,6 @@ object NotificationPreferencesCache {
                     val leadTime = value as? Int
                     if (leadTime != null && leadTime > 0) {
                         tempRouteLeadTimes[routeId] = leadTime
-                        Timber.d("Loaded route lead time: $routeId -> $leadTime minutes")
                     }
                 }
             }
@@ -197,10 +192,8 @@ object NotificationPreferencesCache {
             routeLeadTimes.clear()
             routeLeadTimes.putAll(tempRouteLeadTimes)
             
-            Timber.d("NotificationPreferencesCache updated: quietMode=$quietMode, notificationMode=$notificationMode, vibration=$vibrationEnabled, globalLeadTime=$globalLeadTime")
-            Timber.d("Route-specific settings: ${routeNotificationModes.size} modes, ${routeSelectedDays.size} day sets, ${routeLeadTimes.size} lead times")
         } catch (e: Exception) {
-            Timber.e(e, "Error updating notification preferences cache")
+            Timber.e(e, "Ошибка обновления кэша настроек уведомлений")
         }
     }
     
@@ -233,11 +226,8 @@ object NotificationPreferencesCache {
      */
     fun getNotificationMode(routeId: String? = null): NotificationMode {
         val mode = if (routeId != null && routeNotificationModes.containsKey(routeId)) {
-            val customMode = routeNotificationModes[routeId] ?: notificationMode
-            Timber.d("getNotificationMode($routeId): using CUSTOM mode = $customMode")
-            customMode
+            routeNotificationModes[routeId] ?: notificationMode
         } else {
-            Timber.d("getNotificationMode($routeId): using GLOBAL mode = $notificationMode")
             notificationMode
         }
         return mode
@@ -254,11 +244,8 @@ object NotificationPreferencesCache {
      */
     fun getSelectedDays(routeId: String? = null): Set<DayOfWeek> {
         val days = if (routeId != null && routeSelectedDays.containsKey(routeId)) {
-            val customDays = routeSelectedDays[routeId] ?: selectedDays
-            Timber.d("getSelectedDays($routeId): using CUSTOM days = $customDays")
-            customDays
+            routeSelectedDays[routeId] ?: selectedDays
         } else {
-            Timber.d("getSelectedDays($routeId): using GLOBAL days = $selectedDays")
             selectedDays
         }
         return days
@@ -285,11 +272,8 @@ object NotificationPreferencesCache {
      */
     fun getLeadTimeForRoute(routeId: String? = null): Int {
         val leadTime = if (routeId != null && routeLeadTimes.containsKey(routeId)) {
-            val customLeadTime = routeLeadTimes[routeId] ?: globalLeadTime
-            Timber.d("getLeadTimeForRoute($routeId): using CUSTOM lead time = $customLeadTime minutes")
-            customLeadTime
+            routeLeadTimes[routeId] ?: globalLeadTime
         } else {
-            Timber.d("getLeadTimeForRoute($routeId): using GLOBAL lead time = $globalLeadTime minutes")
             globalLeadTime
         }
         return leadTime
@@ -299,9 +283,12 @@ object NotificationPreferencesCache {
      * Комплексная проверка, должно ли быть отправлено уведомление (синхронно)
      * 
      * Проверяет все условия для отправки уведомления:
-     * 1. Тихий режим (не должен быть DISABLED или активный CUSTOM_DAYS)
-     * 2. Режим уведомлений маршрута (не DISABLED)
+     * 1. Тихий режим (НЕ блокирует уведомления - они приходят даже в тихом режиме)
+     * 2. Режим уведомлений маршрута (не должен быть DISABLED)
      * 3. Соответствие текущего дня выбранным дням (для SELECTED_DAYS и WEEKDAYS)
+     * 
+     * ВАЖНО: Тихий режим больше НЕ блокирует уведомления!
+     * Уведомления приходят даже когда включен тихий режим.
      * 
      * Эта функция вызывается из AlarmReceiver для принятия решения о показе уведомления.
      * 
@@ -310,68 +297,18 @@ object NotificationPreferencesCache {
      */
     fun shouldSendNotification(routeId: String? = null): Boolean {
         return try {
-            Timber.d("Checking notification settings:")
-            Timber.d("  RouteId: ${routeId ?: "global"}")
-            
-            // Проверяем тихий режим
-            Timber.d("  QuietMode: $quietMode")
-            when (quietMode) {
-                QuietMode.DISABLED -> {
-                    Timber.d("  ✗ Result: Quiet mode is DISABLED - no notifications")
-                    return false
-                }
-                QuietMode.ENABLED -> {
-                    Timber.d("  ✓ Quiet mode: ENABLED (notifications allowed)")
-                }
-                QuietMode.CUSTOM_DAYS -> {
-                    if (quietUntilTime != null && System.currentTimeMillis() < quietUntilTime!!) {
-                        val remainingTime = (quietUntilTime!! - System.currentTimeMillis()) / 1000 / 60
-                        Timber.d("  ✗ Result: Quiet until timer active ($remainingTime min remaining)")
-                        return false
-                    } else {
-                        Timber.d("  ✓ Quiet timer expired or not set")
-                    }
-                }
-            }
-            
-            // Проверяем режим уведомлений
             val mode = getNotificationMode(routeId)
-            Timber.d("  NotificationMode: $mode")
             
-            val result = when (mode) {
-                NotificationMode.DISABLED -> {
-                    Timber.d("  ✗ Result: Notification mode is DISABLED")
-                    false
-                }
-                NotificationMode.ALL_DAYS -> {
-                    Timber.d("  ✓ Result: ALL_DAYS mode - sending notification")
-                    true
-                }
+            when (mode) {
+                NotificationMode.DISABLED -> false
+                NotificationMode.ALL_DAYS -> true
                 NotificationMode.WEEKDAYS -> {
                     val currentDay = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_WEEK)
-                    val isWeekday = currentDay in java.util.Calendar.MONDAY..java.util.Calendar.FRIDAY
-                    val dayName = when (currentDay) {
-                        java.util.Calendar.SUNDAY -> "Sunday"
-                        java.util.Calendar.MONDAY -> "Monday"
-                        java.util.Calendar.TUESDAY -> "Tuesday"
-                        java.util.Calendar.WEDNESDAY -> "Wednesday"
-                        java.util.Calendar.THURSDAY -> "Thursday"
-                        java.util.Calendar.FRIDAY -> "Friday"
-                        java.util.Calendar.SATURDAY -> "Saturday"
-                        else -> "Unknown"
-                    }
-                    Timber.d("  Current day: $dayName (code: $currentDay)")
-                    if (isWeekday) {
-                        Timber.d("  ✓ Result: WEEKDAYS mode - today is a weekday")
-                    } else {
-                        Timber.d("  ✗ Result: WEEKDAYS mode - today is weekend")
-                    }
-                    isWeekday
+                    currentDay in java.util.Calendar.MONDAY..java.util.Calendar.FRIDAY
                 }
                 NotificationMode.SELECTED_DAYS -> {
                     val days = getSelectedDays(routeId)
-                    val calendar = java.util.Calendar.getInstance()
-                    val currentDay = calendar.get(java.util.Calendar.DAY_OF_WEEK)
+                    val currentDay = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_WEEK)
                     val currentDayOfWeek = when (currentDay) {
                         java.util.Calendar.SUNDAY -> DayOfWeek.SUNDAY
                         java.util.Calendar.MONDAY -> DayOfWeek.MONDAY
@@ -382,22 +319,12 @@ object NotificationPreferencesCache {
                         java.util.Calendar.SATURDAY -> DayOfWeek.SATURDAY
                         else -> null
                     }
-                    val shouldSend = currentDayOfWeek != null && currentDayOfWeek in days
-                    Timber.d("  Current day: $currentDayOfWeek")
-                    Timber.d("  Selected days: $days")
-                    if (shouldSend) {
-                        Timber.d("  ✓ Result: SELECTED_DAYS mode - today is in selected days")
-                    } else {
-                        Timber.d("  ✗ Result: SELECTED_DAYS mode - today is NOT in selected days")
-                    }
-                    shouldSend
+                    currentDayOfWeek != null && currentDayOfWeek in days
                 }
             }
-            
-            result
         } catch (e: Exception) {
-            Timber.e(e, "✗ Error checking notification settings - defaulting to SEND")
-            true // По умолчанию разрешаем уведомления
+            Timber.e(e, "Ошибка проверки настроек уведомлений")
+            true
         }
     }
 }

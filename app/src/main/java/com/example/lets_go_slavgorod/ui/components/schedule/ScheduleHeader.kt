@@ -126,7 +126,6 @@ fun UnifiedScheduleHeader(
                 if (onNotificationClick != null) {
                     IconButton(
                         onClick = {
-                            Timber.d("Notification button clicked for route: ${route?.id}")
                             onNotificationClick()
                         }
                     ) {
@@ -137,7 +136,6 @@ fun UnifiedScheduleHeader(
                         )
                     }
                 } else {
-                    Timber.w("Notification button hidden: onNotificationClick is null")
                 }
             }
             

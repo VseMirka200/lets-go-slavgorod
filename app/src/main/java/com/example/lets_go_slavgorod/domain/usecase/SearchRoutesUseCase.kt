@@ -25,7 +25,6 @@ class SearchRoutesUseCase(
      * @return список найденных маршрутов
      */
     suspend operator fun invoke(query: String): List<BusRoute> {
-        Timber.d("🔍 Searching routes with query: '$query'")
         
         return if (query.isBlank()) {
             // Если запрос пустой, возвращаем все маршруты

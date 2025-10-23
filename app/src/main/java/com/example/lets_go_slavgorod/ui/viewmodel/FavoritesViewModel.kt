@@ -77,7 +77,7 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
                 entities.toFavoriteTimesBatch(routeRepository)
             }
             .catch { exception ->
-                Timber.e(exception, "Error collecting favorite times")
+                Timber.e(exception, "Ошибка получения избранных времен")
                 emit(emptyList())
             }
             .stateIn(
@@ -92,20 +92,13 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
     fun addFavoriteTime(schedule: BusSchedule) {
         viewModelScope.launch {
             try {
-                Timber.d("═══════════════════════════════════════════════════")
-                Timber.d("🌟 ADDING FAVORITE TIME")
-                Timber.d("Input schedule:")
-                Timber.d("  id: ${schedule.id}")
-                Timber.d("  routeId: ${schedule.routeId}")
-                Timber.d("  time: ${schedule.departureTime}")
-                Timber.d("  day: ${schedule.dayOfWeek}")
                 
                 _uiState.update { it.copy(isAddingFavorite = true, error = null) }
                 
                 // Валидация
                 val sanitizedSchedule = schedule.sanitized()
                 if (!sanitizedSchedule.isValid()) {
-                    Timber.e("❌ Invalid schedule data after sanitization")
+                    Timber.e("Неверные данные расписания после очистки")
                     _uiState.update {
                         it.copy(isAddingFavorite = false, error = "Некорректные данные")
                     }
@@ -116,7 +109,6 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
                 val route = routeRepository.getRouteById(sanitizedSchedule.routeId)
                 val currentTime = System.currentTimeMillis()
                 
-                Timber.d("Route info loaded: ${route?.name ?: "null"}")
                 
                 // Создаем entity
                 val favoriteTimeEntity = FavoriteTimeEntity(
@@ -132,35 +124,18 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
                     isActive = true
                 )
                 
-                Timber.d("Created FavoriteTimeEntity:")
-                Timber.d("  id: ${favoriteTimeEntity.id}")
-                Timber.d("  routeId: ${favoriteTimeEntity.routeId}")
-                Timber.d("  isActive: ${favoriteTimeEntity.isActive}")
-                Timber.d("  time: ${favoriteTimeEntity.departureTime}")
                 
                 // Сохраняем в БД
                 favoriteTimeDao.addFavoriteTime(favoriteTimeEntity)
-                Timber.d("✓ Saved to database")
-                
-                // Проверяем что сохранилось
-                val savedEntity = favoriteTimeDao.getFavoriteTimeById(favoriteTimeEntity.id).firstOrNull()
-                if (savedEntity != null) {
-                    Timber.d("✅ VERIFICATION: Favorite saved successfully!")
-                    Timber.d("   Saved entity routeId: ${savedEntity.routeId}")
-                    Timber.d("   Saved entity isActive: ${savedEntity.isActive}")
-                } else {
-                    Timber.e("❌ VERIFICATION FAILED: Favorite not found in DB after save!")
-                }
                 
                 // Планируем уведомление
                 val favoriteTime = favoriteTimeEntity.toFavoriteTime(routeRepository)
                 AlarmScheduler.checkAndUpdateNotifications(getApplication(), favoriteTime)
                 
-                Timber.d("═══════════════════════════════════════════════════")
                 
                 _uiState.update { it.copy(isAddingFavorite = false, error = null) }
             } catch (e: Exception) {
-                Timber.e(e, "Error adding favorite time")
+                Timber.e(e, "Ошибка добавления избранного времени")
                 _uiState.update {
                     it.copy(isAddingFavorite = false, error = e.message)
                 }
@@ -181,7 +156,7 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
                 
                 _uiState.update { it.copy(isRemovingFavorite = false, error = null) }
             } catch (e: Exception) {
-                Timber.e(e, "Error removing favorite time")
+                Timber.e(e, "Ошибка удаления избранного времени")
                 _uiState.update {
                     it.copy(isRemovingFavorite = false, error = e.message)
                 }
@@ -196,7 +171,6 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch {
             val entityInDb = favoriteTimeDao.getFavoriteTimeById(favoriteTime.id).firstOrNull()
                 ?: run {
-                    Timber.w("Favorite time not found: ${favoriteTime.id}")
                     return@launch
                 }
             
@@ -206,7 +180,7 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
                 try {
                     AlarmScheduler.cancelAlarm(getApplication(), favoriteTime.id)
                 } catch (e: Exception) {
-                    Timber.e(e, "Error cancelling alarm")
+                    Timber.e(e, "Ошибка отмены будильника")
                 }
             } else {
                 // Активация - обновляем
@@ -216,7 +190,7 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
                     try {
                         AlarmScheduler.checkAndUpdateNotifications(getApplication(), updatedFavorite)
                     } catch (e: Exception) {
-                        Timber.e(e, "Error rescheduling alarm")
+                        Timber.e(e, "Ошибка переноса будильника")
                     }
                 }
             }

@@ -27,21 +27,33 @@ import timber.log.Timber
  * Специализированный ViewModel с единственной ответственностью:
  * загрузка и обновление расписаний для конкретных маршрутов.
  * 
- * Функции:
- * - Получение расписания для маршрута
- * - Обновление расписания (force refresh)
- * - Кэширование расписаний
+ * Основные возможности:
+ * - **Загрузка расписаний**: Получение расписаний для конкретных маршрутов
+ * - **Принудительное обновление**: Метод refreshSchedulesForRoute() для актуальности
+ * - **Умное кэширование**: LRU кэш с автоматической очисткой
+ * - **Управление памятью**: Предотвращение утечек памяти
+ * - **Асинхронная загрузка**: Неблокирующие операции
+ * 
+ * Архитектура:
+ * ```
+ * UI (ScheduleScreen) → ScheduleViewModel → BusRouteRepository → Data Sources
+ * ```
+ * 
+ * Потоки данных:
+ * - **schedulesCache**: Map<String, List<BusSchedule>> - кэш расписаний
+ * - **cacheJobs**: Map<String, Job> - активные задачи загрузки
  * 
  * Преимущества:
- * - Единственная ответственность (SRP)
- * - Независимый от других ViewModels
- * - Легко тестировать
- * - Переиспользуемый
+ * - **Единственная ответственность** (SRP)
+ * - **Независимый** от других ViewModels
+ * - **Легко тестировать** (изолированная логика)
+ * - **Переиспользуемый** (можно использовать в других экранах)
+ * - **Производительность** (оптимизированный кэш)
  * 
  * @param application контекст приложения
  * 
  * @author VseMirka200
- * @version 1.0
+ * @version 2.0
  * @since 2.1
  */
 class ScheduleViewModel(application: Application) : AndroidViewModel(application) {
@@ -73,7 +85,6 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     fun getScheduleFor(routeId: String): StateFlow<List<BusSchedule>> {
         // Проверяем размер кэша и очищаем при необходимости
         if (schedulesCache.size > MAX_SCHEDULE_CACHE_SIZE) {
-            Timber.w("Schedule cache size exceeded: ${schedulesCache.size} > $MAX_SCHEDULE_CACHE_SIZE")
             clearScheduleCache()
         }
         
@@ -86,9 +97,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 // Асинхронная загрузка через suspend функцию
                 val loadedSchedules = repository.getSchedulesForRoute(routeId)
                 emit(loadedSchedules)
-                Timber.d("Loaded ${loadedSchedules.size} schedules for route $routeId")
             } catch (e: Exception) {
-                Timber.e(e, "Error loading schedules for route $routeId")
+                Timber.e(e, "Ошибка загрузки расписаний для маршрута $routeId")
                 emit(emptyList())
             }
         }.flowOn(Dispatchers.IO).stateIn(
@@ -110,7 +120,6 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     fun refreshSchedule(routeId: String) {
         viewModelScope.launch {
             try {
-                Timber.d("Force refreshing schedule for route $routeId")
                 // Асинхронная загрузка с принудительным обновлением
                 val loadedSchedules = repository.getSchedulesForRoute(routeId, forceRefresh = true)
                 
@@ -119,9 +128,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 val newStateFlow = MutableStateFlow(loadedSchedules)
                 schedulesCache[routeId] = newStateFlow
                 
-                Timber.d("Schedule refreshed for route $routeId: ${loadedSchedules.size} items")
             } catch (e: Exception) {
-                Timber.e(e, "Error refreshing schedule for route $routeId")
+                Timber.e(e, "Ошибка обновления расписания для маршрута $routeId")
             }
         }
     }
@@ -139,7 +147,47 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         return try {
             repository.getSchedulesForRoute(routeId)
         } catch (e: Exception) {
-            Timber.e(e, "Error getting schedules for route $routeId")
+            Timber.e(e, "Ошибка получения расписаний для маршрута $routeId")
+            emptyList()
+        }
+    }
+    
+    /**
+     * Принудительно обновляет расписание для маршрута
+     * 
+     * Используется для обеспечения актуальности данных при навигации
+     * к экрану расписания.
+     * 
+     * Алгоритм обновления:
+     * 1. Очищает кэш для указанного маршрута
+     * 2. Отменяет активные задачи загрузки
+     * 3. Принудительно загружает свежие данные из репозитория
+     * 4. Возвращает обновлённые расписания
+     * 
+     * Применение:
+     * - При переходе к ScheduleScreen для актуальности
+     * - При обновлении данных после изменений
+     * - При восстановлении после ошибок сети
+     * 
+     * @param routeId ID маршрута для обновления
+     * @return список обновлённых расписаний
+     * @see BusRouteRepository.getSchedulesForRoute()
+     * @see clearScheduleCache()
+     */
+    suspend fun refreshSchedulesForRoute(routeId: String): List<BusSchedule> {
+        return try {
+            
+            // Очищаем кэш для данного маршрута
+            schedulesCache.remove(routeId)
+            cacheJobs[routeId]?.cancel()
+            cacheJobs.remove(routeId)
+            
+            // Принудительно загружаем свежие данные
+            val schedules = repository.getSchedulesForRoute(routeId)
+            
+            schedules
+        } catch (e: Exception) {
+            Timber.e(e, "Ошибка принудительного обновления расписаний для маршрута $routeId")
             emptyList()
         }
     }
@@ -148,7 +196,6 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
      * Очищает кэш расписаний для предотвращения утечек памяти
      */
     private fun clearScheduleCache() {
-        Timber.d("🧹 Clearing schedule cache to prevent memory leaks")
         
         // Отменяем все активные корутины
         cacheJobs.values.forEach { job ->
@@ -167,7 +214,6 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
      */
     override fun onCleared() {
         super.onCleared()
-        Timber.d("🧹 ScheduleViewModel cleared, cleaning up resources")
         
         // Отменяем все корутины
         supervisorJob.cancel()

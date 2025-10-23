@@ -42,16 +42,34 @@ data class RoutesUiState(
  * Специализированный ViewModel с единственной ответственностью:
  * управление списком маршрутов и поиском по ним.
  * 
- * Преимущества разделения:
- * - Единственная ответственность (SRP)
- * - Легко тестировать (меньше зависимостей)
- * - Меньше строк кода (150 vs 462)
- * - Переиспользуемый
+ * Основные возможности:
+ * - **Реактивный поиск**: Debounced поиск с задержкой 300ms
+ * - **Кэширование**: LRU кэш для предотвращения утечек памяти
+ * - **Умная фильтрация**: Поиск по номеру, названию, описанию
+ * - **Состояние загрузки**: Отслеживание состояния операций
+ * - **Обработка ошибок**: Централизованная обработка ошибок
+ * - **Принудительное обновление**: Метод refreshRoutes() для актуальности данных
  * 
- * @param application контекст приложения
+ * Архитектура:
+ * ```
+ * UI (HomeScreen) → RoutesViewModel → BusRouteRepository → Data Sources
+ * ```
+ * 
+ * Потоки данных:
+ * - **uiState**: RoutesUiState - состояние UI
+ * - **searchQuery**: String - текущий поисковый запрос
+ * - **filteredRoutes**: List<BusRoute> - отфильтрованные маршруты
+ * 
+ * Преимущества разделения:
+ * - **Единственная ответственность** (SRP)
+ * - **Легко тестировать** (меньше зависимостей)
+ * - **Переиспользуемый** (можно использовать в других экранах)
+ * - **Производительность** (оптимизированный кэш)
+ * 
+ * @param application Контекст приложения для создания репозитория
  * 
  * @author VseMirka200
- * @version 1.0
+ * @version 3.1
  * @since 2.1
  */
 @OptIn(FlowPreview::class)
@@ -78,6 +96,11 @@ class RoutesViewModel(application: Application) : AndroidViewModel(application) 
     
     // Job для отслеживания корутин и предотвращения утечек
     private val cacheJobs = mutableMapOf<String, Job>()
+    
+    // Ограничения кэша для предотвращения утечек памяти
+    private val maxCacheSize = 50
+    private val cacheExpirationTime = 30 * 60 * 1000L // 30 минут
+    private var lastCacheTime = 0L
     
     // SupervisorJob для безопасной отмены всех корутин
     private val supervisorJob = SupervisorJob()
@@ -114,16 +137,15 @@ class RoutesViewModel(application: Application) : AndroidViewModel(application) 
         // Подписка на маршруты из Repository (реактивная загрузка)
         viewModelScope.launch {
             routeRepository.routes.collect { routes ->
-                Timber.d("📥 Received ${routes.size} routes from Repository")
                 
-                // Проверяем размер кэша и очищаем при необходимости
-                if (routes.size > MAX_CACHE_SIZE) {
-                    Timber.w("Cache size exceeded: ${routes.size} > $MAX_CACHE_SIZE")
+                // Проверяем нужно ли обновить кэш
+                if (shouldRefreshCache()) {
                     clearCache()
                 }
                 
                 cachedRoutes = routes
                 cachedRoutesMap = routes.associateBy { it.id }
+                updateCacheTime()
                 
                 // Обновляем UI если нет активного поиска
                 if (_searchQuery.value.isEmpty()) {
@@ -167,20 +189,52 @@ class RoutesViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             _isRefreshing.value = true
             try {
-                Timber.d("🔄 Refreshing routes from GitHub...")
                 
                 // Принудительно обновляем из Repository
                 val success = routeRepository.refreshRoutesFromRemote()
                 
                 if (success) {
-                    Timber.i("✅ Routes refreshed successfully")
                 } else {
-                    Timber.w("⚠️ Failed to refresh routes")
                 }
                 
                 delay(Constants.PULL_TO_REFRESH_MIN_DELAY_MS)
             } finally {
                 _isRefreshing.value = false
+            }
+        }
+    }
+    
+    /**
+     * Принудительно обновляет маршруты для актуальности данных
+     * 
+     * Используется при навигации к экрану расписания для обеспечения
+     * актуальности данных о следующих рейсах.
+     * 
+     * Алгоритм:
+     * 1. Принудительно обновляет данные из удалённого источника
+     * 2. Очищает внутренний кэш для гарантии свежести данных
+     * 3. Выполняется в фоновом режиме без блокировки UI
+     * 
+     * Применение:
+     * - При переходе к ScheduleScreen для точности расписания
+     * - При обновлении данных после изменений в настройках
+     * - При восстановлении после ошибок сети
+     * 
+     * @see BusRouteRepository.refreshRoutesFromRemote()
+     * @see clearCache()
+     */
+    fun refreshRoutes() {
+        viewModelScope.launch {
+            try {
+                
+                // Принудительно обновляем из Repository без UI индикации
+                routeRepository.refreshRoutesFromRemote()
+                
+                // Очищаем кэш для принудительного обновления
+                clearCache()
+                
+            } catch (e: Exception) {
+                Timber.e(e, "Ошибка принудительного обновления маршрутов")
             }
         }
     }
@@ -198,7 +252,6 @@ class RoutesViewModel(application: Application) : AndroidViewModel(application) 
         
         // O(1) lookup из HashMap вместо O(n) из Repository
         return cachedRoutesMap[routeId] ?: run {
-            Timber.w("Route not found in cache: $routeId, falling back to repository")
             routeRepository.getRouteById(routeId)
         }
     }
@@ -207,7 +260,6 @@ class RoutesViewModel(application: Application) : AndroidViewModel(application) 
      * Очищает кэш маршрутов для предотвращения утечек памяти
      */
     private fun clearCache() {
-        Timber.d("🧹 Clearing routes cache to prevent memory leaks")
         
         // Отменяем все активные корутины
         cacheJobs.values.forEach { job ->
@@ -220,6 +272,24 @@ class RoutesViewModel(application: Application) : AndroidViewModel(application) 
         // Очищаем кэш
         cachedRoutes = emptyList()
         cachedRoutesMap = emptyMap()
+        lastCacheTime = 0L
+    }
+    
+    /**
+     * Проверяет, нужно ли обновить кэш
+     */
+    private fun shouldRefreshCache(): Boolean {
+        val currentTime = System.currentTimeMillis()
+        return cachedRoutes.isEmpty() || 
+               (currentTime - lastCacheTime) > cacheExpirationTime ||
+               cachedRoutes.size > maxCacheSize
+    }
+    
+    /**
+     * Обновляет время кэша
+     */
+    private fun updateCacheTime() {
+        lastCacheTime = System.currentTimeMillis()
     }
     
     /**
@@ -227,7 +297,6 @@ class RoutesViewModel(application: Application) : AndroidViewModel(application) 
      */
     override fun onCleared() {
         super.onCleared()
-        Timber.d("🧹 RoutesViewModel cleared, cleaning up resources")
         
         // Отменяем все корутины
         supervisorJob.cancel()

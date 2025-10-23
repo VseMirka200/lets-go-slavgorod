@@ -52,7 +52,6 @@ class DownloadMetrics(private val context: Context) {
                 .apply()
         }
         
-        Timber.d("📊 Download success: $source, ${bytes}B, ${timeMs}ms${if (etagHit) " (ETag hit)" else ""}")
     }
     
     /**
@@ -65,7 +64,6 @@ class DownloadMetrics(private val context: Context) {
             .putLong(KEY_LAST_FAILURE, System.currentTimeMillis())
             .apply()
         
-        Timber.w("📊 Download failure: $source, error: $error")
     }
     
     /**

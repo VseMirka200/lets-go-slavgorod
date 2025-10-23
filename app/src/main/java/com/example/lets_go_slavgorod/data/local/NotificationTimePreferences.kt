@@ -51,10 +51,12 @@ class NotificationTimePreferences(private val context: Context) {
         context.dataStore.edit { preferences ->
             preferences[GLOBAL_LEAD_TIME_KEY] = minutes
         }
-        Timber.d("✅ Global lead time set to $minutes minutes")
         
-        // Временно отключено для предотвращения крашей
-        // updateAllAlarmsAfterTimeChange()
+        // Обновляем кэш настроек
+        NotificationPreferencesCache.updateCache(context)
+        
+        // Перепланируем все уведомления с новым глобальным временем опережения
+        updateAllAlarmsAfterTimeChange()
     }
     
     /**
@@ -77,46 +79,16 @@ class NotificationTimePreferences(private val context: Context) {
      * @param minutes время в минутах (null = использовать глобальное)
      */
     suspend fun setLeadTimeForRoute(routeId: String, minutes: Int?) {
-        Timber.d("═══════════════════════════════════════════════════")
-        Timber.d("💾 SAVING LEAD TIME")
-        Timber.d("   Route: $routeId")
-        Timber.d("   Minutes: $minutes")
-        
-        val key = routeLeadTimeKey(routeId)
-        Timber.d("   Key: ${key.name}")
-        
         context.dataStore.edit { preferences ->
             if (minutes == null) {
-                // Удаляем индивидуальную настройку, используем глобальную
-                preferences.remove(key)
-                Timber.d("   ✓ Removed custom lead time (will use global)")
+                preferences.remove(routeLeadTimeKey(routeId))
             } else {
-                preferences[key] = minutes
-                Timber.d("   ✓ Written to DataStore: ${key.name} = $minutes")
+                preferences[routeLeadTimeKey(routeId)] = minutes
             }
         }
         
-        // Проверка
-        val verification = context.dataStore.data.firstOrNull()
-        val savedValue = verification?.get(key)
-        Timber.d("   VERIFICATION: Read back = $savedValue")
-        
-        if (minutes != null && savedValue == minutes) {
-            Timber.d("   ✅ SUCCESS: Lead time verified in DataStore!")
-        } else if (minutes == null && savedValue == null) {
-            Timber.d("   ✅ SUCCESS: Custom lead time removed!")
-        } else {
-            Timber.e("   ❌ ERROR: Data mismatch! Expected: $minutes, Got: $savedValue")
-        }
-        
-        // Обновляем кэш настроек
         NotificationPreferencesCache.updateCache(context)
-        Timber.d("   ✓ Updated NotificationPreferencesCache")
-        
-        // Временно отключено для предотвращения крашей
-        // updateAllAlarmsAfterTimeChange()
-        
-        Timber.d("═══════════════════════════════════════════════════")
+        updateAllAlarmsAfterTimeChange()
     }
     
     /**
@@ -141,8 +113,6 @@ class NotificationTimePreferences(private val context: Context) {
      */
     private suspend fun updateAllAlarmsAfterTimeChange() {
         try {
-            Timber.d("📢 Updating all alarms after lead time change...")
-            
             val database = AppDatabase.getDatabase(context)
             val favoriteTimeDao = database.favoriteTimeDao()
             val repository = BusRouteRepository(context)
@@ -154,10 +124,9 @@ class NotificationTimePreferences(private val context: Context) {
                 .map { entity -> entity.toFavoriteTime(repository) }
             
             AlarmScheduler.updateAllAlarmsBasedOnSettings(context, activeFavoriteTimes)
-            Timber.d("✅ Updated ${activeFavoriteTimes.size} active alarms with new lead time")
             
         } catch (e: Exception) {
-            Timber.e(e, "❌ Error updating alarms after lead time change")
+            Timber.e(e, "Ошибка обновления будильников после изменения времени опережения")
         }
     }
 }
