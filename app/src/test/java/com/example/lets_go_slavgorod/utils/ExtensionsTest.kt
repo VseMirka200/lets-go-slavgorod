@@ -1,6 +1,7 @@
 package com.example.lets_go_slavgorod.utils
 
 import com.example.lets_go_slavgorod.data.model.BusRoute
+import com.example.lets_go_slavgorod.core.search
 import org.junit.Test
 import org.junit.Assert.*
 

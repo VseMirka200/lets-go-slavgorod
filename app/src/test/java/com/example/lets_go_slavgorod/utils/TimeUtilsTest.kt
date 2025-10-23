@@ -1,6 +1,7 @@
 package com.example.lets_go_slavgorod.utils
 
 import com.example.lets_go_slavgorod.data.model.BusSchedule
+import com.example.lets_go_slavgorod.domain.util.TimeUtils
 import org.junit.Test
 import org.junit.Assert.*
 import org.junit.Before

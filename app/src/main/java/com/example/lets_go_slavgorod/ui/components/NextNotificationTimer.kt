@@ -15,85 +15,53 @@ import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 /**
- * Компонент таймера до следующего уведомления о избранном времени
+ * Компонент таймера до следующего уведомления
  * 
- * Показывает время до ближайшего запланированного УВЕДОМЛЕНИЯ.
- * Отображает три типа информации:
+ * Отображает информацию о ближайшем запланированном уведомлении с учетом времени опережения.
+ * Показывает три типа информации:
  * 1. Относительное время до уведомления: "Через 45 мин." или "Через 2 мин. 35 сек."
- * 2. Абсолютное время уведомления: "Сегодня в 13:45"
- * 3. Подсказка: время отправления автобуса "Автобус в 14:00"
+ * 2. Абсолютное время уведомления: "13:45" (только время, без даты)
+ * 3. Дополнительно: время отправления автобуса "Автобус в 14:00" (если доступно)
  * 
- * Умное обновление:
- * - Каждую СЕКУНДУ когда осталось меньше 5 минут (показывает секунды)
- * - Каждую МИНУТУ когда осталось больше 5 минут (экономия батареи)
+ * Оптимизация производительности:
+ * - Обновление каждую секунду при остатке < 5 минут (показ секунд)
+ * - Обновление каждую минуту при остатке ≥ 5 минут (экономия батареи)
  * 
- * ВАЖНО: nextNotificationTime - это время УВЕДОМЛЕНИЯ (уже вычитан leadTime).
- * Показываем именно время уведомления, чтобы пользователь знал когда придет notification!
+ * Архитектурные особенности:
+ * - Использует remember для кэширования вычислений
+ * - LaunchedEffect для управления обновлениями
+ * - Реактивность на изменения nextNotificationTime
  * 
- * Пример 1 (далеко до уведомления):
- * - Автобус отправляется в 14:00
- * - Уведомление за 15 минут → уведомление в 13:45
- * - Сейчас 13:00
- * - Компонент покажет:
- *   "Через 45 мин." (обновляется каждую минуту)
- *   "Сегодня в 13:45"
- *   "Автобус в 14:00"
- * 
- * Пример 2 (близко к уведомлению):
- * - Сейчас 13:43
- * - Компонент покажет:
- *   "Через 1 мин. 45 сек." (обновляется каждую секунду!)
- *   "Сегодня в 13:45"
- *   "Автобус в 14:00"
- * 
- * @param nextNotificationTime время срабатывания уведомления (уже с учетом leadTime)
- * @param leadTimeMinutes интервал в минутах до отправления (для вычисления времени отправления)
- * @param modifier модификатор для стилизации компонента
+ * @param nextNotificationTime время уведомления (рассчитанное с учетом leadTime)
+ * @param nextDepartureTime время отправления автобуса (опционально, для контекста)
+ * @param modifier модификатор для стилизации
  * 
  * @author VseMirka200
- * @version 2.3
+ * @version 2.5
  * @since 2.1
  */
 @Composable
 fun NextNotificationTimer(
     nextNotificationTime: LocalDateTime?,
-    leadTimeMinutes: Int,
+    nextDepartureTime: LocalDateTime? = null,
     modifier: Modifier = Modifier
 ) {
     var currentTime by remember { mutableStateOf(LocalDateTime.now()) }
     
-    // Вычисляем время отправления автобуса (для справки)
-    // Пересчитывается при изменении nextNotificationTime ИЛИ leadTimeMinutes
-    val nextDepartureTime = remember(nextNotificationTime, leadTimeMinutes) {
-        val result = nextNotificationTime?.plusMinutes(leadTimeMinutes.toLong())
-        result
-    }
-    
-    // Логируем при изменении nextNotificationTime
-    LaunchedEffect(nextNotificationTime, leadTimeMinutes) {
-        if (nextNotificationTime != null && nextDepartureTime != null) {
-            
+    // Отслеживание изменений времени уведомления для логирования
+    LaunchedEffect(nextNotificationTime) {
+        if (nextNotificationTime != null) {
             val now = LocalDateTime.now()
-            val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(now.toLocalDate(), nextDepartureTime.toLocalDate())
-            val hoursDiff = java.time.temporal.ChronoUnit.HOURS.between(now, nextDepartureTime) % 24
-            val minDiff = java.time.temporal.ChronoUnit.MINUTES.between(now, nextDepartureTime) % 60
+            val minutesUntilNotification = ChronoUnit.MINUTES.between(now, nextNotificationTime)
             
-            
-            // Проверяем, если уведомление должно сработать в ближайшие 5 минут
-            val minutesUntilNotification = java.time.temporal.ChronoUnit.MINUTES.between(now, nextNotificationTime)
-            if (minutesUntilNotification <= 5 && minutesUntilNotification > 0) {
+            // Логируем критическую ситуацию: уведомление в прошлом
+            if (minutesUntilNotification <= 0) {
+                Timber.e("Время уведомления в прошлом или сейчас: $nextNotificationTime")
             }
-            
-            // КРИТИЧЕСКИ ВАЖНО: Если время уведомления в прошлом или сейчас
-            val secondsUntilNotification = java.time.temporal.ChronoUnit.SECONDS.between(now, nextNotificationTime)
-            if (secondsUntilNotification <= 0) {
-                Timber.e("Время уведомления в прошлом или сейчас")
-            }
-            
         }
     }
     
-    // Проверяем сколько времени осталось до уведомления
+    // Вычисляем оставшееся время до уведомления (кэшируется)
     val minutesUntilNotification = remember(currentTime, nextNotificationTime) {
         if (nextNotificationTime != null) {
             ChronoUnit.MINUTES.between(currentTime, nextNotificationTime)
@@ -102,16 +70,15 @@ fun NextNotificationTimer(
         }
     }
     
-    // Обновляем текущее время:
-    // - Каждую секунду если осталось меньше 5 минут (для показа секунд)
-    // - Каждую минуту если осталось больше 5 минут
+    // Адаптивное обновление времени для оптимизации производительности
     LaunchedEffect(minutesUntilNotification) {
         while (true) {
             currentTime = LocalDateTime.now()
+            // Высокая частота обновлений для точного отображения секунд
             val updateInterval = if (minutesUntilNotification < 5) {
-                1000L // 1 секунда
+                1000L // 1 секунда для точности
             } else {
-                60000L // 1 минута
+                60000L // 1 минута для экономии батареи
             }
             delay(updateInterval)
         }
@@ -148,10 +115,9 @@ fun NextNotificationTimer(
                 )
                 
                 if (nextNotificationTime != null) {
-                    // Показываем время ДО УВЕДОМЛЕНИЯ (не до отправления автобуса!)
-                    // Время до уведомления (относительное, с умным форматированием)
+                    // Основная информация: относительное время до уведомления
                     val timeUntilNotification = remember(currentTime, nextNotificationTime, minutesUntilNotification) {
-                        // Показываем секунды если осталось меньше 5 минут
+                        // Адаптивное форматирование: секунды для близких уведомлений
                         if (minutesUntilNotification < 5) {
                             formatTimeUntilWithSeconds(currentTime, nextNotificationTime)
                         } else {
@@ -165,7 +131,7 @@ fun NextNotificationTimer(
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     
-                    // Точное время уведомления
+                    // Абсолютное время уведомления (формат HH:mm)
                     val exactNotificationTime = remember(nextNotificationTime) {
                         formatExactTime(nextNotificationTime)
                     }
@@ -175,20 +141,21 @@ fun NextNotificationTimer(
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     
-                    // Подсказка: время отправления автобуса (для справки)
+                    // Контекстная информация: время отправления автобуса
                     if (nextDepartureTime != null) {
-                        val departureTimeFormatted = remember(nextDepartureTime) {
-                            nextDepartureTime.toLocalTime().toString()
+                        val exactDepartureTime = remember(nextDepartureTime) {
+                            formatExactTime(nextDepartureTime)
                         }
                         Text(
-                            text = "Автобус в $departureTimeFormatted",
+                            text = "Автобус в $exactDepartureTime",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         )
                     }
                 } else {
+                    // Состояние отсутствия уведомлений
                     Text(
-                        text = "Нет запланированных избранных времен",
+                        text = "Нет запланированных уведомлений",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                     )
@@ -199,15 +166,14 @@ fun NextNotificationTimer(
 }
 
 /**
- * Форматирует время до события (относительное: "Через 2 ч. 15 мин.")
+ * Форматирует относительное время до события
  * 
- * Умная логика отображения:
- * - Если > 24 часов: показывает дни + часы + минуты
- * - Если < 24 часов: показывает только часы + минуты (без дней)
+ * Специализированное форматирование для отображения времени до уведомления.
+ * Не показывает дни, только часы и минуты для лучшей читаемости.
  * 
- * Примеры:
- * - До события 8 ч 35 мин → "Через 8 ч. 35 мин." (а не "Через 1 д. 8 ч. 35 мин.")
- * - До события 1 д 10 ч → "Через 1 д. 10 ч. 0 мин."
+ * @param now текущее время
+ * @param target целевое время
+ * @return отформатированная строка времени
  */
 private fun formatTimeUntil(now: LocalDateTime, target: LocalDateTime): String {
     if (target.isBefore(now)) {
@@ -218,28 +184,12 @@ private fun formatTimeUntil(now: LocalDateTime, target: LocalDateTime): String {
     val totalHours = ChronoUnit.HOURS.between(now, target)
     val totalMinutes = ChronoUnit.MINUTES.between(now, target)
     
-    
+    // Оптимизированное отображение: часы и минуты без дней
     return when {
-        totalHours >= 24 -> {
-            // Больше суток - показываем дни, часы, минуты
-            val days = totalHours / 24
+        totalHours > 0 -> {
+            // Ограничиваем отображение часов до 24 для читаемости
             val hours = totalHours % 24
             val minutes = totalMinutes % 60
-            
-            buildString {
-                append("Через ")
-                append("$days д. ")
-                if (hours > 0) {
-                    append("$hours ч. ")
-                }
-                append("$minutes мин.")
-            }
-        }
-        totalHours > 0 -> {
-            // Меньше суток - показываем только часы и минуты
-            val hours = totalHours
-            val minutes = totalMinutes % 60
-            
             "Через $hours ч. $minutes мин."
         }
         else -> {
@@ -251,10 +201,14 @@ private fun formatTimeUntil(now: LocalDateTime, target: LocalDateTime): String {
 }
 
 /**
- * Форматирует время до события с секундами (относительное: "Через 2 мин. 35 сек.")
+ * Форматирует время до события с отображением секунд
  * 
- * Используется когда осталось меньше 5 минут до уведомления.
- * Обновляется каждую секунду для точного отображения.
+ * Используется для точного отображения времени при приближении к уведомлению.
+ * Обновляется каждую секунду для максимальной точности.
+ * 
+ * @param now текущее время
+ * @param target целевое время
+ * @return отформатированная строка с секундами
  */
 private fun formatTimeUntilWithSeconds(now: LocalDateTime, target: LocalDateTime): String {
     if (target.isBefore(now)) {
@@ -274,37 +228,14 @@ private fun formatTimeUntilWithSeconds(now: LocalDateTime, target: LocalDateTime
 }
 
 /**
- * Форматирует точное время уведомления (абсолютное: "Сегодня в 13:45" или "Завтра в 08:30")
+ * Форматирует абсолютное время в формате HH:mm
+ * 
+ * Упрощенное отображение времени без даты для лучшей читаемости.
+ * 
+ * @param target время для форматирования
+ * @return строка времени в формате HH:mm
  */
 private fun formatExactTime(target: LocalDateTime): String {
-    val now = LocalDateTime.now()
     val formatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm")
-    val timeStr = target.format(formatter)
-    
-    return when {
-        target.toLocalDate() == now.toLocalDate() -> {
-            "Сегодня в $timeStr"
-        }
-        target.toLocalDate() == now.toLocalDate().plusDays(1) -> {
-            "Завтра в $timeStr"
-        }
-        target.toLocalDate().isBefore(now.toLocalDate().plusDays(7)) -> {
-            // Для дней на этой неделе показываем день недели
-            val dayOfWeek = when (target.dayOfWeek) {
-                java.time.DayOfWeek.MONDAY -> "Понедельник"
-                java.time.DayOfWeek.TUESDAY -> "Вторник"
-                java.time.DayOfWeek.WEDNESDAY -> "Среда"
-                java.time.DayOfWeek.THURSDAY -> "Четверг"
-                java.time.DayOfWeek.FRIDAY -> "Пятница"
-                java.time.DayOfWeek.SATURDAY -> "Суббота"
-                java.time.DayOfWeek.SUNDAY -> "Воскресенье"
-            }
-            "$dayOfWeek в $timeStr"
-        }
-        else -> {
-            // Для дальних дат показываем дату
-            val dateFormatter = java.time.format.DateTimeFormatter.ofPattern("dd.MM")
-            "${target.format(dateFormatter)} в $timeStr"
-        }
-    }
+    return target.format(formatter)
 }

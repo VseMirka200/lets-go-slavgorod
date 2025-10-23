@@ -112,7 +112,7 @@ class DataManagementViewModel(private val context: Context) : ViewModel() {
                     _scheduleUpdateAvailable.value = false
                     
                     
-                    // UI автоматически обновится через StateFlow в BusViewModel
+                    // UI автоматически обновится через StateFlow в RoutesViewModel
                     // Перезапуск НЕ НУЖЕН - данные обновляются реактивно ✅
                 } else {
                     _scheduleRefreshError.value = "Не удалось загрузить данные с сервера"

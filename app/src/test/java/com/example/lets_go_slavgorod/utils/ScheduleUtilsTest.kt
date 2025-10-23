@@ -1,5 +1,6 @@
 package com.example.lets_go_slavgorod.utils
 
+import com.example.lets_go_slavgorod.domain.util.ScheduleUtils
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue

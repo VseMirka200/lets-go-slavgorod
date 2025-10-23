@@ -6,7 +6,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.lets_go_slavgorod.MainActivity
-import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.FavoritesViewModel
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -32,12 +32,12 @@ class FilterIntegrationTest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<MainActivity>()
     
-    private lateinit var viewModel: BusViewModel
+    private lateinit var viewModel: FavoritesViewModel
     
     @Before
     fun setup() {
         val context = ApplicationProvider.getApplicationContext<Application>()
-        viewModel = BusViewModel(context)
+        viewModel = FavoritesViewModel(context)
     }
     
     @Test

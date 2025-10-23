@@ -15,30 +15,106 @@ import java.time.format.DateTimeFormatter
 /**
  * Калькулятор времени уведомлений
  * 
- * Вычисляет, когда должно сработать следующее уведомление.
- * Учитывает избранные времена и настройки пользователя.
+ * Центральный компонент для расчета времени уведомлений с учетом
+ * избранных времен, режимов уведомлений и настроек пользователя.
  * 
- * Что делает:
- * - Смотрит на все избранные времена
- * - Выбирает ближайшее по времени
- * - Учитывает режимы уведомлений
- * - Возвращает точное время срабатывания
+ * Архитектурные особенности:
+ * - Thread-safe singleton object
+ * - Поддержка override параметров для UI
+ * - Кэширование настроек через NotificationPreferencesCache
+ * - Обработка различных режимов уведомлений
+ * 
+ * Основные функции:
+ * - getNextNotificationTime: расчет времени уведомления
+ * - getNextDepartureTime: расчет времени отправления
+ * - Поддержка всех режимов уведомлений
+ * 
+ * @author VseMirka200
+ * @version 2.1
+ * @since 1.0
  */
 object NotificationTimeCalculator {
     
     /**
-     * Находит время следующего уведомления
+     * Вычисляет время следующего отправления автобуса
      * 
-     * Смотрит на все избранные времена и выбирает ближайшее.
-     * Учитывает настройки каждого маршрута отдельно.
+     * Анализирует все активные избранные времена и определяет ближайшее
+     * время отправления с учетом настроек уведомлений для каждого маршрута.
      * 
-     * Как работает:
-     * 1. Берет все избранные времена
-     * 2. Для каждого получает настройки маршрута
-     * 3. Вычисляет время уведомления
-     * 4. Выбирает самое ближайшее
+     * Алгоритм:
+     * 1. Фильтрация активных избранных времен
+     * 2. Расчет времени отправления для каждого избранного времени
+     * 3. Фильтрация будущих времен
+     * 4. Выбор ближайшего времени
      * 
-     * Возвращает время уведомления и время отправления автобуса.
+     * @param favoriteTimes список избранных времен
+     * @param context контекст приложения (опционально)
+     * @param overrideNotificationMode переопределение режима уведомлений
+     * @param overrideSelectedDays переопределение выбранных дней
+     * @return время следующего отправления или null
+     */
+    fun getNextDepartureTime(
+        favoriteTimes: List<FavoriteTime>,
+        context: Context? = null,
+        overrideNotificationMode: NotificationMode? = null,
+        overrideSelectedDays: Set<DayOfWeek>? = null
+    ): LocalDateTime? {
+        // Фиксация времени для предотвращения race conditions
+        val now = LocalDateTime.now()
+        
+        // Оптимизация: проверка на одномаршрутность для упрощения логики
+        val activeFavorites = favoriteTimes.filter { it.isActive }
+        val uniqueRouteIds = activeFavorites.map { it.routeId }.distinct()
+        val isSingleRoute = uniqueRouteIds.size == 1
+        
+        val upcomingDepartures = activeFavorites
+            .mapNotNull { favoriteTime ->
+                // Передаем override параметры только если это одномаршрутный список
+                val departureTime = if (isSingleRoute && (overrideNotificationMode != null || overrideSelectedDays != null)) {
+                    calculateDepartureTime(
+                        favoriteTime, 
+                        now, // Используем зафиксированное время
+                        overrideNotificationMode,
+                        overrideSelectedDays
+                    )
+                } else {
+                    calculateDepartureTime(favoriteTime, now) // Используем зафиксированное время
+                }
+                
+                departureTime
+            }
+            .filter { 
+                // ИСПРАВЛЕНО: Используем зафиксированное время для консистентности
+                val isAfter = it.isAfter(now)
+                isAfter
+            }
+            .sorted()
+        
+        val nextDeparture = upcomingDepartures.firstOrNull()
+        
+        return nextDeparture
+    }
+
+    /**
+     * Вычисляет время следующего уведомления
+     * 
+     * Основная функция для расчета времени уведомления с учетом времени опережения.
+     * Анализирует все активные избранные времена и определяет ближайшее время
+     * срабатывания уведомления.
+     * 
+     * Алгоритм:
+     * 1. Фильтрация активных избранных времен
+     * 2. Получение настроек времени опережения для каждого маршрута
+     * 3. Расчет времени уведомления для каждого избранного времени
+     * 4. Фильтрация будущих времен
+     * 5. Выбор ближайшего времени уведомления
+     * 
+     * @param favoriteTimes список избранных времен
+     * @param context контекст приложения (опционально)
+     * @param leadTimeMinutes время опережения в минутах
+     * @param overrideNotificationMode переопределение режима уведомлений
+     * @param overrideSelectedDays переопределение выбранных дней
+     * @return время следующего уведомления или null
      */
     fun getNextNotificationTime(
         favoriteTimes: List<FavoriteTime>,
@@ -169,9 +245,13 @@ object NotificationTimeCalculator {
                     // Режим "Все дни": уведомления каждый день в указанное время
                     if (targetDayOfWeek == null) {
                         // День недели не установлен - планируем на сегодня или завтра
-                        targetDate = if (currentTime.toLocalTime().isBefore(departureTime)) {
+                        // ИСПРАВЛЕНО: учитываем, что автобус уже мог уйти сегодня
+                        val todayDeparture = LocalDateTime.of(currentTime.toLocalDate(), departureTime)
+                        targetDate = if (todayDeparture.isAfter(currentTime)) {
+                            // Автобус еще не ушел сегодня
                             currentTime.toLocalDate()
                         } else {
+                            // Автобус уже ушел сегодня, планируем на завтра
                             currentTime.toLocalDate().plusDays(1)
                         }
                     } else {
@@ -253,6 +333,167 @@ object NotificationTimeCalculator {
             
         } catch (e: Exception) {
             Timber.e(e, "Error calculating notification time for ${favoriteTime.id}")
+            null
+        }
+    }
+    
+    /**
+     * Вычисляет время отправления автобуса для одного избранного времени
+     * 
+     * Смотрит на избранное время и настройки маршрута,
+     * чтобы понять, когда должен отправиться автобус.
+     * 
+     * Учитывает:
+     * - Режим уведомлений (все дни, только будни, выбранные дни)
+     * - День недели избранного времени
+     * 
+     * Возвращает точное время отправления автобуса.
+     */
+    private fun calculateDepartureTime(
+        favoriteTime: FavoriteTime,
+        currentTime: LocalDateTime,
+        overrideNotificationMode: NotificationMode? = null,
+        overrideSelectedDays: Set<DayOfWeek>? = null
+    ): LocalDateTime? {
+        return try {
+            // Получаем режим уведомлений для маршрута (используем override если есть)
+            val notificationMode = overrideNotificationMode 
+                ?: NotificationPreferencesCache.getNotificationMode(favoriteTime.routeId)
+            if (notificationMode == NotificationMode.DISABLED) {
+                return null
+            }
+            
+            // Парсим время отправления
+            val departureTime = LocalTime.parse(favoriteTime.departureTime, DateTimeFormatter.ofPattern("HH:mm"))
+            
+            // Конвертируем день недели из Calendar формата (1=ВС, 2=ПН) в Java Time формат (1=ПН, 7=ВС)
+            // ВАЖНО: Если dayOfWeek равен 0 или не установлен, то это означает "каждый день"
+            val targetDayOfWeek = if (favoriteTime.dayOfWeek > 0) {
+                convertCalendarDayToJavaTime(favoriteTime.dayOfWeek)
+            } else {
+                null // null означает "каждый день"
+            }
+            
+            // НОВАЯ ЛОГИКА: в зависимости от режима уведомлений
+            val targetDate: LocalDate
+            
+            when (notificationMode) {
+                NotificationMode.SELECTED_DAYS -> {
+                    // Режим "Выбранные дни": уведомления только в выбранные дни недели
+                    val selectedDays = overrideSelectedDays ?: NotificationPreferencesCache.getSelectedDays(favoriteTime.routeId)
+                    
+                    if (targetDayOfWeek == null) {
+                        // День недели не установлен - ищем любой выбранный день
+                        targetDate = findNextOccurrenceAnyDay(
+                            currentTime.toLocalDate(),
+                            notificationMode,
+                            favoriteTime.routeId,
+                            overrideSelectedDays
+                        )
+                    } else {
+                        // День недели установлен - проверяем, что он входит в выбранные дни
+                        if (targetDayOfWeek !in selectedDays) {
+                            return null
+                        }
+                        
+                        // Ищем следующий день, который соответствует дню недели избранного времени
+                        targetDate = findNextOccurrenceForDayOfWeek(
+                            currentTime.toLocalDate(),
+                            targetDayOfWeek
+                        )
+                    }
+                }
+                
+                NotificationMode.ALL_DAYS -> {
+                    // Режим "Все дни": уведомления каждый день в указанное время
+                    if (targetDayOfWeek == null) {
+                        // День недели не установлен - планируем на сегодня или завтра
+                        // ИСПРАВЛЕНО: учитываем, что автобус уже мог уйти сегодня
+                        val todayDeparture = LocalDateTime.of(currentTime.toLocalDate(), departureTime)
+                        targetDate = if (todayDeparture.isAfter(currentTime)) {
+                            // Автобус еще не ушел сегодня
+                            currentTime.toLocalDate()
+                        } else {
+                            // Автобус уже ушел сегодня, планируем на завтра
+                            currentTime.toLocalDate().plusDays(1)
+                        }
+                    } else {
+                        // День недели установлен - ищем следующий день, который соответствует дню недели избранного времени
+                        targetDate = findNextOccurrenceForDayOfWeek(
+                            currentTime.toLocalDate(),
+                            targetDayOfWeek
+                        )
+                    }
+                }
+                
+                NotificationMode.WEEKDAYS -> {
+                    // Режим "Только будни": уведомления только в будние дни
+                    if (targetDayOfWeek == null) {
+                        // День недели не установлен - ищем следующий будний день
+                        targetDate = findNextOccurrenceAnyDay(
+                            currentTime.toLocalDate(),
+                            notificationMode,
+                            favoriteTime.routeId,
+                            overrideSelectedDays
+                        )
+                    } else {
+                        // День недели установлен - проверяем, что он будний
+                        if (targetDayOfWeek !in listOf(
+                            DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, 
+                            DayOfWeek.THURSDAY, DayOfWeek.FRIDAY
+                        )) {
+                            return null
+                        }
+                        
+                        // Ищем следующий день, который соответствует дню недели избранного времени
+                        targetDate = findNextOccurrenceForDayOfWeek(
+                            currentTime.toLocalDate(),
+                            targetDayOfWeek
+                        )
+                    }
+                }
+                
+                NotificationMode.DISABLED -> {
+                    return null
+                }
+            }
+            
+            // Объединяем дату и время
+            var departureDateTime = LocalDateTime.of(targetDate, departureTime)
+            
+            // Если вычисленное время отправления в прошлом или равно текущему, ищем следующий подходящий день
+            if (departureDateTime.isBefore(currentTime) || departureDateTime.isEqual(currentTime)) {
+                
+                // Ищем следующий день - теперь все режимы работают одинаково
+                val nextDate = when (notificationMode) {
+                    NotificationMode.SELECTED_DAYS, NotificationMode.WEEKDAYS -> {
+                        findNextOccurrenceAnyDay(
+                            targetDate.plusDays(1),
+                            notificationMode,
+                            favoriteTime.routeId,
+                            overrideSelectedDays
+                        )
+                    }
+                    NotificationMode.ALL_DAYS -> {
+                        if (targetDayOfWeek == null) {
+                            targetDate.plusDays(1)
+                        } else {
+                            findNextOccurrenceForDayOfWeek(
+                                targetDate.plusDays(1),
+                                targetDayOfWeek
+                            )
+                        }
+                    }
+                    NotificationMode.DISABLED -> return null
+                }
+                
+                departureDateTime = LocalDateTime.of(nextDate, departureTime)
+            }
+            
+            departureDateTime
+            
+        } catch (e: Exception) {
+            Timber.e(e, "Error calculating departure time for ${favoriteTime.id}")
             null
         }
     }

@@ -1,5 +1,6 @@
 package com.example.lets_go_slavgorod.core
 
+import com.example.lets_go_slavgorod.core.Constants
 import org.junit.Test
 import org.junit.Assert.*
 

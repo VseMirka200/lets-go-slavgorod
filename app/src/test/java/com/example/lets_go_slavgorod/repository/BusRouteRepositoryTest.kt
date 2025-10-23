@@ -6,6 +6,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.whenever
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -35,7 +36,8 @@ class BusRouteRepositoryTest {
     @Before
     fun setup() {
         MockitoAnnotations.openMocks(this)
-        repository = BusRouteRepository(null) // Без контекста для тестов
+        whenever(mockContext.applicationContext).thenReturn(mockContext)
+        repository = BusRouteRepository(mockContext)
     }
     
     @Test

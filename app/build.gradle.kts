@@ -29,8 +29,8 @@ android {
         
         // BuildConfig поля для конфигурации
         buildConfigField("String", "GITHUB_REPO_OWNER", "\"VseMirka200\"")
-        buildConfigField("String", "GITHUB_REPO_NAME", "\"lets_go_slavgorod\"")
-        buildConfigField("String", "GITHUB_API_URL", "\"https://api.github.com/repos/VseMirka200/lets_go_slavgorod/releases/latest\"")
+        buildConfigField("String", "GITHUB_REPO_NAME", "\"lets-go-slavgorod\"")
+        buildConfigField("String", "GITHUB_API_URL", "\"https://api.github.com/repos/VseMirka200/lets-go-slavgorod/releases/latest\"")
         buildConfigField("long", "UPDATE_CHECK_INTERVAL_HOURS", "1L")
         buildConfigField("long", "UPDATE_CACHE_TTL_HOURS", "24L")
     }
@@ -177,6 +177,7 @@ dependencies {
     
     // WorkManager - фоновые задачи
     implementation(libs.androidx.work.runtime)
+    testImplementation("androidx.work:work-testing:2.9.0")
     
     // Baseline Profile
     implementation(libs.androidx.profileinstaller)

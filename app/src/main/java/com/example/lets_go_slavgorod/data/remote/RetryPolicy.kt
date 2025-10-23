@@ -17,7 +17,7 @@ import kotlin.random.Random
  */
 object RetryPolicy {
     
-    private const val MAX_RETRIES = 3
+    private const val MAX_RETRIES = 2 // Уменьшаем количество попыток
     private const val BASE_DELAY_MS = 1000L
     private const val MAX_DELAY_MS = 8000L
     private const val JITTER_MS = 500L
@@ -67,7 +67,12 @@ object RetryPolicy {
             }
         }
         
-        Timber.e("Все попытки повтора исчерпаны. Последняя ошибка: ${lastException?.message}")
+        val errorMessage = if (lastException != null) {
+            "Все попытки повтора исчерпаны. Последняя ошибка: ${lastException.message}"
+        } else {
+            "Все попытки повтора исчерпаны. Операция завершилась с null результатом"
+        }
+        Timber.e(errorMessage)
         return null
     }
     

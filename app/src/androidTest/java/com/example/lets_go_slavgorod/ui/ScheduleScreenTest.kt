@@ -11,7 +11,7 @@ import com.example.lets_go_slavgorod.ui.components.schedule.ScheduleList
 import com.example.lets_go_slavgorod.ui.model.ScheduleUiState
 import com.example.lets_go_slavgorod.ui.model.DeparturePointSchedules
 import com.example.lets_go_slavgorod.ui.theme.lets_go_slavgorodTheme
-import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.FavoritesViewModel
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -36,12 +36,12 @@ class ScheduleScreenTest {
     @get:Rule
     val composeTestRule = createComposeRule()
     
-    private lateinit var viewModel: BusViewModel
+    private lateinit var viewModel: FavoritesViewModel
     
     @Before
     fun setup() {
         val context = ApplicationProvider.getApplicationContext<Application>()
-        viewModel = BusViewModel(context)
+        viewModel = FavoritesViewModel(context)
     }
     
     private val testRoute = BusRoute(

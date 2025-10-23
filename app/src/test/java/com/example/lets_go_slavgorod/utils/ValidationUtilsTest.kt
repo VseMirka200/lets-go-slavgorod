@@ -1,5 +1,6 @@
 package com.example.lets_go_slavgorod.utils
 
+import com.example.lets_go_slavgorod.domain.util.ValidationUtils
 import org.junit.Test
 import org.junit.Assert.*
 import org.junit.Before

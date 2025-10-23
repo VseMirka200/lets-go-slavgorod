@@ -11,6 +11,8 @@ import com.example.lets_go_slavgorod.core.RetryUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
 import org.json.JSONObject
 import timber.log.Timber
@@ -58,11 +60,21 @@ class RemoteDataSource(private val context: Context) {
         private const val CACHE_TTL_HOURS = 24L
         /** Таймаут загрузки */
         private const val DOWNLOAD_TIMEOUT_MS = 30000L
+        /** Минимум 2 секунды между запросами */
+        private const val MIN_REQUEST_INTERVAL_MS = 2000L
     }
     
     private var cachedRoutes: List<BusRoute>? = null
     private val cachedSchedules = mutableMapOf<String, List<BusSchedule>>()
+    
+    // Дедупликация запросов - предотвращаем множественные одновременные запросы
+    private val activeRequests = mutableSetOf<String>()
+    private val requestMutex = kotlinx.coroutines.sync.Mutex()
+    
+    // Throttling - ограничиваем частоту запросов
+    private var lastRequestTime = 0L
     private val metrics = DownloadMetrics(context)
+    
     
     /**
      * Получает файл кэша в internal storage
@@ -160,15 +172,62 @@ class RemoteDataSource(private val context: Context) {
      * @return содержимое JSON файла или null при ошибке
      */
     private suspend fun downloadRemoteJson(): String? = withContext(Dispatchers.IO) {
-        // Проверяем качество соединения
-        if (!isNetworkAvailable()) {
+        val requestKey = "downloadRemoteJson"
+        
+        // Проверяем, не выполняется ли уже запрос
+        val shouldSkip = requestMutex.withLock {
+            if (activeRequests.contains(requestKey)) {
+                Timber.d("Запрос уже выполняется, пропускаем дубликат. Активные запросы: ${activeRequests.size}")
+                true
+            } else {
+                activeRequests.add(requestKey)
+                Timber.d("Добавлен запрос в активные. Всего активных: ${activeRequests.size}")
+                false
+            }
+        }
+        
+        if (shouldSkip) {
             return@withContext null
         }
         
-        // Загружаем с retry механизмом
-        RetryPolicy.executeWithRetry(
-            operation = { attempt -> downloadWithTimeout() }
-        )
+        try {
+            // Проверяем throttling - не делаем запросы слишком часто
+            val currentTime = System.currentTimeMillis()
+            if (currentTime - lastRequestTime < MIN_REQUEST_INTERVAL_MS) {
+                Timber.d("Слишком частые запросы, пропускаем (throttling)")
+                return@withContext null
+            }
+            lastRequestTime = currentTime
+            
+            // Проверяем качество соединения
+            if (!isNetworkAvailable()) {
+                Timber.w("Нет интернет-соединения, пропускаем загрузку с GitHub")
+                return@withContext null
+            }
+            
+            // Загружаем с retry механизмом
+            val result = com.example.lets_go_slavgorod.core.RetryUtils.retryWithBackoff(
+                maxRetries = 3,
+                initialDelay = 1000L
+            ) {
+                downloadWithTimeout()
+            }
+            
+            if (result == null) {
+                Timber.w("Не удалось загрузить данные с GitHub после всех попыток")
+            }
+            
+            result
+        } catch (e: Exception) {
+            Timber.e(e, "Критическая ошибка при загрузке с GitHub: ${e.message}")
+            null
+        } finally {
+            // Убираем запрос из активных
+            requestMutex.withLock {
+                activeRequests.remove(requestKey)
+                Timber.d("Удален запрос из активных. Осталось активных: ${activeRequests.size}")
+            }
+        }
     }
     
     /**
@@ -176,6 +235,7 @@ class RemoteDataSource(private val context: Context) {
      */
     private suspend fun downloadWithTimeout(): String? = withTimeoutOrNull(DOWNLOAD_TIMEOUT_MS) {
         try {
+            Timber.d("Попытка загрузки с URL: ${Constants.REMOTE_JSON_URL}")
             
             val url = URL(Constants.REMOTE_JSON_URL)
             val connection = url.openConnection() as HttpURLConnection
@@ -203,7 +263,34 @@ class RemoteDataSource(private val context: Context) {
             
             when (responseCode) {
                 HttpURLConnection.HTTP_OK -> {
-                    val jsonString = connection.inputStream.bufferedReader().use { it.readText() }
+                    // ИСПРАВЛЕНО: Безопасное чтение больших файлов с ограничением размера
+                    val contentLength = connection.contentLength
+                    if (contentLength > 10 * 1024 * 1024) { // 10MB лимит
+                        Timber.w("Файл слишком большой: ${contentLength} байт")
+                        return@withTimeoutOrNull null
+                    }
+                    
+                    val jsonString = try {
+                        connection.inputStream.bufferedReader(Charsets.UTF_8).use { reader ->
+                            val buffer = CharArray(8192) // 8KB буфер
+                            val result = StringBuilder()
+                            var charsRead: Int
+                            
+                            while (reader.read(buffer, 0, buffer.size).also { charsRead = it } != -1) {
+                                result.append(buffer, 0, charsRead)
+                                
+                                // Проверяем размер каждые 1MB
+                                if (result.length > 1024 * 1024) {
+                                    Timber.w("Файл превышает ожидаемый размер")
+                                    return@withTimeoutOrNull null
+                                }
+                            }
+                            result.toString()
+                        }
+                    } catch (e: OutOfMemoryError) {
+                        Timber.e(e, "Недостаточно памяти для загрузки файла")
+                        return@withTimeoutOrNull null
+                    }
                     
                     // Сохраняем ETag для будущих запросов
                     val etag = connection.getHeaderField("ETag")
@@ -215,14 +302,17 @@ class RemoteDataSource(private val context: Context) {
                     
                     // Расширенная валидация
                     if (validateJsonData(jsonString)) {
+                        Timber.d("Успешно загружены данные с GitHub")
                         return@withTimeoutOrNull jsonString
                     } else {
+                        Timber.w("Загруженные данные не прошли валидацию")
                         return@withTimeoutOrNull null
                     }
                 }
                 HttpURLConnection.HTTP_NOT_MODIFIED -> {
                     // 304 - данные не изменились, используем кэш
                     connection.disconnect()
+                    Timber.d("Данные не изменились, используем кэш")
                     
                     // Загружаем из кэша
                     val cacheFile = getCacheFile()
@@ -233,26 +323,34 @@ class RemoteDataSource(private val context: Context) {
                     }
                 }
                 HttpURLConnection.HTTP_NOT_FOUND -> {
+                    Timber.w("Файл не найден на GitHub (404)")
                     return@withTimeoutOrNull null
                 }
                 HttpURLConnection.HTTP_UNAVAILABLE -> {
+                    Timber.w("Сервер недоступен (503)")
                     return@withTimeoutOrNull null
                 }
                 else -> {
+                    Timber.w("Неожиданный HTTP код: $responseCode")
                     return@withTimeoutOrNull null
                 }
             }
             
         } catch (e: java.net.UnknownHostException) {
+            Timber.w("Неизвестный хост: ${e.message}")
             null
         } catch (e: java.net.SocketTimeoutException) {
+            Timber.w("Таймаут соединения: ${e.message}")
+            null
+        } catch (e: java.net.ConnectException) {
+            Timber.w("Ошибка подключения: ${e.message}")
             null
         } catch (e: Exception) {
             try {
-                Timber.e(e, "Ошибка загрузки с GitHub: ${e.javaClass.simpleName}")
+                Timber.e(e, "Ошибка загрузки с GitHub: ${e.javaClass.simpleName} - ${e.message}")
             } catch (logError: Exception) {
                 // Fallback на системное логирование если Timber не работает
-                android.util.Log.e("RemoteDataSource", "Ошибка загрузки с GitHub: ${e.javaClass.simpleName}", e)
+                android.util.Log.e("RemoteDataSource", "Ошибка загрузки с GitHub: ${e.javaClass.simpleName} - ${e.message}", e)
             }
             null
         }
@@ -442,25 +540,44 @@ class RemoteDataSource(private val context: Context) {
      * @return JSON строка или null при ошибке
      */
     suspend fun getJsonString(forceRefresh: Boolean = false): String? {
-        val hasInternet = isNetworkAvailable()
+        val requestKey = "getJsonString_${forceRefresh}"
         
-        // Если интернета нет и не force refresh - сразу используем кэш/assets
-        if (!hasInternet && !forceRefresh) {
-            
-            // Пробуем загрузить из кэша
-            val cachedJson = loadFromCache()
-            if (cachedJson != null) {
-                return cachedJson
+        // Проверяем, не выполняется ли уже запрос
+        val shouldSkip = requestMutex.withLock {
+            if (activeRequests.contains(requestKey)) {
+                Timber.d("getJsonString уже выполняется, пропускаем дубликат. Активные запросы: ${activeRequests.size}")
+                true
+            } else {
+                activeRequests.add(requestKey)
+                Timber.d("Добавлен getJsonString в активные. Всего активных: ${activeRequests.size}")
+                false
             }
-            
-            // Если кэша нет - загружаем из assets
-            val assetsJson = loadFromAssets()
-            if (assetsJson != null) {
-                return assetsJson
-            }
-            
+        }
+        
+        if (shouldSkip) {
             return null
         }
+        
+        try {
+            val hasInternet = isNetworkAvailable()
+            
+            // Если интернета нет и не force refresh - сразу используем кэш/assets
+            if (!hasInternet && !forceRefresh) {
+                
+                // Пробуем загрузить из кэша
+                val cachedJson = loadFromCache()
+                if (cachedJson != null) {
+                    return cachedJson
+                }
+                
+                // Если кэша нет - загружаем из assets
+                val assetsJson = loadFromAssets()
+                if (assetsJson != null) {
+                    return assetsJson
+                }
+                
+                return null
+            }
         
         // Если есть интернет или force refresh - пытаемся обновить
         if (forceRefresh) {
@@ -507,6 +624,13 @@ class RemoteDataSource(private val context: Context) {
             android.util.Log.e("RemoteDataSource", "Все источники данных недоступны")
         }
         return null
+        } finally {
+            // Убираем запрос из активных
+            requestMutex.withLock {
+                activeRequests.remove(requestKey)
+                Timber.d("Удален getJsonString из активных. Осталось активных: ${activeRequests.size}")
+            }
+        }
     }
     
     /**
@@ -524,7 +648,10 @@ class RemoteDataSource(private val context: Context) {
         }
         
         try {
-            val jsonString = RetryUtils.retryNetwork {
+            val jsonString = com.example.lets_go_slavgorod.core.RetryUtils.retryWithBackoff(
+                maxRetries = 3,
+                initialDelay = 1000L
+            ) {
                 getJsonString(forceRefresh)
             }
             

@@ -8,7 +8,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.lets_go_slavgorod.data.local.AppDatabase
 import com.example.lets_go_slavgorod.data.local.entity.FavoriteTimeEntity
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
-import com.example.lets_go_slavgorod.ui.viewmodel.BusViewModel
+import com.example.lets_go_slavgorod.ui.viewmodel.FavoritesViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -38,7 +38,7 @@ import org.junit.Assert.*
 class FavoriteFlowTest {
     
     private lateinit var database: AppDatabase
-    private lateinit var viewModel: BusViewModel
+    private lateinit var viewModel: FavoritesViewModel
     private lateinit var context: Context
     
     @Before
@@ -52,7 +52,7 @@ class FavoriteFlowTest {
         ).allowMainThreadQueries().build()
         
         // Создаем ViewModel
-        viewModel = BusViewModel(context as Application)
+        viewModel = FavoritesViewModel(context as Application)
     }
     
     @After

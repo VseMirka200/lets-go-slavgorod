@@ -3,11 +3,15 @@ package com.example.lets_go_slavgorod.ui.viewmodel
 import android.app.Application
 import com.example.lets_go_slavgorod.data.model.BusRoute
 import com.example.lets_go_slavgorod.data.repository.BusRouteRepository
-import io.mockk.coEvery
-import io.mockk.mockk
+import org.mockito.Mock
+import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.whenever
+import org.mockito.kotlin.any
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -39,8 +43,6 @@ import kotlin.test.assertTrue
 class RoutesViewModelTest {
     
     private lateinit var testDispatcher: TestDispatcher
-    private lateinit var mockApplication: Application
-    private lateinit var mockRepository: BusRouteRepository
     private lateinit var viewModel: RoutesViewModel
     
     private val testRoutes = listOf(
@@ -52,11 +54,11 @@ class RoutesViewModelTest {
             isActive = true,
             isFavorite = false,
             color = "#FF6200EE",
-            pricePrimary = 50,
-            priceSecondary = 0,
+            pricePrimary = "50",
+            priceSecondary = "0",
             directionDetails = "Славгород (Рынок) — Яровое (МСЧ)",
             travelTime = "45 минут",
-            paymentMethods = listOf("Наличные", "Банковская карта")
+            paymentMethods = "Наличные, Банковская карта"
         ),
         BusRoute(
             id = "1",
@@ -66,25 +68,30 @@ class RoutesViewModelTest {
             isActive = true,
             isFavorite = false,
             color = "#FF1976D2",
-            pricePrimary = 25,
-            priceSecondary = 0,
+            pricePrimary = "25",
+            priceSecondary = "0",
             directionDetails = "Вокзал — Совхоз",
             travelTime = "20 минут",
-            paymentMethods = listOf("Наличные")
+            paymentMethods = "Наличные"
         )
     )
     
+    @Mock
+    private lateinit var mockApplication: Application
+    
+    @Mock
+    private lateinit var mockRepository: BusRouteRepository
+    
     @Before
     fun setup() {
+        MockitoAnnotations.openMocks(this)
         testDispatcher = StandardTestDispatcher()
         Dispatchers.setMain(testDispatcher)
         
-        mockApplication = mockk(relaxed = true)
-        mockRepository = mockk(relaxed = true)
-        
         // Настраиваем mock repository
-        coEvery { mockRepository.routes } returns flowOf(testRoutes)
-        coEvery { mockRepository.getRouteById(any()) } returns testRoutes.first()
+        val mockStateFlow = MutableStateFlow(testRoutes)
+        whenever(mockRepository.routes).thenReturn(mockStateFlow)
+        whenever(mockRepository.getRouteById(any())).thenReturn(testRoutes.first())
         
         viewModel = RoutesViewModel(mockApplication)
     }
@@ -123,7 +130,7 @@ class RoutesViewModelTest {
         val searchQuery = "102"
         
         // When
-        viewModel.updateSearchQuery(searchQuery)
+        viewModel.onSearchQueryChange(searchQuery)
         
         // Then
         assertEquals(searchQuery, viewModel.searchQuery.value)
@@ -157,7 +164,7 @@ class RoutesViewModelTest {
     @Test
     fun `should handle refresh`() {
         // When
-        viewModel.refreshRoutes()
+        viewModel.refresh()
         
         // Then
         // Проверяем что refresh был вызван (нет исключений)
@@ -167,10 +174,10 @@ class RoutesViewModelTest {
     @Test
     fun `should clear search query`() {
         // Given
-        viewModel.updateSearchQuery("test")
+        viewModel.onSearchQueryChange("test")
         
         // When
-        viewModel.updateSearchQuery("")
+        viewModel.onSearchQueryChange("")
         
         // Then
         assertEquals("", viewModel.searchQuery.value)

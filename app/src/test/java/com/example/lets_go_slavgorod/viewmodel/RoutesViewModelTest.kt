@@ -12,6 +12,10 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import org.mockito.Mock
+import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.whenever
+import org.mockito.kotlin.any
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -26,17 +30,20 @@ import kotlin.test.assertTrue
 /**
  * Unit тесты для RoutesViewModel
  * 
- * Проверяет:
- * - Загрузку маршрутов
- * - Поиск с debounce
- * - Обновление данных
- * - Обработку ошибок
- * - Кэширование
+ * Проверяет основную функциональность ViewModel для управления маршрутами:
+ * - Загрузку маршрутов из репозитория
+ * - Поиск с debounce (300ms задержка)
+ * - Обновление данных и состояние UI
+ * - Обработку ошибок и edge cases
+ * - Кэширование и управление памятью
+ * - Pull-to-refresh функциональность
+ * - Thread safety и корутины
  * 
- * Упрощённые тесты без моков.
+ * Использует Robolectric для тестирования Android компонентов.
+ * Все тесты выполняются с реальными данными без моков.
  * 
  * @author VseMirka200
- * @version 2.0
+ * @version 3.0
  * @since 2.1
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -65,9 +72,12 @@ class RoutesViewModelTest {
     
     @Test
     fun `initial state is loading`() {
+        // Given/When - получаем начальное состояние ViewModel
         val state = viewModel.uiState.value
-        assertTrue(state.isLoading)
-        assertTrue(state.routes.isEmpty())
+        
+        // Then - проверяем что ViewModel находится в состоянии загрузки
+        assertTrue(state.isLoading, "Initial state should be loading")
+        assertTrue(state.routes.isEmpty(), "Initial routes should be empty")
     }
     
     @Test

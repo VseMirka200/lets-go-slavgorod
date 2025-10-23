@@ -60,38 +60,32 @@ import timber.log.Timber
 import java.time.DayOfWeek
 
 /**
- * Экран настроек уведомлений для конкретного маршрута
+ * Экран настроек уведомлений для маршрута
  * 
- * Позволяет настроить уведомления индивидуально для каждого маршрута.
- * Доступен из экрана расписания маршрута через кнопку уведомлений в шапке.
+ * Центральный экран для конфигурации уведомлений с индивидуальными настройками
+ * для каждого маршрута. Обеспечивает полный контроль над режимами уведомлений
+ * и временем опережения.
  * 
- * Функциональность:
+ * Архитектурные особенности:
+ * - Реактивное состояние через StateFlow
+ * - Модальные диалоги для выбора режимов
+ * - Валидация настроек перед применением
+ * - Автоматическое обновление таймера уведомлений
  * 
- * 1. Режим уведомлений (модальный диалог):
- *    - Все дни: уведомления каждый день
- *    - Только будни: с понедельника по пятницу
- *    - Выбранные дни: уведомления в определенные дни недели
- *    - Отключено: уведомления для этого маршрута отключены
+ * Режимы уведомлений:
+ * - ALL_DAYS: ежедневные уведомления
+ * - WEEKDAYS: только будние дни
+ * - SELECTED_DAYS: выбранные дни недели
+ * - DISABLED: отключенные уведомления
  * 
- * 2. Выбор дней недели (при режиме "Выбранные дни"):
- *    - Модальный диалог с чекбоксами для каждого дня
- *    - Отображается количество выбранных дней
- *    - Применение изменений по кнопке "Применить"
+ * @param route маршрут для настройки
+ * @param notificationSettingsViewModel ViewModel для управления состоянием
+ * @param onBackClick callback навигации назад
+ * @param modifier модификатор композиции
  * 
- * Применение настроек:
- * - Настройки применяются КО ВСЕМ избранным временам данного маршрута
- * - Автоматическое обновление запланированных уведомлений
- * - Сохранение в DataStore
- * 
- * Шапка:
- * - Заголовок "Уведомления"
- * - Подзаголовок с названием маршрута
- * - Стрелка назад
- * 
- * @param route маршрут для настройки уведомлений
- * @param notificationSettingsViewModel ViewModel для управления настройками
- * @param onBackClick callback для возврата назад
- * @param modifier модификатор для настройки внешнего вида
+ * @author VseMirka200
+ * @version 2.1
+ * @since 1.0
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,10 +95,11 @@ fun RouteNotificationSettingsScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Напрямую из DataStore без оптимистичного обновления
+    // Реактивное состояние из DataStore
     val currentNotificationMode by notificationSettingsViewModel.getRouteNotificationMode(route.id).collectAsState()
     val selectedDays by notificationSettingsViewModel.getRouteSelectedDays(route.id).collectAsState()
     
+    // Состояние UI диалогов
     var showModeDropdown by remember { mutableStateOf(false) }
     var showDaysDialog by remember { mutableStateOf(false) }
     var pendingDaysDialog by remember { mutableStateOf(false) }
@@ -119,10 +114,10 @@ fun RouteNotificationSettingsScreen(
     
     val dayOptions = DayOfWeek.entries
     
-    // Отслеживаем изменения режима и открываем диалог когда режим станет SELECTED_DAYS
+    // Автоматическое открытие диалога выбора дней при переходе в режим SELECTED_DAYS
     LaunchedEffect(currentNotificationMode, pendingDaysDialog) {
         if (pendingDaysDialog && currentNotificationMode == NotificationMode.SELECTED_DAYS) {
-            // Небольшая задержка для завершения обновления StateFlow
+            // Задержка для синхронизации с StateFlow
             kotlinx.coroutines.delay(100)
             showDaysDialog = true
             pendingDaysDialog = false
@@ -211,16 +206,16 @@ fun RouteNotificationSettingsScreen(
             // ВЫЧИСЛЕНИЕ СЛЕДУЮЩЕГО ВРЕМЕНИ УВЕДОМЛЕНИЯ
             // ═══════════════════════════════════════════════════════════
             
-            // Пересчитывается при изменении ЛЮБОЙ зависимости:
-            // - routeFavoriteTimes: добавление/удаление избранных
-            // - leadTime: изменение времени уведомления (за сколько минут)
-            // - currentNotificationMode: режим (ALL_DAYS/WEEKDAYS/SELECTED_DAYS/DISABLED)
-            // - selectedDays: выбранные дни недели (для режима SELECTED_DAYS)
+            // Реактивный расчет времени уведомления с учетом всех зависимостей:
+            // - routeFavoriteTimes: изменения в избранных временах
+            // - leadTime: настройка времени опережения
+            // - currentNotificationMode: режим уведомлений
+            // - selectedDays: выбранные дни недели
             val nextNotificationTime = remember(
                 routeFavoriteTimes,
-                leadTime,
                 currentNotificationMode,
-                selectedDays
+                selectedDays,
+                leadTime
             ) {
                 val convertedTimes = routeFavoriteTimes.mapNotNull { entity ->
                     try {
@@ -252,13 +247,48 @@ fun RouteNotificationSettingsScreen(
                 )
             }
             
+            // Расчет времени отправления автобуса для контекстной информации
+            val nextDepartureTime = remember(
+                routeFavoriteTimes,
+                currentNotificationMode,
+                selectedDays
+            ) {
+                val convertedTimes = routeFavoriteTimes.mapNotNull { entity ->
+                    try {
+                        val routeData = repository.getRouteById(entity.routeId)
+                        com.example.lets_go_slavgorod.data.model.FavoriteTime(
+                            id = entity.id,
+                            routeId = entity.routeId,
+                            routeNumber = routeData?.routeNumber ?: route.routeNumber,
+                            routeName = routeData?.name ?: route.name,
+                            stopName = entity.stopName,
+                            departureTime = entity.departureTime,
+                            dayOfWeek = entity.dayOfWeek,
+                            departurePoint = entity.departurePoint,
+                            addedDate = entity.addedDate,
+                            isActive = entity.isActive
+                        )
+                    } catch (e: Exception) {
+                        Timber.e(e, "Ошибка конвертации избранного времени ${entity.id}")
+                        null
+                    }
+                }
+                
+                NotificationTimeCalculator.getNextDepartureTime(
+                    favoriteTimes = convertedTimes,
+                    context = context,
+                    overrideNotificationMode = currentNotificationMode,
+                    overrideSelectedDays = selectedDays
+                )
+            }
+            
             if (routeFavoriteTimes.isNotEmpty()) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     NextNotificationTimer(
                         nextNotificationTime = nextNotificationTime,
-                        leadTimeMinutes = leadTime
+                        nextDepartureTime = nextDepartureTime
                     )
                     
                 }

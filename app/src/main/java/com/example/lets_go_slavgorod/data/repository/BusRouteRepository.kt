@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
+import kotlin.math.pow
 
 /**
  * Центральный репозиторий для управления маршрутами автобусов
@@ -114,7 +115,7 @@ class BusRouteRepository(private val context: Context) {
     }
     
     /**
-     * Загружает начальные маршруты с оптимизацией
+     * Загружает начальные маршруты с оптимизацией и улучшенной обработкой ошибок
      * 
      * Логика загрузки:
      * 1. Попытка загрузки из RemoteDataSource (GitHub с fallback на кэш/assets)
@@ -122,6 +123,8 @@ class BusRouteRepository(private val context: Context) {
      * 3. Fallback на hardcoded данные
      * 4. Валидация данных
      * 5. Кэширование валидных маршрутов
+     * 
+     * ИСПРАВЛЕНО: Добавлен retry механизм и улучшенная обработка ошибок
      */
     private suspend fun loadInitialRoutes() {
         loadMutex.withLock {
@@ -131,11 +134,12 @@ class BusRouteRepository(private val context: Context) {
             
             
             try {
-                // Приоритет 1: Пытаемся загрузить из RemoteDataSource (умная загрузка)
-                val remoteRoutes = try {
+                // ИСПРАВЛЕНО: Добавлен retry механизм для надежности
+                val remoteRoutes = retryWithBackoff(
+                    maxRetries = 3,
+                    initialDelay = 1000L
+                ) {
                     remoteDataSource.loadRoutes(forceRefresh = false)
-                } catch (e: Exception) {
-                    null
                 }
                 
                 // Если удалённая загрузка успешна, используем её
@@ -399,5 +403,41 @@ class BusRouteRepository(private val context: Context) {
      */
     fun getRemoteDataSource(): RemoteDataSource? {
         return remoteDataSource
+    }
+    
+    /**
+     * ИСПРАВЛЕНО: Retry механизм с экспоненциальной задержкой
+     * 
+     * Выполняет операцию с повторными попытками при ошибках.
+     * Использует экспоненциальную задержку между попытками.
+     * 
+     * @param maxRetries максимальное количество попыток
+     * @param initialDelay начальная задержка в миллисекундах
+     * @param operation операция для выполнения
+     * @return результат операции или null при неудаче
+     */
+    private suspend fun <T> retryWithBackoff(
+        maxRetries: Int = 3,
+        initialDelay: Long = 1000L,
+        operation: suspend () -> T?
+    ): T? {
+        var lastException: Exception? = null
+        
+        repeat(maxRetries) { attempt ->
+            try {
+                return operation()
+            } catch (e: Exception) {
+                lastException = e
+                if (attempt < maxRetries - 1) {
+                    val delay = initialDelay * (2.0.pow(attempt.toDouble())).toLong()
+                    kotlinx.coroutines.delay(delay)
+                }
+            }
+        }
+        
+        lastException?.let { 
+            Timber.e(it, "Все попытки retry исчерпаны после $maxRetries попыток")
+        }
+        return null
     }
 }

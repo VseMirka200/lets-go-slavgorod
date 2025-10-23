@@ -2,18 +2,12 @@ package com.example.lets_go_slavgorod.core
 
 import kotlinx.coroutines.delay
 import timber.log.Timber
+import kotlin.math.pow
 
 /**
- * Утилиты для повторных попыток выполнения операций
+ * Утилиты для retry операций
  * 
- * Предоставляет функции для retry логики с exponential backoff
- * для сетевых запросов и других операций, которые могут временно не удаться.
- * 
- * Особенности:
- * - Exponential backoff для избежания перегрузки сервера
- * - Максимальное количество попыток
- * - Настраиваемые задержки
- * - Логирование попыток
+ * ИСПРАВЛЕНО: Централизованные утилиты для устранения дублирования кода
  * 
  * @author VseMirka200
  * @version 1.0
@@ -22,116 +16,67 @@ import timber.log.Timber
 object RetryUtils {
     
     /**
-     * Выполняет операцию с повторными попытками
+     * Выполняет операцию с повторными попытками при ошибках
      * 
-     * @param T тип возвращаемого значения
-     * @param times количество попыток (по умолчанию 3)
-     * @param initialDelay начальная задержка в миллисекундах (по умолчанию 1000)
-     * @param maxDelay максимальная задержка в миллисекундах (по умолчанию 10000)
-     * @param factor множитель для exponential backoff (по умолчанию 2.0)
+     * @param maxRetries максимальное количество попыток
+     * @param initialDelay начальная задержка в миллисекундах
      * @param operation операция для выполнения
-     * @return результат операции
-     * @throws Exception если все попытки исчерпаны
+     * @return результат операции или null при неудаче
      */
-    suspend fun <T> retry(
-        times: Int = 3,
+    suspend fun <T> retryWithBackoff(
+        maxRetries: Int = 3,
         initialDelay: Long = 1000L,
-        maxDelay: Long = 10000L,
-        factor: Double = 2.0,
-        operation: suspend () -> T
-    ): T {
-        var currentDelay = initialDelay
+        operation: suspend () -> T?
+    ): T? {
         var lastException: Exception? = null
         
-        repeat(times) { attempt ->
+        repeat(maxRetries) { attempt ->
             try {
                 return operation()
             } catch (e: Exception) {
                 lastException = e
-                
-                // Если это последняя попытка, не ждем
-                if (attempt == times - 1) {
-                    return@repeat
+                if (attempt < maxRetries - 1) {
+                    val delay = initialDelay * (2.0.pow(attempt.toDouble())).toLong()
+                    delay(delay)
                 }
-                
-                // Ждем перед следующей попыткой
-                delay(currentDelay)
-                
-                // Увеличиваем задержку для следующей попытки
-                currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelay)
             }
         }
         
-        // Если все попытки исчерпаны, выбрасываем последнее исключение
-        Timber.e(lastException, "Все $times попыток не удались")
-        throw lastException ?: Exception("All retry attempts failed")
-    }
-    
-    /**
-     * Выполняет операцию с повторными попытками и возвращает Result
-     * 
-     * @param T тип возвращаемого значения
-     * @param times количество попыток
-     * @param initialDelay начальная задержка
-     * @param maxDelay максимальная задержка
-     * @param factor множитель для exponential backoff
-     * @param operation операция для выполнения
-     * @return Result.Success с данными или Result.Error с исключением
-     */
-    suspend fun <T> retryWithResult(
-        times: Int = 3,
-        initialDelay: Long = 1000L,
-        maxDelay: Long = 10000L,
-        factor: Double = 2.0,
-        operation: suspend () -> T
-    ): Result<T> {
-        return try {
-            val result = retry(times, initialDelay, maxDelay, factor, operation)
-            Result.success(result)
-        } catch (e: Exception) {
-            Result.failure(e)
+        lastException?.let { 
+            Timber.e(it, "Все попытки retry исчерпаны после $maxRetries попыток")
         }
+        return null
     }
     
     /**
-     * Выполняет операцию с повторными попытками для сетевых запросов
+     * Выполняет операцию с фиксированной задержкой между попытками
      * 
-     * Специализированная версия для сетевых операций с оптимизированными параметрами.
-     * 
-     * @param T тип возвращаемого значения
-     * @param operation сетевая операция
-     * @return результат операции
+     * @param maxRetries максимальное количество попыток
+     * @param delayMs задержка между попытками в миллисекундах
+     * @param operation операция для выполнения
+     * @return результат операции или null при неудаче
      */
-    suspend fun <T> retryNetwork(
-        operation: suspend () -> T
-    ): T {
-        return retry(
-            times = 3,
-            initialDelay = 1000L,
-            maxDelay = 8000L,
-            factor = 2.0,
-            operation = operation
-        )
-    }
-    
-    /**
-     * Выполняет операцию с повторными попытками для операций с базой данных
-     * 
-     * Специализированная версия для операций с БД с быстрыми повторными попытками.
-     * 
-     * @param T тип возвращаемого значения
-     * @param operation операция с БД
-     * @return результат операции
-     */
-    suspend fun <T> retryDatabase(
-        operation: suspend () -> T
-    ): T {
-        return retry(
-            times = 2,
-            initialDelay = 100L,
-            maxDelay = 1000L,
-            factor = 3.0,
-            operation = operation
-        )
+    suspend fun <T> retryWithFixedDelay(
+        maxRetries: Int = 3,
+        delayMs: Long = 1000L,
+        operation: suspend () -> T?
+    ): T? {
+        var lastException: Exception? = null
+        
+        repeat(maxRetries) { attempt ->
+            try {
+                return operation()
+            } catch (e: Exception) {
+                lastException = e
+                if (attempt < maxRetries - 1) {
+                    delay(delayMs)
+                }
+            }
+        }
+        
+        lastException?.let { 
+            Timber.e(it, "Все попытки retry исчерпаны после $maxRetries попыток")
+        }
+        return null
     }
 }

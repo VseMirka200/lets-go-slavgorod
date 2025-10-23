@@ -146,3 +146,189 @@ routes_data_template.json
 
 # Git attributes (если не нужен)
 .gitattributes
+
+# GitHub Actions (если не нужны)
+.github/
+
+# Дополнительные IDE файлы
+.idea/caches/
+.idea/shelf/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/.name
+.idea/deploymentTargetSelector.xml
+.idea/deviceManager.xml
+.idea/assetWizardSettings.xml
+.idea/misc.xml
+.idea/deviceStreaming.xml
+
+# Android Studio 4.0+ files
+.idea/modules.xml
+.idea/vcs.xml
+.idea/compiler.xml
+.idea/encodings.xml
+.idea/libraries/
+.idea/runConfigurations/
+.idea/scopes/
+.idea/usage/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/.name
+.idea/deploymentTargetSelector.xml
+.idea/deviceManager.xml
+.idea/assetWizardSettings.xml
+.idea/misc.xml
+.idea/deviceStreaming.xml
+
+# Gradle build files
+.gradle/
+build/
+**/build/
+gradle-app.setting
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+
+# Kotlin build files
+.kotlin/
+*.kt.swp
+*.kt.swo
+
+# Android build files
+*.apk
+*.aar
+*.ap_
+*.aab
+*.dex
+*.class
+
+# Android Studio files
+.navigation/
+captures/
+*.iml
+*.ipr
+*.iws
+
+# External native build
+.externalNativeBuild/
+.cxx/
+
+# NDK
+obj/
+
+# Log files
+*.log
+*.hprof
+
+# OS files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*~
+
+# Editor files
+*.swp
+*.swo
+.vscode/
+.vs/
+
+# Cache and temp files
+.cache/
+tmp/
+temp/
+
+# Documentation temp files
+*.md~
+*.txt~
+
+# Build outputs
+app/build/outputs/
+app/build/reports/
+app/build/logs/
+
+# Lint files
+lint/intermediates/
+lint/generated/
+lint/outputs/
+lint/tmp/
+
+# Proguard
+proguard/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+fastlane/readme.md
+
+# Freeline
+freeline.py
+freeline/
+freeline_project_description.json
+
+# Version control
+vcs.xml
+
+# Google Services
+google-services.json
+
+# Keystore files (uncomment if needed)
+#*.jks
+#*.keystore
+
+# Local configuration
+local.properties
+
+# Temporary data files
+routes_data.json
+routes_data_template.json
+
+# GitHub Actions (if not needed)
+.github/
+
+# Git attributes (if not needed)
+.gitattributes
+
+# Additional Android Studio files
+.idea/caches/
+.idea/shelf/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/.name
+.idea/deploymentTargetSelector.xml
+.idea/deviceManager.xml
+.idea/assetWizardSettings.xml
+.idea/misc.xml
+.idea/deviceStreaming.xml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/compiler.xml
+.idea/encodings.xml
+.idea/libraries/
+.idea/runConfigurations/
+.idea/scopes/
+.idea/usage/
+
+# Kotlin build reports
+**/build/reports/kotlin-build/
+
+# Additional build files
+**/build/generated/
+**/build/intermediates/
+**/build/outputs/
+**/build/tmp/
+**/build/kotlin/
+**/build/snapshot/
+
+# Additional IDE files
+.idea/caches/
+.idea/shelf/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/.name
+.idea/deploymentTargetSelector.xml
+.idea/deviceManager.xml
+.idea/assetWizardSettings.xml
+.idea/misc.xml
+.idea/deviceStreaming.xml

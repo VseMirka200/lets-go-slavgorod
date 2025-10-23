@@ -1,6 +1,7 @@
 package com.example.lets_go_slavgorod.updates
 
 import android.content.Context
+import com.example.lets_go_slavgorod.domain.update.UpdateManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Before
 import org.junit.Test

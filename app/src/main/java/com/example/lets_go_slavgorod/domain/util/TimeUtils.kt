@@ -332,4 +332,49 @@ object TimeUtils {
     fun groupSchedulesByDayOfWeek(schedules: List<BusSchedule>): Map<Int, List<BusSchedule>> {
         return schedules.groupBy { it.dayOfWeek }
     }
+    
+    /**
+     * Форматирует время в строку HH:mm
+     * 
+     * @param calendar объект Calendar с временем
+     * @return отформатированная строка времени
+     */
+    fun formatTime(calendar: Calendar): String {
+        return timeFormat.format(calendar.time)
+    }
+    
+    /**
+     * Получает день недели из Calendar
+     * 
+     * @param calendar объект Calendar
+     * @return день недели (1-7, где 1 - воскресенье, 7 - суббота)
+     */
+    fun getDayOfWeek(calendar: Calendar): Int {
+        return calendar.get(Calendar.DAY_OF_WEEK)
+    }
+    
+    /**
+     * Проверяет, является ли день выходным
+     * 
+     * @param calendar объект Calendar
+     * @return true если день выходной (суббота или воскресенье)
+     */
+    fun isWeekend(calendar: Calendar): Boolean {
+        val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
+        return dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY
+    }
+    
+    /**
+     * Вычисляет количество минут между двумя временами
+     * 
+     * @param currentTime текущее время
+     * @param targetTime целевое время
+     * @return количество минут между временами
+     */
+    fun getMinutesUntil(currentTime: Calendar, targetTime: Calendar): Int {
+        val currentMillis = currentTime.timeInMillis
+        val targetMillis = targetTime.timeInMillis
+        val diffMillis = targetMillis - currentMillis
+        return (diffMillis / (1000 * 60)).toInt()
+    }
 }

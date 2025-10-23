@@ -51,7 +51,7 @@ import com.example.lets_go_slavgorod.ui.viewmodel.FavoritesViewModel
  * @param rightTitle заголовок для правой колонки
  * @param nextUpcomingLeftId ID ближайшего предстоящего рейса в левой колонке
  * @param nextUpcomingRightId ID ближайшего предстоящего рейса в правой колонке
- * @param viewModel BusViewModel для работы с избранными
+ * @param viewModel FavoritesViewModel для работы с избранными
  * @param route маршрут для контекста
  * @param showOnlyFavorites если true, показывать только избранные времена
  * @param showOnlyUpcoming если true, показывать только следующий рейс

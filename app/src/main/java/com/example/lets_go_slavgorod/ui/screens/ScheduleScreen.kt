@@ -160,9 +160,7 @@ fun ScheduleScreen(
             
             val startTime = System.currentTimeMillis()
             
-            // Загружаем расписание через ScheduleViewModel с принудительным обновлением
-            // Логика загрузки: принудительно обновляем для актуальности данных
-            // refreshSchedulesForRoute() очищает кэш и загружает свежие данные
+            // ИСПРАВЛЕНО: Загрузка расписания без remember (нельзя использовать в LaunchedEffect)
             val allSchedules = scheduleViewModel.refreshSchedulesForRoute(route.id)
             ConditionalLogging.debug("Schedule") { "Loaded ${allSchedules.size} schedules for route ${route.id}" }
             if (route.id == "102B") {
@@ -387,6 +385,55 @@ private fun getNextUpcomingScheduleId(schedules: List<BusSchedule>): String? {
     val firstTomorrow = schedules.firstOrNull()
     ConditionalLogging.debug("Schedule") { "No departures today. First tomorrow: ${firstTomorrow?.departureTime}" }
     return firstTomorrow?.id
+}
+
+/**
+ * Определяет ID ближайшего рейса с учетом избранных времен и настроек уведомлений
+ * 
+ * НОВАЯ ЛОГИКА: использует NotificationTimeCalculator для поиска ближайшего
+ * избранного времени с учетом настроек уведомлений.
+ * 
+ * @param schedules список расписаний для поиска
+ * @param routeId ID маршрута для поиска избранных времен
+ * @param viewModel FavoritesViewModel для доступа к избранным временам
+ * @return ID ближайшего рейса или null если нет избранных времен
+ */
+private fun getNextUpcomingScheduleIdWithFavorites(
+    schedules: List<BusSchedule>,
+    routeId: String,
+    viewModel: FavoritesViewModel
+): String? {
+    if (schedules.isEmpty()) return null
+    
+    // Получаем избранные времена для этого маршрута
+    val favoriteTimes = viewModel.favoriteTimes.value.filter { 
+        it.routeId == routeId && it.isActive 
+    }
+    
+    if (favoriteTimes.isEmpty()) {
+        // Если нет избранных времен, используем старую логику
+        return getNextUpcomingScheduleId(schedules)
+    }
+    
+    // Используем NotificationTimeCalculator для поиска ближайшего избранного времени
+    val nextDepartureTime = com.example.lets_go_slavgorod.domain.notification.NotificationTimeCalculator.getNextDepartureTime(
+        favoriteTimes = favoriteTimes,
+        context = null
+    )
+    
+    if (nextDepartureTime == null) {
+        return null
+    }
+    
+    // Находим расписание, которое соответствует времени отправления
+    val timeFormat = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+    val targetTimeString = timeFormat.format(java.util.Date.from(nextDepartureTime.atZone(java.time.ZoneId.systemDefault()).toInstant()))
+    
+    val matchingSchedule = schedules.find { schedule ->
+        schedule.departureTime == targetTimeString
+    }
+    
+    return matchingSchedule?.id
 }
 
 /**
