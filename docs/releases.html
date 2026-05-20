@@ -1,0 +1,77 @@
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Релизы приложения - Поехали! Славгород</title>
+    <meta
+        name="description"
+        content="Страница релизов проекта «Поехали! Славгород»: список версий, заметки о выпуске и ссылки на загрузку файлов из GitHub."
+    >
+    <link rel="icon" type="image/png" href="assets/images/app-logo.png">
+    <link rel="apple-touch-icon" href="assets/images/app-logo.png">
+    <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+    <header class="subpage-hero" id="top">
+        <nav class="topbar">
+            <a class="brand" href="index.html#top">
+                <img class="brand-logo" src="assets/images/brand-logo.png" alt="Логотип Поехали! Славгород">
+                <span class="brand-copy">
+                    <span>Поехали!</span>
+                    <span>Славгород</span>
+                </span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html#features">Возможности</a>
+                <a href="index.html#documents">Документы</a>
+                <a href="index.html#feedback">Контакты</a>
+                <a href="releases.html">Релизы</a>
+            </div>
+            <a class="nav-featured" href="schedule.html">Расписание</a>
+        </nav>
+
+        <section class="subpage-heading releases-hero">
+            <h1>Релизы проекта</h1>
+            <p class="hero-text releases-hero-text">
+                Здесь показываются релизы прямо из GitHub: свежие версии, заметки о выпуске и файлы для загрузки.
+            </p>
+            <div class="schedule-summary releases-summary">
+                <div class="schedule-chip">
+                    <span class="schedule-chip-label">Статус</span>
+                    <strong id="releases-load-state">Загрузка...</strong>
+                </div>
+                <div class="schedule-chip">
+                    <span class="schedule-chip-label">Последний релиз</span>
+                    <strong id="releases-latest-tag">Сейчас</strong>
+                </div>
+                <div class="schedule-chip">
+                    <span class="schedule-chip-label">Всего</span>
+                    <strong id="releases-count">0</strong>
+                </div>
+            </div>
+        </section>
+    </header>
+
+    <main class="releases-page">
+        <section class="section releases-panel">
+            <div class="releases-status-message" id="releases-status-message" role="status" aria-live="polite"></div>
+            <div class="releases-list" id="releases-list"></div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="site-footer-links">
+            <a href="index.html#documents">Документы</a>
+            <a href="index.html#feedback">Контакты</a>
+            <a href="schedule.html">Расписание</a>
+            <a href="releases.html">Релизы</a>
+            <a href="https://github.com/VseMirka200/lets-go-slavgorod" target="_blank" rel="noreferrer">Исходный код</a>
+            <a href="https://vk.com/letsgoslavgorod" target="_blank" rel="noreferrer">Группа ВКонтакте</a>
+        </div>
+    </footer>
+
+    <a class="back-to-top" href="#top" aria-label="Вернуться наверх">↑</a>
+
+    <script src="assets/js/releases-page.js"></script>
+</body>
+</html>

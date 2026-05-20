@@ -40,3 +40,11 @@ function setupHeroHeightSync() {
 }
 
 setupHeroHeightSync();
+
+const comingSoonPlayButton = document.querySelector("[data-coming-soon-play]");
+if (comingSoonPlayButton) {
+    comingSoonPlayButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        window.alert("Скоро и там будем");
+    });
+}

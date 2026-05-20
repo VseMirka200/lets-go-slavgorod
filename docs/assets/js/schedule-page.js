@@ -197,7 +197,9 @@ function getRouteDescription(route) {
         route.info,
         route.summary,
         route.text,
-        route.note
+        route.note,
+        route.notes,
+        route.remark
     ];
 
     return candidates
@@ -321,6 +323,7 @@ function buildRouteDetailCard(route) {
                     <span>Способ оплаты: ${paymentMethods}</span>
                     <span>Маршрут: ${route.name || `Автобус №${routeNumber}`}</span>
                 </div>
+                ${description ? `<p class="schedule-route-description">${description}</p>` : ""}
             </header>
             <div class="schedule-route-body">
                 <div class="schedule-departures">
@@ -359,11 +362,10 @@ function setupSchedulePage() {
     const results = document.getElementById("schedule-results");
     const statusMessage = document.getElementById("schedule-status-message");
     const searchInput = document.getElementById("schedule-search");
-    const reloadButton = document.getElementById("schedule-reload");
     const loadStateLabel = document.getElementById("schedule-load-state");
     const updatedAtLabel = document.getElementById("schedule-updated-at");
 
-    if (!root || !results || !statusMessage || !searchInput || !reloadButton || !loadStateLabel || !updatedAtLabel) {
+    if (!root || !results || !statusMessage || !searchInput || !loadStateLabel || !updatedAtLabel) {
         return;
     }
 
@@ -468,7 +470,6 @@ function setupSchedulePage() {
     };
 
     searchInput.addEventListener("input", applyFilter);
-    reloadButton.addEventListener("click", load);
     load();
 }
 
