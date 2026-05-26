@@ -1,3 +1,7 @@
+/**
+ * Выравнивает текстовую колонку героя по высоте с визуальной колонкой на широких экранах.
+ * Когда макет переходит в одну колонку, ограничение по высоте снимается.
+ */
 function syncHeroColumnsHeight() {
     const heroCopy = document.querySelector(".hero-copy");
     const heroVisual = document.querySelector(".hero-visual");
@@ -19,6 +23,10 @@ function syncHeroColumnsHeight() {
     }
 }
 
+/**
+ * Пересчитывает высоту колонок героя при изменении ширины окна или баннера.
+ * Так мы избегаем лишнего пустого пространства в первом экране на десктопе.
+ */
 function setupHeroHeightSync() {
     syncHeroColumnsHeight();
 
@@ -41,6 +49,10 @@ function setupHeroHeightSync() {
 
 setupHeroHeightSync();
 
+/**
+ * Оставляет кнопку-заглушку Google Play видимой, но неактивной до появления магазина.
+ * Это помогает показать пользователю, что место под ссылку зарезервировано сознательно.
+ */
 const comingSoonPlayButton = document.querySelector("[data-coming-soon-play]");
 if (comingSoonPlayButton) {
     comingSoonPlayButton.addEventListener("click", (event) => {

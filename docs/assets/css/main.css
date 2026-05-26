@@ -1,3 +1,4 @@
+/* Цветовая система, размеры и шрифты проекта */
 :root {
     --bg: #0c1220;
     --bg-soft: #131c2f;
@@ -21,6 +22,7 @@
     --font-accent: "Segoe UI", Arial, Helvetica, sans-serif;
 }
 
+/* Базовый сброс и универсальная геометрия */
 * {
     box-sizing: border-box;
 }
@@ -60,6 +62,7 @@ img {
     max-width: 100%;
 }
 
+/* Общая верхняя область страниц и контейнеры контента */
 .hero,
 .subpage-hero {
     padding: clamp(10px, 2vw, 18px) clamp(14px, 2.4vw, 18px) clamp(6px, 1.5vw, 12px);
@@ -92,6 +95,7 @@ img {
     min-width: 0;
 }
 
+/* Бренд и верхняя навигация */
 .brand {
     display: inline-flex;
     align-items: center;
@@ -170,6 +174,7 @@ img {
     color: #b6cdfc;
 }
 
+/* Hero-блок главной страницы */
 .hero-layout {
     display: grid;
     grid-template-columns: 1.1fr 0.9fr;
@@ -193,6 +198,7 @@ img {
     }
 }
 
+/* Заголовки, подписи и основной текст */
 .eyebrow,
 .card-kicker {
     display: inline-flex;
@@ -252,6 +258,7 @@ img {
     transform: translateY(-1px);
 }
 
+/* Уважение к системной настройке снижения анимаций */
 @media (prefers-reduced-motion: reduce) {
     html {
         scroll-behavior: auto;
@@ -1306,6 +1313,7 @@ img {
     word-break: break-word;
 }
 
+/* Адаптив для планшетов и маленьких экранов */
 @media (max-width: 980px) {
     .hero-layout,
     .feature-columns-grid,
@@ -1394,6 +1402,7 @@ img {
     }
 }
 
+/* Дополнительная подстройка для телефонов */
 @media (max-width: 640px) {
     .hero,
     .subpage-hero,
@@ -1586,6 +1595,7 @@ img {
     }
 }
 
+/* Узкие экраны: уменьшаем плотность и сохраняем читабельность */
 @media (max-width: 420px) {
     .hero-copy h1,
     .subpage-heading h1 {

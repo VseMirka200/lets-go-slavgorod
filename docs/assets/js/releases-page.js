@@ -1,6 +1,13 @@
+/**
+ * Метаданные репозитория, из которых собирается публичный URL GitHub Releases API.
+ * Хранить owner/repo в одном месте безопаснее, если репозиторий когда-нибудь переименуют.
+ */
 const GITHUB_REPO = "VseMirka200/lets-go-slavgorod";
 const GITHUB_RELEASES_API = `https://api.github.com/repos/${GITHUB_REPO}/releases?per_page=30`;
 
+/**
+ * Экранирует пользовательские строки перед вставкой в HTML.
+ */
 function escapeHtml(input) {
     return String(input)
         .replaceAll("&", "&amp;")
@@ -10,6 +17,10 @@ function escapeHtml(input) {
         .replaceAll("'", "&#039;");
 }
 
+/**
+ * Применяет тот же небольшой набор inline-Markdown, что используется на статических страницах.
+ * Реализация намеренно узкая, потому что заметки релизов пишутся в упрощённом GitHub-стиле, а не в полном Markdown.
+ */
 function applyInlineMarkdown(text) {
     let value = escapeHtml(text);
     const links = [];
@@ -24,6 +35,9 @@ function applyInlineMarkdown(text) {
     return value;
 }
 
+/**
+ * Преобразует небольшой поднабор Markdown в блочный HTML, безопасный для вставки.
+ */
 function markdownToHtml(markdown) {
     const lines = String(markdown || "").replaceAll("\r\n", "\n").split("\n");
     const html = [];
@@ -90,6 +104,9 @@ function markdownToHtml(markdown) {
     return html.join("\n");
 }
 
+/**
+ * Преобразует timestamp из GitHub в компактную строку локали ru-RU для интерфейса.
+ */
 function formatReleaseDate(value) {
     if (!value) {
         return "Дата не указана";
@@ -106,6 +123,9 @@ function formatReleaseDate(value) {
     }).format(date);
 }
 
+/**
+ * Приводит тело релиза к HTML или возвращает пустую строку, если текста нет.
+ */
 function formatReleaseBody(body) {
     const text = String(body ?? "").trim();
     if (!text) {
@@ -115,16 +135,11 @@ function formatReleaseBody(body) {
     return markdownToHtml(text);
 }
 
-function renderRelease(release) {
-    const name = escapeHtml(release.name || release.tag_name || "Без названия");
-    const tagName = escapeHtml(release.tag_name || "");
-    const publishedAt = escapeHtml(formatReleaseDate(release.published_at));
-    const isPrerelease = Boolean(release.prerelease);
-    const isDraft = Boolean(release.draft);
-    const body = formatReleaseBody(release.body);
-    const assets = Array.isArray(release.assets) ? release.assets : [];
-
-    const assetsMarkup = assets.length
+/**
+ * Собирает блок файлов релиза, включая аккуратный запасной вариант для пустого списка.
+ */
+function renderReleaseAssetsMarkup(assets) {
+    return assets.length
         ? assets.map((asset) => {
             const assetName = escapeHtml(asset.name || "Файл");
             const assetUrl = escapeHtml(asset.browser_download_url || "#");
@@ -138,6 +153,19 @@ function renderRelease(release) {
             `;
         }).join("")
         : `<div class="release-empty-assets">Файлы для этого релиза не приложены.</div>`;
+}
+
+/**
+ * Рендерит одну карточку релиза как самостоятельный HTML-фрагмент.
+ */
+function renderRelease(release) {
+    const name = escapeHtml(release.name || release.tag_name || "Без названия");
+    const tagName = escapeHtml(release.tag_name || "");
+    const publishedAt = escapeHtml(formatReleaseDate(release.published_at));
+    const isPrerelease = Boolean(release.prerelease);
+    const isDraft = Boolean(release.draft);
+    const body = formatReleaseBody(release.body);
+    const assets = Array.isArray(release.assets) ? release.assets : [];
 
     return `
         <article class="release-card">
@@ -159,10 +187,35 @@ function renderRelease(release) {
             <div class="release-assets">
                 <strong>Файлы релиза</strong>
                 <div class="release-assets-grid">
-                    ${assetsMarkup}
+                    ${renderReleaseAssetsMarkup(assets)}
                 </div>
             </div>
         </article>
+    `;
+}
+
+/**
+ * Рендерит пустое состояние, которое показывается, когда GitHub не вернул релизы.
+ */
+function renderEmptyReleaseState() {
+    return `
+        <div class="release-empty-state">
+            <strong>Релизы не найдены</strong>
+            <p>В репозитории пока нет опубликованных релизов.</p>
+        </div>
+    `;
+}
+
+/**
+ * Рендерит сообщение об ошибке, когда GitHub API недоступен.
+ */
+function renderReleaseErrorState(error) {
+    return `
+        <div class="release-empty-state release-empty-state-error">
+            <strong>Источник недоступен</strong>
+            <p>Проверьте доступность репозитория или попробуйте позже.</p>
+            <p class="release-error-detail">${escapeHtml(error.message || "unknown error")}</p>
+        </div>
     `;
 }
 
@@ -195,24 +248,11 @@ async function loadReleases() {
         countLabel.textContent = String(releaseList.length);
         latestTagLabel.textContent = releaseList[0]?.tag_name || "Нет релизов";
         statusMessage.textContent = releaseList.length ? "" : "Релизы пока не опубликованы.";
-        list.innerHTML = releaseList.length
-            ? releaseList.map(renderRelease).join("")
-            : `
-                <div class="release-empty-state">
-                    <strong>Релизы не найдены</strong>
-                    <p>В репозитории пока нет опубликованных релизов.</p>
-                </div>
-            `;
+        list.innerHTML = releaseList.length ? releaseList.map(renderRelease).join("") : renderEmptyReleaseState();
     } catch (error) {
         loadStateLabel.textContent = "Ошибка загрузки";
         statusMessage.textContent = "Не удалось получить релизы из GitHub.";
-        list.innerHTML = `
-            <div class="release-empty-state release-empty-state-error">
-                <strong>Источник недоступен</strong>
-                <p>Проверьте доступность репозитория или попробуйте позже.</p>
-                <p class="release-error-detail">${escapeHtml(error.message || "unknown error")}</p>
-            </div>
-        `;
+        list.innerHTML = renderReleaseErrorState(error);
     }
 }
 
