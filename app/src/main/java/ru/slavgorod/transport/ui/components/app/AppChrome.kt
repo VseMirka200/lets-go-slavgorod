@@ -214,7 +214,6 @@ internal fun ScheduleHeaderDetails(
     noteText: String? = null
 ) {
     if (route == null) return
-    val hasNoteText = !noteText.isNullOrBlank()
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -222,12 +221,7 @@ internal fun ScheduleHeaderDetails(
             containerColor = AppHeaderContainerColor,
             contentColor = AppHeaderContentColor
         ),
-        shape = RoundedCornerShape(
-            topStart = 0.dp,
-            topEnd = 0.dp,
-            bottomStart = if (hasNoteText) 16.dp else 0.dp,
-            bottomEnd = if (hasNoteText) 16.dp else 0.dp
-        )
+        shape = RoundedCornerShape(0.dp)
     ) {
         ScheduleHeaderDetailsContent(
             route = route,

@@ -2,7 +2,7 @@ package ru.slavgorod.transport.core
 
 object Constants {
 
-    const val APP_VERSION = "v3.0.0"
+    const val APP_VERSION = "v3.0.1"
     const val CARD_CORNER_RADIUS = 12
     const val SETTINGS_ITEM_SPACING = 12
     const val SETTINGS_HORIZONTAL_PADDING = 12

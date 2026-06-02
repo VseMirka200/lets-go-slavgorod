@@ -69,9 +69,9 @@ internal fun buildScheduleListDisplayState(
 
 internal fun resolveScheduleListBottomReserve(visibleSchedulesCount: Int): Dp {
     return when {
-        visibleSchedulesCount <= 5 -> 860.dp
-        visibleSchedulesCount <= 8 -> 520.dp
-        visibleSchedulesCount <= 12 -> 180.dp
+        visibleSchedulesCount <= 5 -> 120.dp
+        visibleSchedulesCount <= 8 -> 80.dp
+        visibleSchedulesCount <= 12 -> 40.dp
         else -> 0.dp
     }
 }

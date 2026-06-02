@@ -26,8 +26,8 @@ class ScheduleLayoutUtilsTest {
 
     @Test
     fun `list bottom reserve is larger for short schedules`() {
-        assertEquals(860.dp, resolveScheduleListBottomReserve(5))
-        assertEquals(520.dp, resolveScheduleListBottomReserve(8))
-        assertEquals(180.dp, resolveScheduleListBottomReserve(11))
+        assertEquals(120.dp, resolveScheduleListBottomReserve(5))
+        assertEquals(80.dp, resolveScheduleListBottomReserve(8))
+        assertEquals(40.dp, resolveScheduleListBottomReserve(11))
     }
 }

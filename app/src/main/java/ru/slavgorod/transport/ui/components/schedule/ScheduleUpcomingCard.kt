@@ -46,6 +46,41 @@ internal fun UpcomingSchedulesCard(
     layout: ScheduleResponsiveLayoutSpec,
     compactMode: Boolean = false,
     squareCorners: Boolean = false,
+    attachedToHeader: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    if (entries.isEmpty()) return
+
+    val cardShape = upcomingSchedulesCardShape(
+        compactMode = compactMode,
+        squareCorners = squareCorners,
+        attachedToHeader = attachedToHeader
+    )
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = cardShape,
+        colors = CardDefaults.cardColors(containerColor = UpcomingScheduleBoardColors.default().board),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        UpcomingSchedulesContent(
+            entries = entries,
+            currentTimeMillis = currentTimeMillis,
+            layout = layout,
+            compactMode = compactMode,
+            squareCorners = squareCorners || attachedToHeader,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+internal fun UpcomingSchedulesContent(
+    entries: List<UpcomingScheduleEntry>,
+    currentTimeMillis: Long,
+    layout: ScheduleResponsiveLayoutSpec,
+    compactMode: Boolean = false,
+    squareCorners: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     if (entries.isEmpty()) return
@@ -58,87 +93,87 @@ internal fun UpcomingSchedulesCard(
         val cardContentPadding = layout.upcoming.upcomingCardContentPadding
         val contentSpacing = layout.section.sectionVerticalSpacing
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = if (compactMode || squareCorners) RoundedCornerShape(0.dp) else RoundedCornerShape(
-                22.dp
-            ),
-            colors = CardDefaults.cardColors(containerColor = colors.board),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = cardContentPadding,
+                    top = layout.upcoming.upcomingCardTopPadding,
+                    end = cardContentPadding,
+                    bottom = layout.upcoming.upcomingCardBottomPadding
+                ),
+            verticalArrangement = Arrangement.spacedBy(layout.section.sectionVerticalSpacing)
         ) {
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(
-                        start = cardContentPadding,
-                        top = layout.upcoming.upcomingCardTopPadding,
-                        end = cardContentPadding,
-                        bottom = layout.upcoming.upcomingCardBottomPadding
-                    ),
-                verticalArrangement = Arrangement.spacedBy(layout.section.sectionVerticalSpacing)
+                    .heightIn(min = layout.upcoming.upcomingMinRowHeight),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
+                Icon(
+                    imageVector = Icons.Outlined.Schedule,
+                    contentDescription = null,
+                    modifier = Modifier.size(if (isTightLayout) 16.dp else if (isCompactLayout) 18.dp else 22.dp),
+                    tint = colors.content
+                )
+                Text(
+                    text = stringResource(R.string.schedule_upcoming_departures_title),
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontSize = layout.upcoming.upcomingHeaderFontSize,
+                        lineHeight = layout.upcoming.upcomingHeaderFontSize * 1.12f
+                    ),
+                    fontWeight = FontWeight.ExtraBold,
+                    color = colors.content,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = layout.upcoming.upcomingMinRowHeight),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Schedule,
-                        contentDescription = null,
-                        modifier = Modifier.size(if (isTightLayout) 16.dp else if (isCompactLayout) 18.dp else 22.dp),
-                        tint = colors.content
+                        .weight(1f)
+                        .padding(start = if (isTightLayout) 3.dp else 6.dp)
+                )
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(contentSpacing)) {
+                entries.forEachIndexed { index, entry ->
+                    val diffMinutes = resolveDepartureDiffMinutes(
+                        departureTime = entry.schedule.departureTime,
+                        currentTimeMillis = currentTimeMillis
                     )
-                    Text(
-                        text = stringResource(R.string.schedule_upcoming_departures_title),
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            fontSize = layout.upcoming.upcomingHeaderFontSize,
-                            lineHeight = layout.upcoming.upcomingHeaderFontSize * 1.12f
+                    val minutesLabel = diffMinutes?.let { buildCountdownLabel(it) }
+                        ?: stringResource(R.string.schedule_time_soon)
+
+                    UpcomingScheduleBoardRow(
+                        title = entry.title,
+                        countdownLabel = minutesLabel,
+                        departureTime = entry.schedule.departureTime,
+                        nextDepartureTime = entry.nextDepartureTime,
+                        colors = colors,
+                        textSpec = UpcomingScheduleTextSpec(
+                            primaryTextSize = layout.upcoming.upcomingPrimaryTextSize,
+                            supportingTextSize = layout.upcoming.upcomingSupportingTextSize
                         ),
-                        fontWeight = FontWeight.ExtraBold,
-                        color = colors.content,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(start = if (isTightLayout) 3.dp else 6.dp)
+                        fullWidthMode = squareCorners,
+                        compactMode = compactMode
                     )
-                }
-                Column(verticalArrangement = Arrangement.spacedBy(contentSpacing)) {
-                    entries.forEachIndexed { index, entry ->
-                        val diffMinutes = resolveDepartureDiffMinutes(
-                            departureTime = entry.schedule.departureTime,
-                            currentTimeMillis = currentTimeMillis
-                        )
-                        val minutesLabel = diffMinutes?.let { buildCountdownLabel(it) }
-                            ?: stringResource(R.string.schedule_time_soon)
 
-                        UpcomingScheduleBoardRow(
-                            title = entry.title,
-                            countdownLabel = minutesLabel,
-                            departureTime = entry.schedule.departureTime,
-                            nextDepartureTime = entry.nextDepartureTime,
-                            colors = colors,
-                            textSpec = UpcomingScheduleTextSpec(
-                                primaryTextSize = layout.upcoming.upcomingPrimaryTextSize,
-                                supportingTextSize = layout.upcoming.upcomingSupportingTextSize
-                            ),
-                            fullWidthMode = squareCorners,
-                            compactMode = compactMode
+                    if (index != entries.lastIndex) {
+                        HorizontalDivider(
+                            thickness = 1.5.dp,
+                            color = colors.divider,
+                            modifier = Modifier.fillMaxWidth()
                         )
-
-                        if (index != entries.lastIndex) {
-                            HorizontalDivider(
-                                thickness = 1.5.dp,
-                                color = colors.divider,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
                     }
                 }
             }
         }
     }
+}
+
+private fun upcomingSchedulesCardShape(
+    compactMode: Boolean,
+    squareCorners: Boolean,
+    attachedToHeader: Boolean
+) = when {
+    compactMode || squareCorners || attachedToHeader -> RoundedCornerShape(0.dp)
+    else -> RoundedCornerShape(22.dp)
 }
 
 private data class UpcomingScheduleBoardColors(
