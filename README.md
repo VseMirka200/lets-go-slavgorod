@@ -25,6 +25,13 @@
 - [Политика конфиденциальности](https://vsemirka200.github.io/lets-go-slavgorod/privacy.html)
 - [Используемые библиотеки](https://vsemirka200.github.io/lets-go-slavgorod/libraries.html)
 
+## Источники
+
+- [Исходный код проекта](https://github.com/VseMirka200/lets-go-slavgorod)
+- [Источник расписания по умолчанию](https://script.google.com/macros/s/AKfycbwKaCxx-FdDvlptqFCaWbg81ZWLvenzZ0e-sjgmgp8n2LYzzhCLokozPi9rTcbeXf2BNA/exec)
+- [Политика конфиденциальности](https://vsemirka200.github.io/lets-go-slavgorod/privacy.html)
+- [Публичная страница проекта](https://vsemirka200.github.io/lets-go-slavgorod/)
+
 ## Скриншоты
 
 <img width="200" src="docs/assets/screenshots/screenshot_1.png" alt="Главный экран приложения"> <img width="200" src="docs/assets/screenshots/screenshot_2.png" alt="Список маршрутов"> <img width="200" src="docs/assets/screenshots/screenshot_3.png" alt="Экран расписания"> <img width="200" src="docs/assets/screenshots/screenshot_4.png" alt="Настройки">
