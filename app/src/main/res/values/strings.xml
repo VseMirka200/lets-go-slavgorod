@@ -8,6 +8,8 @@
     <string name="about_app_description">Приложение «Поехали! Славгород» является неофициальным справочным приложением, не связано с администрацией, государственными учреждениями, такими перевозчиками, как ООО «Славгородское АТП», МУП «Торговый ряд г. Славгород», или иными муниципальными организациями, и не является их официальным приложением.</string>
     <string name="about_details">Подробнее</string>
     <string name="about_open_details_failed">Не удалось открыть страницу приложения</string>
+    <string name="about_privacy_policy">Политика конфиденциальности</string>
+    <string name="about_open_privacy_policy_failed">Не удалось открыть политику конфиденциальности</string>
     <string name="about_vk_group">Группа ВКонтакте</string>
     <string name="about_open_vk_group_failed">Не удалось открыть группу ВК</string>
     <string name="developer_name">VseMirka200</string>

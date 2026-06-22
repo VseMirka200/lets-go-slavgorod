@@ -34,6 +34,7 @@ import ru.slavgorod.transport.ui.components.settings.SettingsScreenScaffold
 import ru.slavgorod.transport.ui.components.settings.SettingsSurfaceCard
 
 private const val DETAILS_URL = "https://vsemirka200.github.io/lets-go-slavgorod/"
+private const val PRIVACY_POLICY_URL = "https://vsemirka200.github.io/lets-go-slavgorod/privacy.html"
 private const val VK_GROUP_URL = "https://vk.com/letsgoslavgorod"
 
 @Composable
@@ -74,6 +75,16 @@ fun AboutScreen(
                             context.openExternalUrl(
                                 url = DETAILS_URL,
                                 failureLogMessage = context.getString(R.string.about_open_details_failed)
+                            )
+                        }
+                    )
+                    AboutActionRow(
+                        title = stringResource(R.string.about_privacy_policy),
+                        icon = Icons.Outlined.Public,
+                        onClick = {
+                            context.openExternalUrl(
+                                url = PRIVACY_POLICY_URL,
+                                failureLogMessage = context.getString(R.string.about_open_privacy_policy_failed)
                             )
                         }
                     )

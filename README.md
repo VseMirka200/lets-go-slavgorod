@@ -21,9 +21,9 @@
 
 - [Публичная страница проекта](https://vsemirka200.github.io/lets-go-slavgorod/)
 - [Страница расписания](https://vsemirka200.github.io/lets-go-slavgorod/schedule.html)
-- [Политика безопасности](https://drive.google.com/file/d/1DsT6W4P2a21jH7KYwEBNUdwZCR4_hRtE/view?usp=sharing)
-- [Политика конфиденциальности](https://drive.google.com/file/d/1bru5Lo_PxcHaKhbvd50HXfUSo313j4Wp/view?usp=sharing)
-- [Используемые библиотеки](https://drive.google.com/file/d/1ie1B3zC8lElfXiPFyVj58C669fvtAVVd/view?usp=sharing)
+- [Политика безопасности](https://vsemirka200.github.io/lets-go-slavgorod/security.html)
+- [Политика конфиденциальности](https://vsemirka200.github.io/lets-go-slavgorod/privacy.html)
+- [Используемые библиотеки](https://vsemirka200.github.io/lets-go-slavgorod/libraries.html)
 
 ## Скриншоты
 
