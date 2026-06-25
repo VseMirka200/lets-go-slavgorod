@@ -27,6 +27,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -40,6 +41,7 @@ import ru.slavgorod.transport.logging.UserActionLogger
 import ru.slavgorod.transport.ui.components.app.AppDestructiveButton
 import ru.slavgorod.transport.ui.components.settings.SettingsScreenScaffold
 import ru.slavgorod.transport.ui.components.settings.SettingsSurfaceCard
+import ru.slavgorod.transport.ui.theme.scaleDpForFontScale
 
 @Composable
 fun ResetSettingsScreen(
@@ -51,6 +53,7 @@ fun ResetSettingsScreen(
     LaunchedEffect(Unit) {
         UserActionLogger.screenOpened(screenTitle)
     }
+    val fontScale = LocalDensity.current.fontScale
     val coroutineScope = rememberCoroutineScope()
     var showResetDialog by remember { mutableStateOf(false) }
 
@@ -63,13 +66,15 @@ fun ResetSettingsScreen(
                 .fillMaxSize()
                 .then(contentModifier)
                 .padding(
-                    start = Constants.SETTINGS_SCREEN_EDGE_PADDING.dp,
-                    top = Constants.SETTINGS_SCREEN_EDGE_PADDING.dp,
-                    end = Constants.SETTINGS_SCREEN_EDGE_PADDING.dp,
-                    bottom = 24.dp
+                    start = scaleDpForFontScale(Constants.SETTINGS_SCREEN_EDGE_PADDING.dp, fontScale),
+                    top = scaleDpForFontScale(Constants.SETTINGS_SCREEN_EDGE_PADDING.dp, fontScale),
+                    end = scaleDpForFontScale(Constants.SETTINGS_SCREEN_EDGE_PADDING.dp, fontScale),
+                    bottom = scaleDpForFontScale(24.dp, fontScale)
                 )
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(Constants.SETTINGS_ITEM_SPACING.dp)
+            verticalArrangement = Arrangement.spacedBy(
+                scaleDpForFontScale(Constants.SETTINGS_ITEM_SPACING.dp, fontScale)
+            )
         ) {
             ResetWarningCard(onResetClick = { showResetDialog = true })
             ResetSummaryCard(
@@ -107,6 +112,7 @@ fun ResetSettingsScreen(
 
 @Composable
 private fun ResetWarningCard(onResetClick: () -> Unit) {
+    val fontScale = LocalDensity.current.fontScale
     val warningTitle = stringResource(R.string.settings_reset_dialog_title)
     val warningText = stringResource(R.string.settings_reset_warning_text)
     val restartText = stringResource(R.string.settings_reset_restart_text)
@@ -117,21 +123,21 @@ private fun ResetWarningCard(onResetClick: () -> Unit) {
         containerColor = MaterialTheme.colorScheme.error,
         shadowElevation = 6.dp,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(
-            Constants.SETTINGS_SCREEN_EDGE_PADDING.dp
+            scaleDpForFontScale(Constants.SETTINGS_SCREEN_EDGE_PADDING.dp, fontScale)
         )
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(scaleDpForFontScale(8.dp, fontScale))
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(scaleDpForFontScale(8.dp, fontScale))
             ) {
                 Icon(
                     imageVector = Icons.Default.Warning,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onError,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(scaleDpForFontScale(24.dp, fontScale))
                 )
                 Text(
                     text = warningTitle,
@@ -153,7 +159,7 @@ private fun ResetWarningCard(onResetClick: () -> Unit) {
                 fontWeight = FontWeight.Medium
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(scaleDpForFontScale(8.dp, fontScale)))
 
             AppDestructiveButton(
                 onClick = onResetClick,
@@ -162,9 +168,9 @@ private fun ResetWarningCard(onResetClick: () -> Unit) {
                 Icon(
                     Icons.Default.Close,
                     contentDescription = null,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(scaleDpForFontScale(20.dp, fontScale))
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(scaleDpForFontScale(8.dp, fontScale)))
                 Text(actionLabel)
             }
         }
@@ -176,16 +182,17 @@ private fun ResetSummaryCard(
     title: String,
     lines: List<String>
 ) {
+    val fontScale = LocalDensity.current.fontScale
     SettingsSurfaceCard(
         modifier = Modifier.fillMaxWidth(),
         containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
         shadowElevation = 1.dp,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(
-            Constants.SETTINGS_SCREEN_EDGE_PADDING.dp
+            scaleDpForFontScale(Constants.SETTINGS_SCREEN_EDGE_PADDING.dp, fontScale)
         )
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(scaleDpForFontScale(8.dp, fontScale))
         ) {
             Text(
                 text = title,

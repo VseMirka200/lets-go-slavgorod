@@ -71,4 +71,15 @@ class ScheduleResponsiveLayoutTest {
         assertEquals(8.dp, spec.upcoming.upcomingBottomSpacing)
         assertEquals(520.dp, spec.section.twoColumnLayoutMinWidth)
     }
+
+    @Test
+    fun `resolveScheduleResponsiveLayout grows measurements when font scale increases`() {
+        val regular = resolveScheduleResponsiveLayout(600.dp)
+        val scaled = resolveScheduleResponsiveLayout(600.dp, fontScale = 1.4f)
+
+        assertTrue(scaled.card.cardHorizontalPadding.value > regular.card.cardHorizontalPadding.value)
+        assertTrue(scaled.card.departureTimeFontSize.value > regular.card.departureTimeFontSize.value)
+        assertTrue(scaled.header.headerTitleFontSize.value > regular.header.headerTitleFontSize.value)
+        assertTrue(scaled.upcoming.upcomingMinRowHeight > regular.upcoming.upcomingMinRowHeight)
+    }
 }

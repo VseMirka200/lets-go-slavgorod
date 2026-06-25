@@ -19,12 +19,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import ru.slavgorod.transport.ui.components.app.AppDestructiveButton
 import ru.slavgorod.transport.ui.components.app.AppSecondaryButton
+import ru.slavgorod.transport.ui.theme.scaleDpForFontScale
 
 @Composable
 internal fun ResetConfirmationDialog(
@@ -35,6 +37,7 @@ internal fun ResetConfirmationDialog(
     onConfirm: () -> Unit,
     onCancel: () -> Unit
 ) {
+    val fontScale = LocalDensity.current.fontScale
     BackHandler {}
     Dialog(
         onDismissRequest = {},
@@ -43,7 +46,7 @@ internal fun ResetConfirmationDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 12.dp),
+                .padding(horizontal = scaleDpForFontScale(12.dp, fontScale)),
             contentAlignment = Alignment.Center
         ) {
             Surface(
@@ -52,30 +55,30 @@ internal fun ResetConfirmationDialog(
                 shadowElevation = 10.dp,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .widthIn(max = 420.dp)
+                    .widthIn(max = scaleDpForFontScale(420.dp, fontScale))
             ) {
                 Column(
-                    modifier = Modifier.padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    modifier = Modifier.padding(scaleDpForFontScale(24.dp, fontScale)),
+                    verticalArrangement = Arrangement.spacedBy(scaleDpForFontScale(16.dp, fontScale))
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(scaleDpForFontScale(12.dp, fontScale))) {
                         Surface(
                             shape = MaterialTheme.shapes.large,
                             color = MaterialTheme.colorScheme.error
                         ) {
                             Row(
                                 modifier = Modifier.padding(
-                                    horizontal = 12.dp,
-                                    vertical = 8.dp
+                                    horizontal = scaleDpForFontScale(12.dp, fontScale),
+                                    vertical = scaleDpForFontScale(8.dp, fontScale)
                                 ),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(scaleDpForFontScale(8.dp, fontScale))
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Warning,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onError,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(scaleDpForFontScale(18.dp, fontScale))
                                 )
                                 Text(
                                     text = title,
@@ -95,7 +98,7 @@ internal fun ResetConfirmationDialog(
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(scaleDpForFontScale(12.dp, fontScale))
                     ) {
                         AppDestructiveButton(
                             onClick = onConfirm,

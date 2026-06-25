@@ -25,10 +25,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import ru.slavgorod.transport.ui.theme.scaleDpForFontScale
 
 @Composable
 fun SettingsMenuRow(
@@ -135,11 +137,12 @@ private fun SettingsMenuRowIcon(
     title: String,
     icon: ImageVector
 ) {
+    val fontScale = LocalDensity.current.fontScale
     Icon(
         imageVector = icon,
         contentDescription = title,
         tint = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.size(24.dp)
+        modifier = Modifier.size(scaleDpForFontScale(24.dp, fontScale))
     )
 }
 
@@ -185,16 +188,20 @@ internal fun SettingsRowShell(
     contentHorizontalPadding: Dp = 10.dp,
     contentVerticalPadding: Dp = 16.dp
 ) {
+    val fontScale = LocalDensity.current.fontScale
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(scaleDpForFontScale(16.dp, fontScale)))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick
             )
-            .padding(horizontal = contentHorizontalPadding, vertical = contentVerticalPadding),
+            .padding(
+                horizontal = scaleDpForFontScale(contentHorizontalPadding, fontScale),
+                vertical = scaleDpForFontScale(contentVerticalPadding, fontScale)
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = contentHorizontalArrangement
     ) {
