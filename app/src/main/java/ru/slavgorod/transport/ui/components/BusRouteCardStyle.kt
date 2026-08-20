@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import ru.slavgorod.transport.R
 import ru.slavgorod.transport.ui.theme.DesignTokens
+import ru.slavgorod.transport.ui.theme.scaleDpForFontScale
 
 @Composable
 internal fun rememberRouteCardBackgroundColor(
@@ -68,30 +69,33 @@ internal fun Modifier.routeCardClickable(
         }
 }
 
-internal fun routeGridSizing(gridColumns: Int): Triple<Dp, Dp, Dp> {
+internal fun routeGridSizing(
+    gridColumns: Int,
+    fontScale: Float = 1f
+): Triple<Dp, Dp, Dp> {
     return when (gridColumns) {
         1 -> Triple(
-            DesignTokens.Size.Card.Height.Grid1Column,
-            DesignTokens.Spacing.Large,
-            DesignTokens.Spacing.Medium - 4.dp
+            scaleDpForFontScale(DesignTokens.Size.Card.Height.Grid1Column, fontScale),
+            scaleDpForFontScale(DesignTokens.Spacing.Large, fontScale),
+            scaleDpForFontScale(DesignTokens.Spacing.Medium - 4.dp, fontScale)
         )
 
         2 -> Triple(
-            DesignTokens.Size.Card.Height.Grid2Columns,
-            DesignTokens.Spacing.Medium + 4.dp,
-            DesignTokens.Spacing.Medium
+            scaleDpForFontScale(DesignTokens.Size.Card.Height.Grid2Columns, fontScale),
+            scaleDpForFontScale(DesignTokens.Spacing.Medium + 4.dp, fontScale),
+            scaleDpForFontScale(DesignTokens.Spacing.Medium, fontScale)
         )
 
         3 -> Triple(
-            DesignTokens.Size.Card.Height.Grid3Columns,
-            DesignTokens.Spacing.Medium,
-            DesignTokens.Spacing.Small + 4.dp
+            scaleDpForFontScale(DesignTokens.Size.Card.Height.Grid3Columns, fontScale),
+            scaleDpForFontScale(DesignTokens.Spacing.Medium, fontScale),
+            scaleDpForFontScale(DesignTokens.Spacing.Small + 4.dp, fontScale)
         )
 
         else -> Triple(
-            DesignTokens.Size.Card.Height.Grid4Columns,
-            DesignTokens.Spacing.Small + 4.dp,
-            DesignTokens.Spacing.Small
+            scaleDpForFontScale(DesignTokens.Size.Card.Height.Grid4Columns, fontScale),
+            scaleDpForFontScale(DesignTokens.Spacing.Small + 4.dp, fontScale),
+            scaleDpForFontScale(DesignTokens.Spacing.Small, fontScale)
         )
     }
 }

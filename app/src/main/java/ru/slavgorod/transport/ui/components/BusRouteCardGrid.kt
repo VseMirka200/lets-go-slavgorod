@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -16,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -37,8 +39,9 @@ internal fun BusRouteCardGrid(
 ) {
     val boxBackgroundColor = rememberRouteCardBackgroundColor(routeColor = route.color)
     val interactionSource = remember { MutableInteractionSource() }
-    val (cardHeight, cardPadding, spacerHeight) = remember(gridColumns) {
-        routeGridSizing(gridColumns)
+    val fontScale = LocalDensity.current.fontScale
+    val (cardHeight, cardPadding, spacerHeight) = remember(gridColumns, fontScale) {
+        routeGridSizing(gridColumns, fontScale)
     }
     val routeNumberStyle = routeNumberTextStyle(
         routeNumber = route.routeNumber,
@@ -58,14 +61,14 @@ internal fun BusRouteCardGrid(
                 onRouteClick = onRouteClick,
                 onRouteLongPress = onRouteLongPress
             )
-            .height(cardHeight),
+            .heightIn(min = cardHeight),
         backgroundColor = boxBackgroundColor,
         shape = RoundedCornerShape(16.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(cardHeight)
+                .heightIn(min = cardHeight)
                 .padding(cardPadding)
         ) {
             Column(

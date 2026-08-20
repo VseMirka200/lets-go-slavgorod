@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -32,8 +33,10 @@ import ru.slavgorod.transport.core.Constants
 import ru.slavgorod.transport.logging.UserActionLogger
 import ru.slavgorod.transport.ui.components.settings.SettingsScreenScaffold
 import ru.slavgorod.transport.ui.components.settings.SettingsSurfaceCard
+import ru.slavgorod.transport.ui.theme.scaleDpForFontScale
 
 private const val DETAILS_URL = "https://vsemirka200.github.io/lets-go-slavgorod/"
+private const val PRIVACY_POLICY_URL = "https://vsemirka200.github.io/lets-go-slavgorod/privacy.html"
 private const val VK_GROUP_URL = "https://vk.com/letsgoslavgorod"
 
 @Composable
@@ -44,6 +47,7 @@ fun AboutScreen(
     scrollEnabled: Boolean = true
 ) {
     val context = LocalContext.current
+    val fontScale = LocalDensity.current.fontScale
 
     LaunchedEffect(Unit) {
         UserActionLogger.screenOpened(R.string.about_screen_title)
@@ -55,18 +59,18 @@ fun AboutScreen(
                 .then(modifier)
                 .then(if (showTopBar) Modifier.fillMaxSize() else Modifier.fillMaxWidth())
                 .padding(
-                    start = Constants.SETTINGS_SCREEN_EDGE_PADDING.dp,
-                    end = Constants.SETTINGS_SCREEN_EDGE_PADDING.dp,
-                    top = Constants.SETTINGS_SCREEN_EDGE_PADDING.dp,
-                    bottom = 24.dp
+                    start = scaleDpForFontScale(Constants.SETTINGS_SCREEN_EDGE_PADDING.dp, fontScale),
+                    end = scaleDpForFontScale(Constants.SETTINGS_SCREEN_EDGE_PADDING.dp, fontScale),
+                    top = scaleDpForFontScale(Constants.SETTINGS_SCREEN_EDGE_PADDING.dp, fontScale),
+                    bottom = scaleDpForFontScale(24.dp, fontScale)
                 )
                 .then(if (scrollEnabled) Modifier.verticalScroll(rememberScrollState()) else Modifier),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(scaleDpForFontScale(8.dp, fontScale))
         ) {
             AboutHeaderBlock(appVersion = Constants.APP_VERSION)
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(scaleDpForFontScale(4.dp, fontScale))) {
                 AboutDescriptionBlock()
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(scaleDpForFontScale(4.dp, fontScale))) {
                     AboutActionRow(
                         title = stringResource(R.string.about_details),
                         icon = Icons.Outlined.Public,
@@ -74,6 +78,16 @@ fun AboutScreen(
                             context.openExternalUrl(
                                 url = DETAILS_URL,
                                 failureLogMessage = context.getString(R.string.about_open_details_failed)
+                            )
+                        }
+                    )
+                    AboutActionRow(
+                        title = stringResource(R.string.about_privacy_policy),
+                        icon = Icons.Outlined.Public,
+                        onClick = {
+                            context.openExternalUrl(
+                                url = PRIVACY_POLICY_URL,
+                                failureLogMessage = context.getString(R.string.about_open_privacy_policy_failed)
                             )
                         }
                     )
@@ -105,26 +119,27 @@ private fun AboutHeaderBlock(
     appVersion: String,
     modifier: Modifier = Modifier
 ) {
+    val fontScale = LocalDensity.current.fontScale
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(
-                horizontal = Constants.SETTINGS_SCREEN_EDGE_PADDING.dp,
-                vertical = 4.dp
+                horizontal = scaleDpForFontScale(Constants.SETTINGS_SCREEN_EDGE_PADDING.dp, fontScale),
+                vertical = scaleDpForFontScale(4.dp, fontScale)
             ),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(scaleDpForFontScale(12.dp, fontScale)),
         verticalAlignment = Alignment.Top
     ) {
         Image(
             painter = painterResource(id = R.drawable.ic_lets_go_slavgorod),
             contentDescription = stringResource(id = R.string.app_name),
-            modifier = Modifier.size(58.dp)
+            modifier = Modifier.size(scaleDpForFontScale(58.dp, fontScale))
         )
 
         Column(
             modifier = Modifier
                 .weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            verticalArrangement = Arrangement.spacedBy(scaleDpForFontScale(2.dp, fontScale))
         ) {
             Text(
                 text = stringResource(id = R.string.app_name),
@@ -153,10 +168,11 @@ private fun AboutHeaderBlock(
 private fun AboutDescriptionBlock(
     modifier: Modifier = Modifier
 ) {
+    val fontScale = LocalDensity.current.fontScale
     SettingsSurfaceCard(
         modifier = modifier.fillMaxWidth(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(
-            Constants.SETTINGS_SCREEN_EDGE_PADDING.dp
+            scaleDpForFontScale(Constants.SETTINGS_SCREEN_EDGE_PADDING.dp, fontScale)
         )
     ) {
         Text(
@@ -175,11 +191,12 @@ private fun AboutActionRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val fontScale = LocalDensity.current.fontScale
     SettingsSurfaceCard(
         modifier = modifier.fillMaxWidth(),
         onClick = onClick,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(
-            Constants.SETTINGS_SCREEN_EDGE_PADDING.dp
+            scaleDpForFontScale(Constants.SETTINGS_SCREEN_EDGE_PADDING.dp, fontScale)
         )
     ) {
         Row(
@@ -188,13 +205,13 @@ private fun AboutActionRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(scaleDpForFontScale(12.dp, fontScale)),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = title,
-                    modifier = Modifier.size(22.dp),
+                    modifier = Modifier.size(scaleDpForFontScale(22.dp, fontScale)),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
@@ -207,7 +224,7 @@ private fun AboutActionRow(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = title,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(scaleDpForFontScale(18.dp, fontScale)),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

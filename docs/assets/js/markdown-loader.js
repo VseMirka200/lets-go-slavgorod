@@ -1,3 +1,7 @@
+/**
+ * Экранирует обычный текст перед вставкой в innerHTML.
+ * Это граница безопасности для облегчённого Markdown-рендерера.
+ */
 function escapeHtml(input) {
     return String(input)
         .replaceAll("&", "&amp;")
@@ -7,6 +11,10 @@ function escapeHtml(input) {
         .replaceAll("'", "&#039;");
 }
 
+/**
+ * Рендерит небольшой набор inline-разметки Markdown:
+ * кодовые фрагменты, явные ссылки и обычные URL.
+ */
 function applyInlineMarkdown(text) {
     let value = escapeHtml(text);
     const links = [];
@@ -21,6 +29,11 @@ function applyInlineMarkdown(text) {
     return value;
 }
 
+/**
+ * Преобразует поддерживаемый поднабор Markdown в семантические HTML-блоки.
+ * Парсер намеренно остаётся маленьким, потому что сайту нужны только заголовки,
+ * абзацы, списки, ссылки и встроенный код.
+ */
 function markdownToHtml(markdown) {
     const lines = markdown.replaceAll("\r\n", "\n").split("\n");
     const html = [];
@@ -87,6 +100,10 @@ function markdownToHtml(markdown) {
     return html.join("\n");
 }
 
+/**
+ * Загружает первый доступный Markdown-источник и выводит его в целевой контейнер.
+ * Поддержка нескольких источников нужна, чтобы страница корректно переживала сбой одного URL.
+ */
 async function loadMarkdownDocument() {
     const container = document.getElementById("policy-content");
     if (!container) return;
@@ -104,7 +121,7 @@ async function loadMarkdownDocument() {
             container.innerHTML = markdownToHtml(text);
             return;
         } catch (_) {
-            // Try the next configured source.
+            // Пробуем следующий настроенный источник.
         }
     }
 

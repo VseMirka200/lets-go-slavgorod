@@ -1,9 +1,35 @@
+/**
+ * Стандартная точка входа Google Apps Script, которая отдаёт JSON расписания.
+ * Пользователь может переопределить её через query-параметр `source`.
+ */
 const DEFAULT_SCHEDULE_SOURCE = "https://script.google.com/macros/s/AKfycbwKaCxx-FdDvlptqFCaWbg81ZWLvenzZ0e-sjgmgp8n2LYzzhCLokozPi9rTcbeXf2BNA/exec";
+
+/**
+ * Префикс для всех записей localStorage, связанных с кэшем расписания.
+ */
 const SCHEDULE_CACHE_PREFIX = "lets-go-slavgorod:schedule-cache:";
+
+/**
+ * Общие настройки форматирования даты для всех временных меток на странице расписания.
+ */
+const SCHEDULE_DATE_FORMAT_OPTIONS = {
+    dateStyle: "medium",
+    timeStyle: "short"
+};
 
 let currentScheduleSourceUrl = DEFAULT_SCHEDULE_SOURCE;
 let currentRouteQuery = "";
 
+/**
+ * Форматирует дату или timestamp в единый вид, принятый на странице расписания.
+ */
+function formatScheduleDate(value) {
+    return new Intl.DateTimeFormat("ru-RU", SCHEDULE_DATE_FORMAT_OPTIONS).format(new Date(value));
+}
+
+/**
+ * Экранирует пользовательские значения перед вставкой в HTML.
+ */
 function escapeHtml(input) {
     return String(input)
         .replaceAll("&", "&amp;")
@@ -13,6 +39,10 @@ function escapeHtml(input) {
         .replaceAll("'", "&#039;");
 }
 
+/**
+ * Схлопывает пробелы, обрезает строку и переводит её в нижний регистр.
+ * Используется для поиска, чтобы маршрут находился независимо от оформления текста.
+ */
 function normalizeText(value) {
     return String(value ?? "")
         .trim()
@@ -20,14 +50,24 @@ function normalizeText(value) {
         .toLowerCase();
 }
 
+/**
+ * Возвращает человекочитаемую подпись маршрута для интерфейса.
+ * Если номер отсутствует, используется id маршрута.
+ */
 function formatRouteNumber(route) {
     return route.routeNumber || route.id || "—";
 }
 
+/**
+ * Выбирает наиболее подходящее значение для query-параметра `route`.
+ */
 function getRouteQueryValue(route) {
     return route.routeNumber || route.id || route.name || "";
 }
 
+/**
+ * Строит ссылку на ту же страницу с сохранением параметров route/source.
+ */
 function buildRouteHref(route, sourceUrl) {
     const url = new URL(window.location.href);
     url.searchParams.set("route", getRouteQueryValue(route));
@@ -41,6 +81,9 @@ function buildRouteHref(route, sourceUrl) {
     return `${url.pathname}${url.search}${url.hash}`;
 }
 
+/**
+ * Проверяет, соответствует ли маршрут текущему запросу маршрута.
+ */
 function routeMatchesQuery(route, routeQuery) {
     const normalizedQuery = normalizeText(routeQuery);
     if (!normalizedQuery) {
@@ -61,6 +104,9 @@ function routeMatchesQuery(route, routeQuery) {
     return candidates.some((candidate) => candidate === normalizedQuery || candidate.includes(normalizedQuery));
 }
 
+/**
+ * Склеивает все поисковые данные маршрута в одну нормализованную строку.
+ */
 function buildSearchText(route) {
     const scheduleText = (route.schedules || []).map((schedule) => [
         schedule.departurePoint,
@@ -85,6 +131,9 @@ function buildSearchText(route) {
     ].join(" "));
 }
 
+/**
+ * Сортирует маршруты в естественном порядке, чтобы числовые номера шли по возрастанию.
+ */
 function sortRoutes(routes) {
     return [...routes].sort((left, right) => {
         const leftNumber = Number.parseFloat(formatRouteNumber(left).replace(",", "."));
@@ -102,6 +151,9 @@ function sortRoutes(routes) {
     });
 }
 
+/**
+ * Извлекает пригодный массив маршрутов из любой формы ответа бэкенда.
+ */
 function parseRoutesPayload(payload) {
     if (Array.isArray(payload)) {
         return payload;
@@ -114,6 +166,9 @@ function parseRoutesPayload(payload) {
     return [];
 }
 
+/**
+ * Проверяет, доступна ли запись в localStorage в текущем браузерном контексте.
+ */
 function canUseStorage() {
     try {
         const testKey = `${SCHEDULE_CACHE_PREFIX}test`;
@@ -125,10 +180,16 @@ function canUseStorage() {
     }
 }
 
+/**
+ * Возвращает ключ кэша для указанного URL источника расписания.
+ */
 function getScheduleCacheKey(sourceUrl) {
     return `${SCHEDULE_CACHE_PREFIX}${sourceUrl}`;
 }
 
+/**
+ * Читает кэшированные маршруты и время последнего обновления из localStorage.
+ */
 function readScheduleCache(sourceUrl) {
     if (!canUseStorage()) {
         return null;
@@ -154,6 +215,9 @@ function readScheduleCache(sourceUrl) {
     }
 }
 
+/**
+ * Записывает нормализованный список маршрутов в localStorage для офлайн-доступа.
+ */
 function writeScheduleCache(sourceUrl, routes, updatedAt) {
     if (!canUseStorage()) {
         return;
@@ -165,10 +229,13 @@ function writeScheduleCache(sourceUrl, routes, updatedAt) {
             updatedAt: updatedAt || new Date().toISOString()
         }));
     } catch {
-        // Ignore storage quota and privacy mode failures.
+        // Игнорируем переполнение хранилища и ограничения приватного режима.
     }
 }
 
+/**
+ * Группирует рейсы по пункту отправления, чтобы детальная страница могла строить секции.
+ */
 function groupSchedulesByDeparturePoint(schedules) {
     const groups = new Map();
 
@@ -188,6 +255,9 @@ function groupSchedulesByDeparturePoint(schedules) {
     });
 }
 
+/**
+ * Достаёт человекочитаемое описание маршрута из набора возможных полей источника.
+ */
 function getRouteDescription(route) {
     const candidates = [
         route.description,
@@ -197,7 +267,9 @@ function getRouteDescription(route) {
         route.info,
         route.summary,
         route.text,
-        route.note
+        route.note,
+        route.notes,
+        route.remark
     ];
 
     return candidates
@@ -205,6 +277,10 @@ function getRouteDescription(route) {
         .find(Boolean) || "";
 }
 
+/**
+ * Преобразует время отправления в формате HH:mm в минуты от начала суток.
+ * Возвращает null, если значение отсутствует или записано неверно.
+ */
 function parseDepartureMinutes(value) {
     const match = String(value ?? "").match(/(\d{1,2}):(\d{2})/);
     if (!match) {
@@ -220,6 +296,10 @@ function parseDepartureMinutes(value) {
     return hours * 60 + minutes;
 }
 
+/**
+ * Находит ближайший предстоящий рейс в группе расписания.
+ * Если на сегодня ничего не осталось, возвращается самый ранний валидный рейс.
+ */
 function findNearestSchedule(schedules) {
     const now = new Date();
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -248,6 +328,9 @@ function findNearestSchedule(schedules) {
         .sort((left, right) => left.minutes - right.minutes || left.index - right.index)[0].schedule;
 }
 
+/**
+ * Рендерит компактную карточку результата поиска для списка маршрутов.
+ */
 function buildRouteSummaryCard(route) {
     const routeNumber = escapeHtml(formatRouteNumber(route));
     const routeHref = escapeHtml(buildRouteHref(route, currentScheduleSourceUrl));
@@ -259,6 +342,9 @@ function buildRouteSummaryCard(route) {
     `;
 }
 
+/**
+ * Рендерит развёрнутую карточку маршрута с секциями по пунктам отправления.
+ */
 function buildRouteDetailCard(route) {
     const routeNumber = escapeHtml(formatRouteNumber(route));
     const title = escapeHtml(route.name || "Без названия");
@@ -321,6 +407,7 @@ function buildRouteDetailCard(route) {
                     <span>Способ оплаты: ${paymentMethods}</span>
                     <span>Маршрут: ${route.name || `Автобус №${routeNumber}`}</span>
                 </div>
+                ${description ? `<p class="schedule-route-description">${description}</p>` : ""}
             </header>
             <div class="schedule-route-body">
                 <div class="schedule-departures">
@@ -345,6 +432,9 @@ function renderRoutes(routes, container, detailMode = false) {
     container.innerHTML = detailMode ? buildRouteDetailCard(routes[0]) : routes.map(buildRouteSummaryCard).join("");
 }
 
+/**
+ * Загружает payload расписания из настроенного источника.
+ */
 async function loadScheduleData(sourceUrl) {
     const response = await fetch(sourceUrl, { cache: "no-store" });
     if (!response.ok) {
@@ -354,25 +444,29 @@ async function loadScheduleData(sourceUrl) {
     return response.json();
 }
 
+/**
+ * Подготавливает страницу расписания и связывает поиск, кэш и процесс загрузки в один поток.
+ */
 function setupSchedulePage() {
     const root = document.querySelector("[data-schedule-source]");
     const results = document.getElementById("schedule-results");
     const statusMessage = document.getElementById("schedule-status-message");
     const searchInput = document.getElementById("schedule-search");
-    const reloadButton = document.getElementById("schedule-reload");
     const loadStateLabel = document.getElementById("schedule-load-state");
     const updatedAtLabel = document.getElementById("schedule-updated-at");
 
-    if (!root || !results || !statusMessage || !searchInput || !reloadButton || !loadStateLabel || !updatedAtLabel) {
+    if (!root || !results || !statusMessage || !searchInput || !loadStateLabel || !updatedAtLabel) {
         return;
     }
 
+    // Подхватываем параметры URL, чтобы открывать конкретный маршрут или другой источник данных.
     const params = new URLSearchParams(window.location.search);
     currentScheduleSourceUrl = params.get("source") || root.dataset.scheduleSource || DEFAULT_SCHEDULE_SOURCE;
     currentRouteQuery = params.get("route") || "";
     let allRoutes = [];
     let activeLoadToken = 0;
 
+    // Фильтрация пересчитывается и при вводе текста, и после загрузки новых данных.
     const applyFilter = () => {
         const query = normalizeText(searchInput.value);
         const routeScopedRoutes = currentRouteQuery
@@ -402,13 +496,14 @@ function setupSchedulePage() {
         document.title = "Расписание маршрутов г. Славгород - Поехали! Славгород";
     };
 
-    const updateTimestamp = () => {
-        updatedAtLabel.textContent = new Intl.DateTimeFormat("ru-RU", {
-            dateStyle: "medium",
-            timeStyle: "short"
-        }).format(new Date());
+    /**
+     * Обновляет метку времени, используя стандартный формат страницы.
+     */
+    const updateTimestamp = (value = new Date()) => {
+        updatedAtLabel.textContent = formatScheduleDate(value);
     };
 
+    // Основной поток загрузки сначала показывает кэш, а затем по возможности обновляет его из сети.
     const load = async () => {
         const loadToken = ++activeLoadToken;
         const cached = readScheduleCache(currentScheduleSourceUrl);
@@ -419,10 +514,7 @@ function setupSchedulePage() {
                 schedules: Array.isArray(route.schedules) ? route.schedules : []
             })));
             if (cached.updatedAt) {
-                updatedAtLabel.textContent = new Intl.DateTimeFormat("ru-RU", {
-                    dateStyle: "medium",
-                    timeStyle: "short"
-                }).format(new Date(cached.updatedAt));
+                updatedAtLabel.textContent = formatScheduleDate(cached.updatedAt);
             }
             loadStateLabel.textContent = `Загружено: ${allRoutes.length}`;
             statusMessage.textContent = "";
@@ -468,7 +560,6 @@ function setupSchedulePage() {
     };
 
     searchInput.addEventListener("input", applyFilter);
-    reloadButton.addEventListener("click", load);
     load();
 }
 

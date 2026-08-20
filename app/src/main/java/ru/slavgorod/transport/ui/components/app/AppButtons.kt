@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.requiredSize
@@ -19,7 +21,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.Dp
 import ru.slavgorod.transport.ui.theme.DesignTokens
+import ru.slavgorod.transport.ui.theme.scaleDpForFontScale
 
 @Composable
 fun AppButton(
@@ -35,12 +41,14 @@ fun AppButton(
     contentColor: Color = MaterialTheme.colorScheme.onPrimary,
     content: @Composable () -> Unit
 ) {
+    val fontScale = LocalDensity.current.fontScale
+    val layoutDirection = LocalLayoutDirection.current
     Button(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier.defaultMinSize(
-            minHeight = DesignTokens.Size.Button.Height,
-            minWidth = DesignTokens.Size.Button.MinWidth
+            minHeight = scaleDpForFontScale(DesignTokens.Size.Button.Height, fontScale),
+            minWidth = scaleDpForFontScale(DesignTokens.Size.Button.MinWidth, fontScale)
         ),
         shape = shape,
         colors = ButtonDefaults.buttonColors(
@@ -49,7 +57,7 @@ fun AppButton(
             disabledContainerColor = containerColor.copy(alpha = 0.38f),
             disabledContentColor = contentColor.copy(alpha = 0.38f)
         ),
-        contentPadding = contentPadding
+        contentPadding = contentPadding.scaleForFontScale(fontScale, layoutDirection)
     ) {
         content()
     }
@@ -91,18 +99,20 @@ fun AppOutlinedButton(
     shape: Shape = MaterialTheme.shapes.large,
     content: @Composable () -> Unit
 ) {
+    val fontScale = LocalDensity.current.fontScale
+    val layoutDirection = LocalLayoutDirection.current
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier.defaultMinSize(
-            minHeight = DesignTokens.Size.Button.Height,
-            minWidth = DesignTokens.Size.Button.MinWidth
+            minHeight = scaleDpForFontScale(DesignTokens.Size.Button.Height, fontScale),
+            minWidth = scaleDpForFontScale(DesignTokens.Size.Button.MinWidth, fontScale)
         ),
         shape = shape,
         colors = ButtonDefaults.outlinedButtonColors(
             contentColor = MaterialTheme.colorScheme.primary
         ),
-        contentPadding = contentPadding
+        contentPadding = contentPadding.scaleForFontScale(fontScale, layoutDirection)
     ) {
         content()
     }
@@ -143,10 +153,11 @@ fun AppIconButton(
     content: @Composable () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val fontScale = LocalDensity.current.fontScale
 
     Surface(
         modifier = modifier
-            .requiredSize(size)
+            .requiredSize(scaleDpForFontScale(size, fontScale))
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -165,3 +176,17 @@ fun AppIconButton(
         }
     }
 }
+
+private fun PaddingValues.scaleForFontScale(
+    fontScale: Float,
+    layoutDirection: androidx.compose.ui.unit.LayoutDirection
+): PaddingValues {
+    return PaddingValues(
+        start = calculateStartPadding(layoutDirection).scaled(fontScale),
+        top = calculateTopPadding().scaled(fontScale),
+        end = calculateEndPadding(layoutDirection).scaled(fontScale),
+        bottom = calculateBottomPadding().scaled(fontScale)
+    )
+}
+
+private fun Dp.scaled(fontScale: Float): Dp = scaleDpForFontScale(this, fontScale)

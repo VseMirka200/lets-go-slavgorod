@@ -65,11 +65,6 @@ fun DisplaySettingsScreen(
     val appearanceTitle = stringResource(R.string.settings_appearance_title)
     val themeTitle = stringResource(R.string.settings_theme_title)
     val columnsTitle = stringResource(R.string.settings_columns_title)
-    val gridColumnLabels = mapOf(
-        1 to stringResource(R.string.grid_columns_1),
-        2 to stringResource(R.string.grid_columns_2),
-        3 to stringResource(R.string.grid_columns_3)
-    )
     val listModeSubtitle = stringResource(R.string.display_mode_list_subtitle)
     val screenTitle = if (showTopBar) {
         resolveDisplayScreenTitle(
@@ -84,11 +79,6 @@ fun DisplaySettingsScreen(
     }
 
     val content: @Composable (Modifier) -> Unit = { rootModifier ->
-        val themeLabels = mapOf(
-            AppTheme.SYSTEM to stringResource(R.string.theme_system),
-            AppTheme.LIGHT to stringResource(R.string.theme_light),
-            AppTheme.DARK to stringResource(R.string.theme_dark)
-        )
         SettingsContentLayout(
             title = screenTitle,
             showTopBar = showTopBar,
@@ -109,7 +99,7 @@ fun DisplaySettingsScreen(
                     AppTheme.entries.forEach { theme ->
                         SettingsRadioRow(
                             selected = currentTheme == theme,
-                            title = themeLabels.getValue(theme),
+                            title = theme.toDisplayLabel(),
                             onClick = { themeViewModel.setTheme(theme) },
                             verticalPadding = optionVerticalPadding,
                             horizontalPadding = rowHorizontalPadding
@@ -125,10 +115,10 @@ fun DisplaySettingsScreen(
                 }
 
                 if (showDisplayModeSection) {
-                    GRID_COLUMN_OPTIONS.forEach { columns ->
+                    GridColumnOptions.forEach { columns ->
                         SettingsRadioRow(
                             selected = currentGridColumns == columns,
-                            title = columns.toGridColumnsLabel(gridColumnLabels),
+                            title = columns.toGridColumnsLabel(),
                             subtitle = columns.toGridColumnsSubtitle(listModeSubtitle),
                             onClick = { displaySettingsViewModel.setGridColumns(columns) },
                             verticalPadding = optionVerticalPadding,
@@ -182,16 +172,5 @@ private fun resolveDisplayScreenTitle(
         showThemeSection -> themeTitle
         showDisplayModeSection -> columnsTitle
         else -> appearanceTitle
-    }
-}
-
-private val GRID_COLUMN_OPTIONS = listOf(1, 2, 3)
-
-private fun Int.toGridColumnsLabel(labels: Map<Int, String>): String = labels.getValue(this)
-
-private fun Int.toGridColumnsSubtitle(listModeSubtitle: String): String? {
-    return when (this) {
-        1 -> listModeSubtitle
-        else -> null
     }
 }

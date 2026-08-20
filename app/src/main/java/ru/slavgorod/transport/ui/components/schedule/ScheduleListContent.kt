@@ -31,8 +31,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import ru.slavgorod.transport.R
 import ru.slavgorod.transport.data.model.BusRoute
@@ -72,14 +75,17 @@ internal fun ScheduleListScaffold(
     scheduleExtraLabelProvider: ((BusSchedule) -> String?)?
 ) {
     val listState = rememberLazyListState()
-    val isHeaderCollapsed by remember(listState) {
-        derivedStateOf {
-            listState.firstVisibleItemIndex > 0 ||
-                    listState.firstVisibleItemScrollOffset > 0
-        }
-    }
+    val density = LocalDensity.current
+    val headerCollapseProgress by rememberHeaderCollapseProgress(
+        listState = listState,
+        density = density
+    )
     val listBottomReserve = resolveScheduleListBottomReserve(displayState.visibleSchedulesCount)
-    val filtersBottomReserve = if (displayState.hasFilterControls) 40.dp else 0.dp
+    val filtersBottomReserve = resolveFiltersBottomReserve(
+        hasFilterControls = displayState.hasFilterControls,
+        isFiltersSheetOpen = filterState.isFiltersSheetOpen,
+        layout = layout
+    )
     val layoutDirection = LocalLayoutDirection.current
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -93,13 +99,10 @@ internal fun ScheduleListScaffold(
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = contentPadding.calculateStartPadding(layoutDirection),
-                    top = contentPadding.calculateTopPadding(),
-                    end = contentPadding.calculateEndPadding(layoutDirection),
-                    bottom = contentPadding.calculateBottomPadding() +
-                            listBottomReserve +
-                            filtersBottomReserve
+                contentPadding = scheduleListContentPadding(
+                    contentPadding = contentPadding,
+                    layoutDirection = layoutDirection,
+                    bottomReserve = listBottomReserve + filtersBottomReserve
                 ),
                 verticalArrangement = Arrangement.spacedBy(0.dp),
                 userScrollEnabled = true
@@ -109,7 +112,7 @@ internal fun ScheduleListScaffold(
                     routeRemarkText = routeRemarkText,
                     displayState = displayState,
                     layout = layout,
-                    isHeaderCollapsed = isHeaderCollapsed,
+                    headerCollapseProgress = headerCollapseProgress,
                     currentTimeMillis = currentTimeMillis
                 )
 
@@ -135,24 +138,66 @@ internal fun ScheduleListScaffold(
     }
 }
 
+@Composable
+private fun rememberHeaderCollapseProgress(
+    listState: androidx.compose.foundation.lazy.LazyListState,
+    density: androidx.compose.ui.unit.Density
+) = remember(listState, density) {
+    derivedStateOf {
+        when {
+            listState.firstVisibleItemIndex > 0 -> 1f
+            listState.firstVisibleItemScrollOffset <= 0 -> 0f
+            else -> {
+                val collapseDistancePx = with(density) { HEADER_COLLAPSE_DISTANCE.dp.toPx() }
+                (listState.firstVisibleItemScrollOffset / collapseDistancePx)
+                    .coerceIn(0f, 1f)
+            }
+        }
+    }
+}
+
+private fun scheduleListContentPadding(
+    contentPadding: PaddingValues,
+    layoutDirection: androidx.compose.ui.unit.LayoutDirection,
+    bottomReserve: Dp
+) = PaddingValues(
+    start = contentPadding.calculateStartPadding(layoutDirection),
+    top = contentPadding.calculateTopPadding(),
+    end = contentPadding.calculateEndPadding(layoutDirection),
+    bottom = contentPadding.calculateBottomPadding() + bottomReserve
+)
+
 @OptIn(ExperimentalFoundationApi::class)
 private fun LazyListScope.scheduleStickyHeader(
     route: BusRoute,
     routeRemarkText: String?,
     displayState: ScheduleListDisplayState,
     layout: ScheduleResponsiveLayoutSpec,
-    isHeaderCollapsed: Boolean,
+    headerCollapseProgress: Float,
     currentTimeMillis: Long
 ) {
-    stickyHeader(key = "route_header_and_upcoming") {
+    item(key = "route_header_and_upcoming") {
         ScheduleRouteStickyHeader(
             route = route,
             routeRemarkText = routeRemarkText,
-            displayState = displayState,
             layout = layout,
-            isHeaderCollapsed = isHeaderCollapsed,
-            currentTimeMillis = currentTimeMillis
+            headerCollapseProgress = headerCollapseProgress
         )
+    }
+
+    if (displayState.upcomingEntries.isNotEmpty()) {
+        stickyHeader(key = "upcoming_departures_header") {
+            UpcomingSchedulesCard(
+                entries = displayState.upcomingEntries,
+                currentTimeMillis = currentTimeMillis,
+                layout = layout,
+                compactMode = false,
+                squareCorners = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = layout.section.sectionVerticalSpacing)
+            )
+        }
     }
 }
 
@@ -160,53 +205,23 @@ private fun LazyListScope.scheduleStickyHeader(
 private fun ScheduleRouteStickyHeader(
     route: BusRoute,
     routeRemarkText: String?,
-    displayState: ScheduleListDisplayState,
     layout: ScheduleResponsiveLayoutSpec,
-    isHeaderCollapsed: Boolean,
-    currentTimeMillis: Long
+    headerCollapseProgress: Float
 ) {
-    val collapsedUpcomingBlock = isHeaderCollapsed && displayState.upcomingEntries.isNotEmpty()
-    val upcomingBlockHorizontalPadding =
-        if (isHeaderCollapsed) 0.dp else layout.upcoming.upcomingHorizontalPadding
-
     Column(modifier = Modifier.fillMaxWidth()) {
-        AnimatedVisibility(
-            visible = !isHeaderCollapsed,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut()
-        ) {
-            ScheduleHeaderDetails(
-                route = route,
-                layout = layout,
-                modifier = Modifier.padding(bottom = layout.section.sectionVerticalSpacing),
-                horizontalPadding = layout.header.headerHorizontalPadding,
-                noteText = routeRemarkText
-            )
-        }
-
-        if (displayState.upcomingEntries.isNotEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = upcomingBlockHorizontalPadding,
-                        top = 0.dp,
-                        end = upcomingBlockHorizontalPadding,
-                        bottom = 0.dp
-                    ),
-                verticalArrangement = Arrangement.spacedBy(layout.section.sectionVerticalSpacing / 2)
-            ) {
-                UpcomingSchedulesCard(
-                    entries = displayState.upcomingEntries,
-                    currentTimeMillis = currentTimeMillis,
-                    layout = layout,
-                    compactMode = false,
-                    squareCorners = collapsedUpcomingBlock,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(layout.upcoming.upcomingBottomSpacing / 2))
-            }
-        }
+        ScheduleHeaderDetails(
+            route = route,
+            layout = layout,
+            modifier = Modifier
+                .padding(bottom = layout.section.sectionVerticalSpacing)
+                .graphicsLayer {
+                    val collapseDistancePx = 28.dp.toPx()
+                    translationY = -collapseDistancePx * headerCollapseProgress
+                    alpha = 1f - headerCollapseProgress
+                },
+            horizontalPadding = layout.header.headerHorizontalPadding,
+            noteText = routeRemarkText
+        )
     }
 }
 
@@ -347,5 +362,26 @@ private fun ScheduleFiltersOverlay(
 
 private fun filtersBottomBarOffset(layout: ScheduleResponsiveLayoutSpec) =
     if (layout.mode == ScheduleResponsiveLayoutMode.TIGHT) 8.dp else 10.dp
+
+private const val HEADER_COLLAPSE_DISTANCE = 72
+private val FILTERS_BOTTOM_RESERVE_COLLAPSED = 96.dp
+private val FILTERS_BOTTOM_RESERVE_EXPANDED = 240.dp
+private val FILTERS_PANEL_EXTRA_HEIGHT = 32.dp
+
+private fun resolveFiltersBottomReserve(
+    hasFilterControls: Boolean,
+    isFiltersSheetOpen: Boolean,
+    layout: ScheduleResponsiveLayoutSpec
+): Dp {
+    if (!hasFilterControls) return 0.dp
+    val buttonHeightReserve = filtersBottomBarOffset(layout) +
+            layout.filters.filterSheetVerticalSpacing * 2 +
+            FILTERS_PANEL_EXTRA_HEIGHT
+    return if (isFiltersSheetOpen) {
+        FILTERS_BOTTOM_RESERVE_EXPANDED + buttonHeightReserve
+    } else {
+        FILTERS_BOTTOM_RESERVE_COLLAPSED + buttonHeightReserve
+    }
+}
 
 private val FILTERS_BAR_COLOR = Color(0xFF414753)

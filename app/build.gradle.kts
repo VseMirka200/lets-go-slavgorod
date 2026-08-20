@@ -16,8 +16,8 @@ android {
         applicationId = "ru.slavgorod.transport"
         minSdk = 24
         targetSdk = 36
-        versionCode = 30000
-        versionName = "3.0.0"
+        versionCode = 30002
+        versionName = "3.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true

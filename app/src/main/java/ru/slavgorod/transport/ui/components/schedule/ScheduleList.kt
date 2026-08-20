@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import ru.slavgorod.transport.data.model.BusSchedule
 import ru.slavgorod.transport.logging.UserActionLogger
@@ -58,7 +59,10 @@ fun ScheduleList(
         )
     }
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        val layout = resolveScheduleResponsiveLayout(maxWidth)
+        val layout = resolveScheduleResponsiveLayout(
+            containerWidth = maxWidth,
+            fontScale = LocalDensity.current.fontScale
+        )
         ScheduleListScaffold(
             route = route,
             routeRemarkText = routeRemarkText,

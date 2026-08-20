@@ -104,42 +104,15 @@ internal fun AppearanceSettingsSection(
             )
         }
 
-        GRID_COLUMN_OPTIONS.forEach { columns ->
+        GridColumnOptions.forEach { columns ->
             SettingsRadioRow(
                 selected = currentGridColumns == columns,
                 title = columns.toGridColumnsLabel(),
-                subtitle = columns.toGridColumnsSubtitle(),
+                subtitle = columns.toGridColumnsSubtitle(
+                    listModeSubtitle = stringResource(R.string.display_mode_list)
+                ),
                 onClick = { displaySettingsViewModel.setGridColumns(columns) }
             )
         }
-    }
-}
-
-private val GRID_COLUMN_OPTIONS = listOf(1, 2, 3)
-
-@Composable
-private fun AppTheme.toDisplayLabel(): String {
-    return when (this) {
-        AppTheme.SYSTEM -> stringResource(R.string.theme_system)
-        AppTheme.LIGHT -> stringResource(R.string.theme_light)
-        AppTheme.DARK -> stringResource(R.string.theme_dark)
-    }
-}
-
-@Composable
-private fun Int.toGridColumnsLabel(): String {
-    return when (this) {
-        1 -> stringResource(R.string.grid_columns_1)
-        2 -> stringResource(R.string.grid_columns_2)
-        3 -> stringResource(R.string.grid_columns_3)
-        else -> stringResource(R.string.appearance_columns_count_format, this)
-    }
-}
-
-@Composable
-private fun Int.toGridColumnsSubtitle(): String? {
-    return when (this) {
-        1 -> stringResource(R.string.display_mode_list)
-        else -> null
     }
 }

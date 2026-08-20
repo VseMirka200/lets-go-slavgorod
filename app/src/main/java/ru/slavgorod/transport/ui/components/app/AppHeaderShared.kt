@@ -2,6 +2,7 @@ package ru.slavgorod.transport.ui.components.app
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
@@ -50,6 +51,9 @@ internal fun ScheduleHeaderDetailsContent(
         fontSize = layout.header.headerSubtitleFontSize * headerScale,
         lineHeight = layout.header.headerSubtitleFontSize * headerScale * 1.12f
     )
+    val compactInfoColumnSpacing = 4.dp
+    val travelTimeColumnWeight = 0.82f
+    val priceColumnWeight = 1.18f
     val priceText = buildPriceLabel(
         cityPrice = route.pricePrimary,
         intercityPrice = route.priceSecondary,
@@ -76,22 +80,29 @@ internal fun ScheduleHeaderDetailsContent(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(headerItemSpacing)
         ) {
-            travelTime?.let { value ->
-                ScheduleHeaderInfoItem(
-                    label = travelTimeLabel,
-                    value = value,
-                    labelStyle = headerLabelStyle,
-                    valueStyle = headerValueStyle
-                )
-            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(compactInfoColumnSpacing)
+            ) {
+                travelTime?.let { value ->
+                    ScheduleHeaderInfoItem(
+                        label = travelTimeLabel,
+                        value = value,
+                        labelStyle = headerLabelStyle,
+                        valueStyle = headerValueStyle,
+                        modifier = Modifier.weight(travelTimeColumnWeight)
+                    )
+                }
 
-            priceText?.let { value ->
-                ScheduleHeaderInfoItem(
-                    label = priceLabel,
-                    value = value,
-                    labelStyle = headerLabelStyle,
-                    valueStyle = headerValueStyle
-                )
+                priceText?.let { value ->
+                    ScheduleHeaderInfoItem(
+                        label = priceLabel,
+                        value = value,
+                        labelStyle = headerLabelStyle,
+                        valueStyle = headerValueStyle,
+                        modifier = Modifier.weight(priceColumnWeight)
+                    )
+                }
             }
 
             route.paymentMethods?.let { paymentMethods ->

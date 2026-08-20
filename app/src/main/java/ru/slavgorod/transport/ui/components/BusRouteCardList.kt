@@ -4,6 +4,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -23,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import ru.slavgorod.transport.R
 import ru.slavgorod.transport.core.Constants
 import ru.slavgorod.transport.data.model.BusRoute
+import ru.slavgorod.transport.ui.theme.scaleDpForFontScale
 
 @Composable
 internal fun BusRouteCardList(
@@ -34,6 +37,7 @@ internal fun BusRouteCardList(
 ) {
     val boxBackgroundColor = rememberRouteCardBackgroundColor(routeColor = route.color)
     val interactionSource = remember { MutableInteractionSource() }
+    val fontScale = LocalDensity.current.fontScale
     val routeCardDescription = stringResource(
         R.string.accessibility_route_card_description,
         route.routeNumber,
@@ -53,6 +57,7 @@ internal fun BusRouteCardList(
         Box(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
+                    .heightIn(min = scaleDpForFontScale(80.dp, fontScale))
                     .padding(start = 18.dp, end = 12.dp, top = 16.dp, bottom = 16.dp)
                     .fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -64,7 +69,7 @@ internal fun BusRouteCardList(
                     textAlign = TextAlign.Center,
                     maxLines = 1,
                     overflow = TextOverflow.Visible,
-                    modifier = Modifier.width(ROUTE_LIST_NUMBER_WIDTH)
+                    modifier = Modifier.width(scaleDpForFontScale(ROUTE_LIST_NUMBER_WIDTH, fontScale))
                 )
 
                 Text(
