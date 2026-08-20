@@ -2,7 +2,7 @@
 
 **Русский** | [English](README_EN.md)
 
-![Баннер проекта](docs/assets/images/banner_1.png)
+![Баннер проекта](assets/images/banner_1.png)
 
 <p align="center">
   <a href="https://vsemirka200.github.io/lets-go-slavgorod/"><img alt="Сайт проекта" src="https://img.shields.io/badge/Сайт-проекта-2ea44f?style=for-the-badge"></a>
@@ -32,10 +32,10 @@
 ## Скриншоты
 
 <p>
-  <img width="200" src="docs/assets/screenshots/screenshot_1.png" alt="Главный экран приложения">
-  <img width="200" src="docs/assets/screenshots/screenshot_2.png" alt="Список маршрутов">
-  <img width="200" src="docs/assets/screenshots/screenshot_3.png" alt="Экран расписания">
-  <img width="200" src="docs/assets/screenshots/screenshot_4.png" alt="Настройки">
+  <img width="200" src="assets/screenshots/screenshot_1.png" alt="Главный экран приложения">
+  <img width="200" src="assets/screenshots/screenshot_2.png" alt="Список маршрутов">
+  <img width="200" src="assets/screenshots/screenshot_3.png" alt="Экран расписания">
+  <img width="200" src="assets/screenshots/screenshot_4.png" alt="Настройки">
 </p>
 
 ## Установка
@@ -93,21 +93,23 @@ Debug APK после успешной сборки находится в `app/bu
 ```text
 app/                   Android-приложение, ресурсы и тесты
 config/detekt/         конфигурация статического анализа
-docs/                  сайт проекта и публичная документация
+docs/                  сайт проекта и вся Markdown-документация
+  README.md            обзор проекта
+  CONTRIBUTING.md      правила участия в разработке
+  CODE_OF_CONDUCT.md   правила общения и поведения
+  SECURITY.md          порядок сообщения об уязвимостях
+  PRIVACY.md           политика конфиденциальности
+  LIBRARIES.md         используемые библиотеки
+  CHANGELOG.md         история заметных изменений
 gradle/                Gradle Wrapper и каталог версий
-README.md              обзор проекта
-CONTRIBUTING.md        правила участия в разработке
-CODE_OF_CONDUCT.md     правила общения и поведения
-SECURITY.md            порядок сообщения об уязвимостях
-PRIVACY.md             краткая политика конфиденциальности
-CHANGELOG.md           история заметных изменений
+LICENSE                лицензия проекта
 ```
 
-Английские версии корневой документации имеют суффикс `_EN.md`.
+Английские версии документов находятся рядом и имеют суффикс `_EN.md`.
 
 ## Данные и конфиденциальность
 
-Приложение работает без аккаунта. Пользовательские настройки, избранные маршруты, кэш расписания и локальные журналы хранятся на устройстве. Для получения расписания приложение обращается по сети к выбранному источнику данных. Подробности приведены в [PRIVACY.md](PRIVACY.md) и на [публичной странице политики конфиденциальности](https://vsemirka200.github.io/lets-go-slavgorod/privacy.html).
+Приложение работает без аккаунта. Пользовательские настройки, избранные маршруты, кэш расписания и локальные журналы хранятся на устройстве. Для получения расписания приложение обращается по сети к выбранному источнику данных. Подробности приведены в [PRIVACY.md](PRIVACY.md) и на [публичной странице политики конфиденциальности](https://vsemirka200.github.io/lets-go-slavgorod/document.html?doc=privacy&lang=ru).
 
 ## Документация
 
@@ -117,9 +119,11 @@ CHANGELOG.md           история заметных изменений
 - [Политика конфиденциальности](PRIVACY.md)
 - [Политика безопасности](SECURITY.md)
 - [Кодекс поведения](CODE_OF_CONDUCT.md)
-- [Используемые библиотеки](https://vsemirka200.github.io/lets-go-slavgorod/libraries.html)
+- [Используемые библиотеки](LIBRARIES.md)
 - [Как внести вклад](CONTRIBUTING.md)
 - [История изменений](CHANGELOG.md)
+
+Все документы, у которых есть перевод, можно переключать между русским и английским прямо на [сайте проекта](https://vsemirka200.github.io/lets-go-slavgorod/#documents).
 
 ## Участие в проекте
 
@@ -131,4 +135,4 @@ CHANGELOG.md           история заметных изменений
 
 ## Лицензия
 
-Условия использования исходного кода приведены в существующем файле [LICENSE](LICENSE).
+Условия использования исходного кода приведены в существующем файле [LICENSE](../LICENSE).

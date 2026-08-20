@@ -13,7 +13,6 @@
     <link rel="stylesheet" href="assets/css/main.css">
 </head>
 <body>
-    <!-- Шапка главной страницы: навигация, главный заголовок и быстрые ссылки на загрузку -->
     <header class="hero" id="top">
         <nav class="topbar">
             <a class="brand" href="#top">
@@ -83,7 +82,6 @@
         </section>
     </header>
 
-    <!-- Основной контент главной страницы: возможности, документы и контакты -->
     <main class="page">
         <div class="feature-columns-grid">
             <section class="section feature-section" id="features">
@@ -117,34 +115,42 @@
                 </article>
             </section>
         </div>
+
         <section class="section documents-section" id="documents">
             <div class="section-heading">
                 <span class="eyebrow">Документы</span>
-                <h2>Правовая информация проекта</h2>
+                <h2>Документация проекта</h2>
+                <p>Все документы ниже доступны на русском и английском языках. Язык можно переключить прямо на странице документа.</p>
             </div>
             <div class="documents-grid">
                 <article class="document-card">
-                    <a class="text-link document-title" href="security.html">
-                        <span>
-                            <strong>Политика безопасности</strong>
-                            <small>Открыть на сайте</small>
-                        </span>
+                    <a class="text-link document-title" href="document.html?doc=security&lang=ru">
+                        <span><strong>Политика безопасности</strong><small>Русский · English</small></span>
                     </a>
                 </article>
                 <article class="document-card">
-                    <a class="text-link document-title" href="privacy.html">
-                        <span>
-                            <strong>Политика конфиденциальности</strong>
-                            <small>Открыть на сайте</small>
-                        </span>
+                    <a class="text-link document-title" href="document.html?doc=privacy&lang=ru">
+                        <span><strong>Политика конфиденциальности</strong><small>Русский · English</small></span>
                     </a>
                 </article>
                 <article class="document-card">
-                    <a class="text-link document-title" href="libraries.html">
-                        <span>
-                            <strong>Используемые библиотеки</strong>
-                            <small>Открыть на сайте</small>
-                        </span>
+                    <a class="text-link document-title" href="document.html?doc=conduct&lang=ru">
+                        <span><strong>Кодекс поведения</strong><small>Русский · English</small></span>
+                    </a>
+                </article>
+                <article class="document-card">
+                    <a class="text-link document-title" href="document.html?doc=libraries&lang=ru">
+                        <span><strong>Используемые библиотеки</strong><small>Русский · English</small></span>
+                    </a>
+                </article>
+                <article class="document-card">
+                    <a class="text-link document-title" href="document.html?doc=contributing&lang=ru">
+                        <span><strong>Участие в разработке</strong><small>Русский · English</small></span>
+                    </a>
+                </article>
+                <article class="document-card">
+                    <a class="text-link document-title" href="document.html?doc=changelog&lang=ru">
+                        <span><strong>История изменений</strong><small>Русский · English</small></span>
                     </a>
                 </article>
             </div>
@@ -164,7 +170,6 @@
                 </li>
             </ul>
         </section>
-
     </main>
 
     <div class="image-modal" id="image-modal" hidden aria-hidden="true">
@@ -176,22 +181,19 @@
         </figure>
     </div>
 
-    <!-- Нижний колонтитул дублирует ключевые ссылки, чтобы их было удобно найти в конце страницы -->
-            <footer class="site-footer">
+    <footer class="site-footer">
         <div class="site-footer-links">
-            <a href="index.html#documents">&#1044;&#1086;&#1082;&#1091;&#1084;&#1077;&#1085;&#1090;&#1099;</a>
-            <a href="schedule.html">&#1056;&#1072;&#1089;&#1087;&#1080;&#1089;&#1072;&#1085;&#1080;&#1077;</a>
-            <a href="releases.html">&#1056;&#1077;&#1083;&#1080;&#1079;&#1099;</a>
-            <a href="index.html#feedback">&#1050;&#1086;&#1085;&#1090;&#1072;&#1082;&#1090;&#1099;</a>
-            <a href="https://github.com/VseMirka200/lets-go-slavgorod" target="_blank" rel="noreferrer">&#1048;&#1089;&#1093;&#1086;&#1076;&#1085;&#1099;&#1081;&#32;&#1082;&#1086;&#1076;</a>
-            <a href="https://vk.com/letsgoslavgorod" target="_blank" rel="noreferrer">&#1043;&#1088;&#1091;&#1087;&#1087;&#1072;&#32;&#1042;&#1050;&#1086;&#1085;&#1090;&#1072;&#1082;&#1090;&#1077;</a>
-            <a href="https://pay.cloudtips.ru/p/1fa22ea5" target="_blank" rel="noreferrer">&#1055;&#1086;&#1076;&#1076;&#1077;&#1088;&#1078;&#1072;&#1090;&#1100;</a>
+            <a href="index.html#documents">Документы</a>
+            <a href="schedule.html">Расписание</a>
+            <a href="releases.html">Релизы</a>
+            <a href="index.html#feedback">Контакты</a>
+            <a href="https://github.com/VseMirka200/lets-go-slavgorod" target="_blank" rel="noreferrer">Исходный код</a>
+            <a href="https://vk.com/letsgoslavgorod" target="_blank" rel="noreferrer">Группа ВКонтакте</a>
+            <a href="https://pay.cloudtips.ru/p/1fa22ea5" target="_blank" rel="noreferrer">Поддержать</a>
         </div>
     </footer>
 
     <a class="back-to-top" href="#top" aria-label="Вернуться наверх">↑</a>
-
-    <!-- Общее поведение страницы: выравнивание hero-блока и обработка кнопок-заглушек -->
     <script src="assets/js/main.js"></script>
 </body>
 </html>

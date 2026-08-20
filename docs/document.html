@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Документы - Поехали! Славгород</title>
+    <meta name="description" content="Документы проекта «Поехали! Славгород» на русском и английском языках.">
+    <link rel="icon" type="image/png" href="assets/images/app-logo.png">
+    <link rel="apple-touch-icon" href="assets/images/app-logo.png">
+    <link rel="stylesheet" href="assets/css/main.css">
+    <style>
+        .language-switcher {
+            display: inline-flex;
+            gap: 8px;
+            margin-top: 18px;
+            padding: 6px;
+            border: 1px solid rgba(127, 127, 127, 0.24);
+            border-radius: 999px;
+            background: rgba(127, 127, 127, 0.08);
+        }
+        .language-switcher a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 94px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            color: inherit;
+            text-decoration: none;
+            font-weight: 700;
+        }
+        .language-switcher a[aria-current="page"] {
+            background: currentColor;
+            color: var(--page-background, #ffffff);
+        }
+        .markdown-document h2 { margin-top: 30px; }
+        .markdown-document h3 { margin-top: 24px; }
+        .markdown-document ul,
+        .markdown-document ol { padding-left: 24px; }
+        .markdown-document li + li { margin-top: 8px; }
+        .markdown-document pre {
+            overflow-x: auto;
+            padding: 16px;
+            border-radius: 14px;
+            background: rgba(127, 127, 127, 0.12);
+        }
+        .markdown-document code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+        .markdown-document blockquote {
+            margin: 20px 0;
+            padding: 4px 0 4px 18px;
+            border-left: 4px solid currentColor;
+            opacity: 0.86;
+        }
+        .document-state { opacity: 0.72; }
+    </style>
+</head>
+<body>
+    <header class="subpage-hero" id="top">
+        <nav class="topbar">
+            <a class="brand" href="index.html#top">
+                <img class="brand-logo" src="assets/images/brand-logo.png" alt="Логотип Поехали! Славгород">
+                <span class="brand-copy"><span>Поехали!</span><span>Славгород</span></span>
+            </a>
+            <div class="nav-links">
+                <a id="nav-features" href="index.html#features">Возможности</a>
+                <a id="nav-documents" href="index.html#documents">Документы</a>
+                <a id="nav-feedback" href="index.html#feedback">Контакты</a>
+                <a id="nav-releases" href="releases.html">Релизы</a>
+                <a id="nav-support" href="https://pay.cloudtips.ru/p/1fa22ea5" target="_blank" rel="noreferrer">Поддержать</a>
+            </div>
+            <a class="nav-featured" id="nav-schedule" href="schedule.html">Расписание</a>
+        </nav>
+
+        <section class="subpage-heading">
+            <span class="eyebrow" id="document-eyebrow">Документы</span>
+            <h1 id="document-title">Документ</h1>
+            <p class="hero-text" id="document-lead">Загрузка документа…</p>
+            <div class="language-switcher" aria-label="Выбор языка">
+                <a id="lang-ru" href="#">Русский</a>
+                <a id="lang-en" href="#">English</a>
+            </div>
+        </section>
+    </header>
+
+    <main class="legal-page">
+        <article class="legal-card markdown-document" id="document-content" aria-live="polite">
+            <p class="document-state">Загрузка документа…</p>
+        </article>
+    </main>
+
+    <footer class="site-footer">
+        <div class="site-footer-links">
+            <a id="footer-documents" href="index.html#documents">Документы</a>
+            <a id="footer-schedule" href="schedule.html">Расписание</a>
+            <a id="footer-releases" href="releases.html">Релизы</a>
+            <a id="footer-feedback" href="index.html#feedback">Контакты</a>
+            <a id="footer-source" href="https://github.com/VseMirka200/lets-go-slavgorod" target="_blank" rel="noreferrer">Исходный код</a>
+            <a id="footer-vk" href="https://vk.com/letsgoslavgorod" target="_blank" rel="noreferrer">Группа ВКонтакте</a>
+            <a id="footer-support" href="https://pay.cloudtips.ru/p/1fa22ea5" target="_blank" rel="noreferrer">Поддержать</a>
+        </div>
+    </footer>
+
+    <a class="back-to-top" href="#top" id="back-to-top" aria-label="Вернуться наверх">↑</a>
+    <script src="assets/js/document-page.js"></script>
+</body>
+</html>

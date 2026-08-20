@@ -2,7 +2,7 @@
 
 [Русский](README.md) | **English**
 
-![Project banner](docs/assets/images/banner_1.png)
+![Project banner](assets/images/banner_1.png)
 
 <p align="center">
   <a href="https://vsemirka200.github.io/lets-go-slavgorod/"><img alt="Project website" src="https://img.shields.io/badge/Website-open-2ea44f?style=for-the-badge"></a>
@@ -32,10 +32,10 @@
 ## Screenshots
 
 <p>
-  <img width="200" src="docs/assets/screenshots/screenshot_1.png" alt="App home screen">
-  <img width="200" src="docs/assets/screenshots/screenshot_2.png" alt="Route list">
-  <img width="200" src="docs/assets/screenshots/screenshot_3.png" alt="Schedule screen">
-  <img width="200" src="docs/assets/screenshots/screenshot_4.png" alt="Settings">
+  <img width="200" src="assets/screenshots/screenshot_1.png" alt="App home screen">
+  <img width="200" src="assets/screenshots/screenshot_2.png" alt="Route list">
+  <img width="200" src="assets/screenshots/screenshot_3.png" alt="Schedule screen">
+  <img width="200" src="assets/screenshots/screenshot_4.png" alt="Settings">
 </p>
 
 ## Installation
@@ -93,25 +93,24 @@ The current application version in source is **3.0.2**. The project is built wit
 ```text
 app/                    Android application, resources, and tests
 config/detekt/          static analysis configuration
-docs/                   project website and public documentation
-gradle/                 Gradle Wrapper and version catalog
-README.md                Russian project overview
-README_EN.md             English project overview
-CONTRIBUTING.md          Russian contribution guide
-CONTRIBUTING_EN.md       English contribution guide
-CODE_OF_CONDUCT.md       Russian Code of Conduct
-CODE_OF_CONDUCT_EN.md    English Code of Conduct
-SECURITY.md              Russian security policy
-SECURITY_EN.md           English security policy
-PRIVACY.md               Russian privacy policy
-PRIVACY_EN.md            English privacy policy
-CHANGELOG.md             Russian changelog
-CHANGELOG_EN.md          English changelog
+docs/                   project website and all Markdown documentation
+  README.md              Russian project overview
+  README_EN.md           English project overview
+  CONTRIBUTING.md        contribution guide
+  CODE_OF_CONDUCT.md     Code of Conduct
+  SECURITY.md            security policy
+  PRIVACY.md             privacy policy
+  LIBRARIES.md           third-party libraries
+  CHANGELOG.md           changelog
+gradle/                  Gradle Wrapper and version catalog
+LICENSE                  project license
 ```
+
+English document versions are stored next to their Russian counterparts and use the `_EN.md` suffix.
 
 ## Data and privacy
 
-The app works without an account. User settings, favorite routes, schedule cache, and local logs are stored on the device. To retrieve schedules, the app connects over the network to the selected data source. See [PRIVACY_EN.md](PRIVACY_EN.md) and the [public privacy policy page](https://vsemirka200.github.io/lets-go-slavgorod/privacy.html) for details.
+The app works without an account. User settings, favorite routes, schedule cache, and local logs are stored on the device. To retrieve schedules, the app connects over the network to the selected data source. See [PRIVACY_EN.md](PRIVACY_EN.md) and the [public privacy policy page](https://vsemirka200.github.io/lets-go-slavgorod/document.html?doc=privacy&lang=en) for details.
 
 ## Documentation
 
@@ -121,11 +120,11 @@ The app works without an account. User settings, favorite routes, schedule cache
 - [Privacy policy](PRIVACY_EN.md)
 - [Security policy](SECURITY_EN.md)
 - [Code of Conduct](CODE_OF_CONDUCT_EN.md)
-- [Third-party libraries](https://vsemirka200.github.io/lets-go-slavgorod/libraries.html)
+- [Third-party libraries](LIBRARIES_EN.md)
 - [Contributing](CONTRIBUTING_EN.md)
 - [Changelog](CHANGELOG_EN.md)
 
-The project website is currently primarily in Russian; the repository documentation is available in both Russian and English.
+Every translated document can be switched between Russian and English directly on the [project website](https://vsemirka200.github.io/lets-go-slavgorod/#documents).
 
 ## Contributing
 
@@ -137,4 +136,4 @@ You can report a bug or suggest an improvement through [GitHub Issues](https://g
 
 ## License
 
-Terms for using the source code are provided in the existing [LICENSE](LICENSE) file.
+Terms for using the source code are provided in the existing [LICENSE](../LICENSE) file.
