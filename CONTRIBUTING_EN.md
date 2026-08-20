@@ -4,12 +4,15 @@
 
 Thank you for your interest in “Let's Go! Slavgorod”. Bug fixes, UI improvements, tests, documentation, and suggestions related to data quality are welcome.
 
+By participating in the project, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT_EN.md).
+
 ## Before you start
 
 1. Check whether a similar issue or pull request already exists.
 2. For a significant change, describe the problem or expected behavior in an issue first.
 3. Do not publish secrets, signing keys, personal data, or private application logs.
 4. Report potential vulnerabilities according to [SECURITY_EN.md](SECURITY_EN.md), not through a public issue.
+5. When changing routes or schedule data, provide a verifiable source when possible.
 
 ## Local development
 
@@ -61,6 +64,8 @@ For visual changes, before-and-after screenshots are useful.
 ## Schedule data
 
 Schedules are user-relevant data. Changes to the format, source, validation rules, or time display should preserve understandable behavior when network errors or invalid data occur. Do not add private URLs, tokens, or data sources that cannot be safely published.
+
+If a change corrects a specific route, stop, or departure time, include the source or verification method so the update can be checked again later.
 
 ## Release builds
 

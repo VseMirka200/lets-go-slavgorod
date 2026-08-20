@@ -4,6 +4,13 @@
 
 ![Project banner](docs/assets/images/banner_1.png)
 
+<p align="center">
+  <a href="https://vsemirka200.github.io/lets-go-slavgorod/"><img alt="Project website" src="https://img.shields.io/badge/Website-open-2ea44f?style=for-the-badge"></a>
+  <a href="https://vsemirka200.github.io/lets-go-slavgorod/schedule.html"><img alt="Schedule" src="https://img.shields.io/badge/Schedule-open-0969da?style=for-the-badge"></a>
+  <a href="https://github.com/VseMirka200/lets-go-slavgorod/releases"><img alt="Releases" src="https://img.shields.io/badge/Releases-GitHub-8250df?style=for-the-badge"></a>
+  <a href="https://github.com/VseMirka200/lets-go-slavgorod/issues"><img alt="Issues" src="https://img.shields.io/badge/Issues-report_a_problem-d1242f?style=for-the-badge"></a>
+</p>
+
 **Let's Go! Slavgorod** is an unofficial Android app with urban and suburban public transport schedules for Slavgorod. It helps users quickly find routes and stops, check upcoming departures, and save frequently used routes as favorites.
 
 > [!IMPORTANT]
@@ -92,6 +99,8 @@ README.md                Russian project overview
 README_EN.md             English project overview
 CONTRIBUTING.md          Russian contribution guide
 CONTRIBUTING_EN.md       English contribution guide
+CODE_OF_CONDUCT.md       Russian Code of Conduct
+CODE_OF_CONDUCT_EN.md    English Code of Conduct
 SECURITY.md              Russian security policy
 SECURITY_EN.md           English security policy
 PRIVACY.md               Russian privacy policy
@@ -111,6 +120,7 @@ The app works without an account. User settings, favorite routes, schedule cache
 - [Releases](https://vsemirka200.github.io/lets-go-slavgorod/releases.html)
 - [Privacy policy](PRIVACY_EN.md)
 - [Security policy](SECURITY_EN.md)
+- [Code of Conduct](CODE_OF_CONDUCT_EN.md)
 - [Third-party libraries](https://vsemirka200.github.io/lets-go-slavgorod/libraries.html)
 - [Contributing](CONTRIBUTING_EN.md)
 - [Changelog](CHANGELOG_EN.md)
@@ -119,7 +129,7 @@ The project website is currently primarily in Russian; the repository documentat
 
 ## Contributing
 
-Bug reports, suggestions, and pull requests are welcome. Before making changes, please read [CONTRIBUTING_EN.md](CONTRIBUTING_EN.md). Potential security vulnerabilities should be reported according to [SECURITY_EN.md](SECURITY_EN.md), not through a public issue.
+Bug reports, suggestions, and pull requests are welcome. Before making changes, please read [CONTRIBUTING_EN.md](CONTRIBUTING_EN.md) and [CODE_OF_CONDUCT_EN.md](CODE_OF_CONDUCT_EN.md). Potential security vulnerabilities should be reported according to [SECURITY_EN.md](SECURITY_EN.md), not through a public issue.
 
 ## Feedback
 
