@@ -1,17 +1,16 @@
 # Поехали! Славгород
 
-**Русский** | [English](README_EN.md)
-
 ![Баннер проекта](assets/images/banner_1.png)
 
 <p align="center">
-  <a href="https://vsemirka200.github.io/lets-go-slavgorod/"><img alt="Сайт проекта" src="https://img.shields.io/badge/Сайт-проекта-2ea44f?style=for-the-badge"></a>
-  <a href="https://vsemirka200.github.io/lets-go-slavgorod/schedule.html"><img alt="Расписание" src="https://img.shields.io/badge/Расписание-открыть-0969da?style=for-the-badge"></a>
-  <a href="https://github.com/VseMirka200/lets-go-slavgorod/releases"><img alt="Релизы" src="https://img.shields.io/badge/Релизы-GitHub-8250df?style=for-the-badge"></a>
-  <a href="https://github.com/VseMirka200/lets-go-slavgorod/issues"><img alt="Issues" src="https://img.shields.io/badge/Issues-сообщить_о_проблеме-d1242f?style=for-the-badge"></a>
+  <a href="https://github.com/VseMirka200/lets-go-slavgorod/releases/download/3.0.2/lets-go-slavgorod-3-0-2.apk"><img alt="Скачать" src="https://img.shields.io/badge/-СКАЧАТЬ-555555?style=for-the-badge&logo=github"></a>&nbsp;
+  <a href="https://vsemirka200.github.io/lets-go-slavgorod/"><img alt="Сайт проекта" src="https://img.shields.io/badge/-САЙТ-2468dc?style=for-the-badge"></a>&nbsp;
+  <a href="https://github.com/VseMirka200/lets-go-slavgorod/issues/new"><img alt="Сообщить об ошибке" src="https://img.shields.io/badge/-ОШИБКА-dc3545?style=for-the-badge&logo=github"></a>
 </p>
 
 **«Поехали! Славгород»** — неофициальное Android-приложение с расписанием городского и пригородного транспорта Славгорода. Оно помогает быстро находить маршруты и остановки, смотреть ближайшие отправления и сохранять нужные маршруты в избранное.
+
+Текущая версия — **3.0.2**. Минимальная версия Android — **7.0 (API 24)**.
 
 > [!IMPORTANT]
 > Проект является независимым и не связан с администрацией города, государственными учреждениями, ООО «Славгородское АТП», МУП «Торговый ряд г. Славгород» или другими муниципальными организациями. Приложение не является официальным источником транспортной информации.
@@ -40,12 +39,12 @@
 
 ## Установка
 
-Готовые версии публикуются на странице релизов проекта:
+Готовая версия **3.0.2** доступна по кнопке **«СКАЧАТЬ»** выше. Также релизы публикуются на:
 
-- [Релизы на сайте проекта](https://vsemirka200.github.io/lets-go-slavgorod/releases.html)
-- [GitHub Releases](https://github.com/VseMirka200/lets-go-slavgorod/releases)
+- [странице релизов проекта](https://vsemirka200.github.io/lets-go-slavgorod/releases.html);
+- [GitHub Releases](https://github.com/VseMirka200/lets-go-slavgorod/releases).
 
-Минимальная версия Android — **7.0 (API 24)**. Для загрузки актуального расписания требуется доступ к интернету. Разрешение на уведомления используется только для функции уведомлений и может быть отключено пользователем.
+Для загрузки актуального расписания требуется доступ к интернету. Разрешение на уведомления используется только для функции уведомлений и может быть отключено пользователем.
 
 ## Сборка из исходного кода
 
@@ -65,7 +64,7 @@ gradlew.bat assembleDebug
 
 Debug APK после успешной сборки находится в `app/build/outputs/apk/debug/`.
 
-Полезные проверки перед отправкой изменений:
+Полезные проверки:
 
 ```bash
 ./gradlew test
@@ -86,14 +85,14 @@ Debug APK после успешной сборки находится в `app/bu
 - JUnit, Robolectric, Mockito, MockWebServer и AndroidX Test;
 - Detekt и Android Lint для статических проверок.
 
-Текущая версия приложения в исходном коде — **3.0.2**. Проект собирается с `compileSdk 36`, `targetSdk 36` и `minSdk 24`.
+Проект собирается с `compileSdk 36`, `targetSdk 36` и `minSdk 24`.
 
 ## Структура репозитория
 
 ```text
 app/                   Android-приложение, ресурсы и тесты
 config/detekt/         конфигурация статического анализа
-docs/                  сайт проекта и вся Markdown-документация
+docs/                  сайт проекта и Markdown-документация
   README.md            обзор проекта
   CONTRIBUTING.md      правила участия в разработке
   CODE_OF_CONDUCT.md   правила общения и поведения
@@ -105,11 +104,9 @@ gradle/                Gradle Wrapper и каталог версий
 LICENSE                лицензия проекта
 ```
 
-Английские версии документов находятся рядом и имеют суффикс `_EN.md`.
-
 ## Данные и конфиденциальность
 
-Приложение работает без аккаунта. Пользовательские настройки, избранные маршруты, кэш расписания и локальные журналы хранятся на устройстве. Для получения расписания приложение обращается по сети к выбранному источнику данных. Подробности приведены в [PRIVACY.md](PRIVACY.md) и на [публичной странице политики конфиденциальности](https://vsemirka200.github.io/lets-go-slavgorod/document.html?doc=privacy&lang=ru).
+Приложение работает без аккаунта. Пользовательские настройки, избранные маршруты, кэш расписания и локальные журналы хранятся на устройстве. Для получения расписания приложение обращается по сети к выбранному источнику данных. Подробности приведены в [PRIVACY.md](PRIVACY.md).
 
 ## Документация
 
@@ -123,16 +120,10 @@ LICENSE                лицензия проекта
 - [Как внести вклад](CONTRIBUTING.md)
 - [История изменений](CHANGELOG.md)
 
-Все документы, у которых есть перевод, можно переключать между русским и английским прямо на [сайте проекта](https://vsemirka200.github.io/lets-go-slavgorod/#documents).
-
-## Участие в проекте
-
-Сообщения об ошибках, предложения и pull request приветствуются. Перед изменениями ознакомьтесь с [CONTRIBUTING.md](CONTRIBUTING.md) и [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Для потенциальных уязвимостей используйте порядок из [SECURITY.md](SECURITY.md), а не публичный issue.
-
 ## Обратная связь
 
-Сообщить об ошибке или предложить улучшение можно через [GitHub Issues](https://github.com/VseMirka200/lets-go-slavgorod/issues) или через раздел контактов на [сайте проекта](https://vsemirka200.github.io/lets-go-slavgorod/#feedback).
+Сообщить об ошибке или предложить улучшение можно через [GitHub Issues](https://github.com/VseMirka200/lets-go-slavgorod/issues/new) или через раздел контактов на [сайте проекта](https://vsemirka200.github.io/lets-go-slavgorod/#feedback).
 
 ## Лицензия
 
-Условия использования исходного кода приведены в существующем файле [LICENSE](../LICENSE).
+Условия использования исходного кода приведены в [LICENSE](../LICENSE).
