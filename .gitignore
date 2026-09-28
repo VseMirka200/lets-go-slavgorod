@@ -5,6 +5,8 @@
 .kotlin/
 **/build/
 out/
+/gradle/libs.versions.toml
+/gradle/wrapper/gradle-wrapper.properties
 
 # Local configuration and secrets
 local.properties
