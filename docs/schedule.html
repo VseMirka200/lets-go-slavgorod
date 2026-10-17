@@ -1,51 +1,125 @@
 <!doctype html>
 <html lang="ru">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Актуальное расписание автобусных маршрутов Славгорода и Ярового.">
-    <title>Расписание — Поехали! Славгород</title>
-    <link rel="icon" href="assets/images/app-logo.png">
-    <link rel="manifest" href="manifest.webmanifest">
-    <meta name="theme-color" content="#0d47a1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <link rel="apple-touch-icon" href="assets/images/app-logo.png">
-    <link rel="stylesheet" href="assets/css/portal.css">
-    <link rel="stylesheet" href="assets/css/schedule-portal.css">
-    <link rel="stylesheet" href="assets/css/branding.css">
-    <link rel="stylesheet" href="assets/css/pwa-install.css">
-</head>
-<body data-schedule-source="https://raw.githubusercontent.com/VseMirka200/lets-go-slavgorod/main/schedule-data/schedule.json">
-    <div class="portal-shell">
-        <aside class="portal-sidebar">
-            <a class="portal-brand" href="index.html"><img src="assets/images/app-logo.png" alt=""><span>Поехали! Славгород</span></a>
-            <a class="portal-back" href="index.html">← На главную</a>
-            <nav class="portal-nav" aria-label="Навигация">
-                <a href="index.html">Начало</a><a class="active" href="schedule.html" aria-current="page">Расписание</a>
-                <p>Пользователям</p>
-                <a href="https://www.rustore.ru/catalog/app/ru.slavgorod.transport" target="_blank" rel="noreferrer">Скачать из RuStore</a>
-                <a href="https://vk.cc/cZnpy3" target="_blank" rel="noreferrer">Скачать из Google Play</a>
-                <a href="https://github.com/VseMirka200/lets-go-slavgorod/releases" target="_blank" rel="noreferrer">Скачать APK (GitHub)</a>
-                <a href="https://github.com/VseMirka200/lets-go-slavgorod/issues/new?template=feedback.yml" target="_blank" rel="noreferrer">Обратная связь</a>
-                <p>Проект</p><a href="https://github.com/VseMirka200/lets-go-slavgorod" target="_blank" rel="noreferrer">GitHub</a>
-            </nav>
-        </aside>
-        <main id="top" class="portal-main schedule-portal-main">
-            <div class="portal-topline"><a href="https://vk.com/letsgoslavgorod" target="_blank" rel="noreferrer">Сообщество ВКонтакте</a><a href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/schedule-data/schedule.json" target="_blank" rel="noreferrer">Источник данных ↗</a></div>
-            <header class="portal-hero schedule-portal-hero">
-                <span class="portal-eyebrow">Славгород · Яровое · Алтайский край</span><h1>Расписание маршрутов</h1>
-                <p>Найдите автобус по номеру, остановке, названию или времени отправления. Перед поездкой сверяйте важное время с объявлениями перевозчика.</p>
-                <div class="schedule-meta" aria-live="polite"><span>Статус <strong id="schedule-load-state">Загрузка…</strong></span><span>Обновлено <strong id="schedule-updated-at">—</strong></span></div>
-                <div class="portal-actions"><button class="portal-button" type="button" data-install-web-app hidden>Установить веб-версию</button></div>
-            </header>
-            <section class="schedule-portal-panel" aria-label="Поиск расписания">
-                <label class="schedule-portal-search" for="schedule-search"><span>Поиск по маршруту или остановке</span><input id="schedule-search" type="search" placeholder="Например: 102, Славгород или 06:25" autocomplete="off"></label>
-                <div id="schedule-status-message" class="schedule-portal-status" role="status" aria-live="polite"></div><div id="schedule-results" class="schedule-results"></div>
-            </section>
-            <footer class="portal-footer">© Поехали! Славгород · <a href="https://github.com/VseMirka200/lets-go-slavgorod" target="_blank" rel="noreferrer">Исходный код</a></footer>
-        </main>
-    </div>
-    <script src="assets/js/schedule-page.js"></script>
-    <script src="assets/js/pwa-install.js"></script>
-</body>
-</html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="Актуальное расписание автобусных маршрутов Славгорода и Ярового.">
+        <title>
+            Расписание — Поехали! Славгород
+        </title>
+        <link rel="icon" href="assets/media/branding/app-logo.png">
+        <link rel="manifest" href="manifest.webmanifest">
+        <meta name="theme-color" content="#0d47a1">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="apple-touch-icon" href="assets/media/branding/app-logo.png">
+        <link rel="stylesheet" href="assets/styles/core/portal.css">
+        <link rel="stylesheet" href="assets/styles/pages/schedule-portal.css">
+        <link rel="stylesheet" href="assets/styles/core/branding.css">
+        <link rel="stylesheet" href="assets/styles/features/pwa-install.css">
+        <link rel="stylesheet" href="assets/styles/features/mobile.css">
+    </head>
+    <body data-schedule-source="https://raw.githubusercontent.com/VseMirka200/lets-go-slavgorod/main/schedule-data/schedule.json">
+        <div class="portal-shell">
+            <aside class="portal-sidebar">
+                <a class="portal-brand" href="index.html">
+                    <img src="assets/media/branding/app-logo.png" alt="">
+                    <span>
+                        Поехали! Славгород
+                    </span>
+                </a>
+                <a class="portal-back" href="index.html">
+                    ← На главную
+                </a>
+                <details class="portal-menu" open>
+                    <summary>Меню</summary>
+                    <nav class="portal-nav" aria-label="Навигация">
+                    <a href="index.html">
+                        Начало
+                    </a>
+                    <a class="active" href="schedule.html" aria-current="page">
+                        Расписание
+                    </a>
+                    <p>
+                        Пользователям
+                    </p>
+                    <a href="https://www.rustore.ru/catalog/app/ru.slavgorod.transport" target="_blank" rel="noreferrer">
+                        Скачать из RuStore
+                    </a>
+                    <a href="https://vk.cc/cZnpy3" target="_blank" rel="noreferrer">
+                        Скачать из Google Play
+                    </a>
+                    <a href="https://github.com/VseMirka200/lets-go-slavgorod/releases" target="_blank" rel="noreferrer">
+                        Скачать APK (GitHub)
+                    </a>
+                    <a href="https://github.com/VseMirka200/lets-go-slavgorod/issues/new?template=feedback.yml" target="_blank" rel="noreferrer">
+                        Обратная связь
+                    </a>
+                    <p>
+                        Проект
+                    </p>
+                    <a href="https://github.com/VseMirka200/lets-go-slavgorod" target="_blank" rel="noreferrer">
+                        GitHub
+                    </a>
+                    </nav>
+                </details>
+            </aside>
+            <main id="top" class="portal-main schedule-portal-main">
+                <div class="portal-topline">
+                    <a href="https://vk.com/letsgoslavgorod" target="_blank" rel="noreferrer">
+                        Сообщество ВКонтакте
+                    </a>
+                    <a href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/schedule-data/schedule.json" target="_blank" rel="noreferrer">
+                        Источник данных ↗
+                    </a>
+                </div>
+                <header class="portal-hero schedule-portal-hero">
+                    <span class="portal-eyebrow">
+                        Славгород · Яровое · Алтайский край
+                    </span>
+                    <h1>
+                        Расписание маршрутов
+                    </h1>
+                    <p>
+                        Найдите автобус по номеру, остановке, названию или времени отправления. Перед поездкой сверяйте важное время с объявлениями перевозчика.
+                    </p>
+                    <div class="schedule-meta" aria-live="polite">
+                        <span>
+                            Статус
+                            <strong id="schedule-load-state">
+                                Загрузка…
+                            </strong>
+                        </span>
+                        <span>
+                            Обновлено
+                            <strong id="schedule-updated-at">
+                                —
+                            </strong>
+                        </span>
+                    </div>
+                </header>
+                <section class="schedule-portal-panel" aria-label="Поиск расписания">
+                    <label class="schedule-portal-search" for="schedule-search">
+                        <span>
+                            Поиск по маршруту или остановке
+                        </span>
+                        <input id="schedule-search" type="search" placeholder="Например: 102, Славгород или 06:25" autocomplete="off">
+                    </label>
+                    <div id="schedule-status-message" class="schedule-portal-status" role="status" aria-live="polite">
+                    </div>
+                    <div id="schedule-results" class="schedule-results">
+                    </div>
+                </section>
+                <footer class="portal-footer">
+                    © Поехали! Славгород ·
+                    <a href="https://github.com/VseMirka200/lets-go-slavgorod" target="_blank" rel="noreferrer">
+                        Исходный код
+                    </a>
+                </footer>
+            </main>
+        </div>
+        <script src="assets/scripts/pages/schedule-page.js">
+            </script>
+            <script src="assets/scripts/features/pwa-install.js">
+                </script>
+            </body>
+        </html>

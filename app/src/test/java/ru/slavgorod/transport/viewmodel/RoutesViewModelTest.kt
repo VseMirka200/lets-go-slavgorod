@@ -158,7 +158,12 @@ class RoutesViewModelTest {
         repository = createRepository()
         repository.refreshRoutesFromLocal()
 
-        viewModel = RoutesViewModel(repository, appForegroundTracker)
+        viewModel = RoutesViewModel(
+            routeRepository = repository,
+            appForegroundTracker = appForegroundTracker,
+            ioDispatcher = testDispatcher,
+            defaultDispatcher = testDispatcher
+        )
         advanceViewModelState()
 
         viewModel.onSearchQueryChange("102")
