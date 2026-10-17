@@ -1,0 +1,19 @@
+.portal-button[data-install-web-app] {
+    appearance: none;
+    min-height: 44px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    font: inherit;
+    line-height: inherit;
+}
+
+.portal-button[data-install-web-app]:hover {
+    border-color: #5687bf;
+    background: #1d2635;
+}
+
+.portal-button[data-install-web-app]:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+}

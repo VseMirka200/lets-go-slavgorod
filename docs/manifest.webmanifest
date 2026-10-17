@@ -1,0 +1,19 @@
+{
+  "name": "Поехали! Славгород",
+  "short_name": "Поехали!",
+  "description": "Расписание автобусных маршрутов Славгорода и Ярового.",
+  "lang": "ru",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#10141d",
+  "theme_color": "#0d47a1",
+  "icons": [
+    {
+      "src": "assets/images/app-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
