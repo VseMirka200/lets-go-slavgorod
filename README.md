@@ -1,7 +1,7 @@
 <table>
   <tr>
     <td width="180" align="center" valign="middle">
-      <img src="docs/assets/images/app-logo.png" alt="Логотип приложения «Поехали! Славгород»" width="150">
+      <img src="docs/assets/media/branding/app-logo.png" alt="Логотип приложения «Поехали! Славгород»" width="150">
     </td>
     <td valign="middle">
       <h1>Поехали! Славгород</h1>
