@@ -9,5 +9,5 @@ object ScheduleConfig {
     private const val REMOTE_SCHEDULE_URL_PROPERTY = "remoteScheduleUrl"
     private const val REMOTE_SCHEDULE_URL_ENV = "REMOTE_SCHEDULE_URL"
     private const val DEFAULT_REMOTE_SCHEDULE_URL =
-        "https://raw.githubusercontent.com/VseMirka200/lets-go-slavgorod/main/docs/data/schedule.json"
+        "https://raw.githubusercontent.com/VseMirka200/lets-go-slavgorod/main/docs/schedule-data/schedule.json"
 }
