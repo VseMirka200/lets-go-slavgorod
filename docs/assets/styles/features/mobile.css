@@ -1,0 +1,202 @@
+@media (max-width: 780px) {
+    .portal-sidebar {
+        position: sticky;
+        z-index: 10;
+        top: 0;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px 12px;
+        padding: 12px 14px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.24);
+    }
+    .portal-brand {
+        min-width: 0;
+        padding: 0;
+        font-size: 16px;
+    }
+    .portal-brand img {
+        width: 30px;
+        height: 30px;
+    }
+    .portal-back, .portal-search {
+        margin: 0;
+        align-self: center;
+    }
+    .portal-back {
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--text);
+        font-size: 13px;
+        white-space: nowrap;
+    }
+    .portal-search {
+        width: auto;
+        min-height: 38px;
+        padding: 7px 10px;
+        white-space: nowrap;
+    }
+    .portal-search kbd {
+        display: none;
+    }
+    .portal-nav {
+        display: flex;
+        grid-column: 1 / -1;
+        gap: 6px;
+        margin: 0 -14px -12px;
+        padding: 0 14px 10px;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    .portal-nav::-webkit-scrollbar {
+        display: none;
+    }
+    .portal-nav p {
+        display: none;
+    }
+    .portal-nav a {
+        flex: 0 0 auto;
+        margin: 0;
+        padding: 8px 10px;
+        border: 1px solid transparent;
+        white-space: nowrap;
+        font-size: 13px;
+    }
+    .portal-nav a.active {
+        border-color: #4f83bb;
+    }
+    .portal-main, .schedule-portal-main {
+        width: 100%;
+        padding: 18px 14px 34px;
+    }
+    .portal-topline {
+        display: flex;
+        justify-content: flex-start;
+        gap: 12px;
+        overflow-x: auto;
+        white-space: nowrap;
+        font-size: 13px;
+    }
+    .portal-hero, .schedule-portal-hero {
+        padding: 32px 0 26px;
+    }
+    .portal-hero h1 {
+        font-size: clamp(32px, 11vw, 46px);
+        letter-spacing: -0.04em;
+    }
+    .portal-hero p, .portal-card p {
+        font-size: 16px;
+        line-height: 1.5;
+    }
+    .portal-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+        margin-top: 20px;
+    }
+    .portal-actions .portal-button {
+        width: 100%;
+        min-height: 46px;
+        padding: 9px 10px;
+        font-size: 14px;
+    }
+    .portal-grid, .schedule-results {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+    .portal-grid, .portal-steps {
+        gap: 10px;
+        margin: 18px 0 34px;
+    }
+    .portal-card {
+        min-height: 0;
+        padding: 17px;
+    }
+    .portal-card h2 {
+        margin-top: 7px;
+    }
+    .portal-section {
+        padding: 26px 0;
+    }
+    .portal-section h2 {
+        font-size: 25px;
+    }
+    .portal-steps article {
+        padding: 15px;
+    }
+    .portal-support {
+        gap: 16px;
+        margin-top: 24px;
+        padding: 19px;
+    }
+    .portal-support .portal-button {
+        width: 100%;
+    }
+    .schedule-portal-panel {
+        padding: 14px;
+        border-radius: 12px;
+    }
+    .schedule-portal-search input {
+        min-height: 52px;
+        font-size: 16px;
+    }
+    .schedule-results {
+        gap: 10px;
+    }
+    .schedule-route-card {
+        padding: 13px;
+    }
+    .schedule-route-meta {
+        display: grid;
+        gap: 5px;
+    }
+    .schedule-day-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .schedule-day-card {
+        min-height: 82px;
+    }
+    .schedule-upcoming-card {
+        position: sticky;
+        top: 116px;
+        z-index: 2;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .schedule-upcoming-card ul {
+        justify-content: flex-start;
+        width: 100%;
+    }
+    .schedule-upcoming-card li {
+        flex: 1 1 120px;
+    }
+    .schedule-departures {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+}
+@media (max-width: 420px) {
+    .portal-sidebar {
+        grid-template-columns: 1fr;
+    }
+    .portal-back, .portal-search {
+        display: none;
+    }
+    .portal-actions:not(.portal-actions--downloads) {
+        grid-template-columns: 1fr;
+    }
+    .portal-actions .portal-button:first-child {
+        grid-column: auto;
+    }
+    .portal-hero h1 {
+        font-size: 31px;
+    }
+    .schedule-meta {
+        gap: 7px;
+    }
+    .schedule-meta span {
+        padding: 8px 9px;
+        font-size: 13px;
+    }
+    .schedule-day-picker {
+        padding: 12px;
+    }
+}

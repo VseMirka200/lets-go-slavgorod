@@ -1,16 +1,20 @@
-const CACHE_NAME = "lets-go-slavgorod-web-v1";
+const CACHE_NAME = "lets-go-slavgorod-web-v2";
 const APP_SHELL = [
     "./",
     "./index.html",
     "./schedule.html",
     "./manifest.webmanifest",
-    "./assets/css/portal.css",
-    "./assets/css/schedule-portal.css",
-    "./assets/css/branding.css",
-    "./assets/css/pwa-install.css",
-    "./assets/js/schedule-page.js",
-    "./assets/js/pwa-install.js",
-    "./assets/images/app-logo.png"
+    "./assets/styles/core/portal.css",
+    "./assets/styles/pages/schedule-portal.css",
+    "./assets/styles/core/branding.css",
+    "./assets/styles/features/pwa-install.css",
+    "./assets/styles/features/store-icons.css",
+    "./assets/styles/features/mobile.css",
+    "./assets/scripts/pages/schedule-page.js",
+    "./assets/scripts/features/pwa-install.js",
+    "./assets/media/branding/app-logo.png",
+    "./assets/media/icons/rustore-logo.svg",
+    "./assets/media/icons/play-market-logo.svg"
 ];
 
 self.addEventListener("install", (event) => {
