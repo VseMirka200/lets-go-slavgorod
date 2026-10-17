@@ -2,7 +2,7 @@
  * Стандартная точка входа Google Apps Script, которая отдаёт JSON расписания.
  * Пользователь может переопределить её через query-параметр `source`.
  */
-const DEFAULT_SCHEDULE_SOURCE = "https://script.google.com/macros/s/AKfycbwKaCxx-FdDvlptqFCaWbg81ZWLvenzZ0e-sjgmgp8n2LYzzhCLokozPi9rTcbeXf2BNA/exec";
+const DEFAULT_SCHEDULE_SOURCE = "https://raw.githubusercontent.com/VseMirka200/lets-go-slavgorod/main/schedule-data/schedule.json";
 
 /**
  * Префикс для всех записей localStorage, связанных с кэшем расписания.
