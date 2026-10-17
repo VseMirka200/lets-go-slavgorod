@@ -28,13 +28,15 @@
                         Поехали! Славгород
                     </span>
                 </a>
-                <button class="portal-search" data-open-search>
-                    Поиск по сайту
+                <button class="portal-search" data-open-search aria-label="Поиск по сайту">
+                    Поиск
                     <kbd>
                         Ctrl K
                     </kbd>
                 </button>
-                <nav class="portal-nav">
+                <details class="portal-menu" open>
+                    <summary>Меню</summary>
+                    <nav class="portal-nav">
                     <a class="active" href="#top">
                         Начало
                     </a>
@@ -59,6 +61,9 @@
                     <a href="https://github.com/VseMirka200/lets-go-slavgorod/issues/new?template=feedback.yml" target="_blank" rel="noreferrer">
                         Обратная связь
                     </a>
+                    <a href="https://max.ru/channel_letsgoslavgorod" target="_blank" rel="noreferrer">
+                        Канал в МАКС
+                    </a>
                     <p>
                         Проект
                     </p>
@@ -68,15 +73,19 @@
                     <a href="https://github.com/VseMirka200/lets-go-slavgorod" target="_blank" rel="noreferrer">
                         GitHub
                     </a>
-                </nav>
+                    </nav>
+                </details>
             </aside>
             <main id="top" class="portal-main">
                 <div class="portal-topline">
                     <a href="https://vk.com/letsgoslavgorod" target="_blank" rel="noreferrer">
-                        Сообщество ВКонтакте
+                        Группа ВКонтакте
+                    </a>
+                    <a href="https://max.ru/channel_letsgoslavgorod" target="_blank" rel="noreferrer">
+                        Канал в МАКС
                     </a>
                     <a href="https://github.com/VseMirka200/lets-go-slavgorod/releases" target="_blank" rel="noreferrer">
-                        Релизы GitHub ↗
+                        Релизы GitHub
                     </a>
                 </div>
                 <header class="portal-hero">
@@ -94,6 +103,7 @@
                             Открыть расписание
                         </a>
                         <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/releases" target="_blank" rel="noreferrer">
+                            <img class="store-icon" src="assets/media/icons/github-logo.svg" alt="">
                             Скачать APK
                         </a>
                         <a class="portal-button" href="https://www.rustore.ru/catalog/app/ru.slavgorod.transport" target="_blank" rel="noreferrer">

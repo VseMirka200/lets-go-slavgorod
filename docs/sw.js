@@ -1,4 +1,4 @@
-const CACHE_NAME = "lets-go-slavgorod-web-v2";
+const CACHE_NAME = "lets-go-slavgorod-web-v24";
 const APP_SHELL = [
     "./",
     "./index.html",
@@ -13,6 +13,7 @@ const APP_SHELL = [
     "./assets/scripts/pages/schedule-page.js",
     "./assets/scripts/features/pwa-install.js",
     "./assets/media/branding/app-logo.png",
+    "./assets/media/icons/github-logo.svg",
     "./assets/media/icons/rustore-logo.svg",
     "./assets/media/icons/play-market-logo.svg"
 ];

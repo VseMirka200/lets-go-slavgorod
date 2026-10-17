@@ -18,6 +18,7 @@ const SCHEDULE_DATE_FORMAT_OPTIONS = {
 };
 
 let currentRouteQuery = "";
+let clearUpcomingStickyState = null;
 
 /**
  * Форматирует дату или timestamp в единый вид, принятый на странице расписания.
@@ -382,6 +383,79 @@ function buildUpcomingCard(schedules) {
 }
 
 /**
+ * Меняет вид ближайших отправлений только после их закрепления у верхней границы.
+ * В обычном положении карточка остаётся частью карточки маршрута.
+ */
+function setupUpcomingStickyState() {
+    clearUpcomingStickyState?.();
+    clearUpcomingStickyState = null;
+
+    const card = document.querySelector(".schedule-upcoming-card");
+    if (!card) {
+        return;
+    }
+
+    const sentinel = document.createElement("div");
+    sentinel.className = "schedule-upcoming-sentinel";
+    sentinel.setAttribute("aria-hidden", "true");
+    card.before(sentinel);
+    const routeCard = card.closest(".schedule-route-card");
+
+    let frameId = 0;
+    const updateState = () => {
+        frameId = 0;
+        const isMobile = window.matchMedia("(max-width: 780px)").matches;
+        const stickyTop = isMobile
+            ? document.querySelector(".portal-sidebar")?.getBoundingClientRect().bottom || 0
+            : 0;
+        const routeBottom = routeCard?.getBoundingClientRect().bottom || 0;
+        const shouldStick = sentinel.getBoundingClientRect().top <= stickyTop
+            && routeBottom > stickyTop + card.offsetHeight;
+
+        if (shouldStick) {
+            if (!card.classList.contains("is-stuck")) {
+                sentinel.style.height = `${card.offsetHeight}px`;
+                card.classList.add("is-stuck");
+            }
+            const bounds = routeCard?.getBoundingClientRect();
+            if (bounds) {
+                card.style.left = `${Math.round(bounds.left)}px`;
+                card.style.width = `${Math.round(bounds.width)}px`;
+            }
+            card.style.top = `${Math.round(stickyTop)}px`;
+        } else if (card.classList.contains("is-stuck")) {
+            card.classList.remove("is-stuck");
+            sentinel.style.height = "";
+            card.style.removeProperty("left");
+            card.style.removeProperty("width");
+            card.style.removeProperty("top");
+        }
+    };
+    const scheduleUpdate = () => {
+        if (!frameId) {
+            frameId = window.requestAnimationFrame(updateState);
+        }
+    };
+
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+    updateState();
+
+    clearUpcomingStickyState = () => {
+        window.removeEventListener("scroll", scheduleUpdate);
+        window.removeEventListener("resize", scheduleUpdate);
+        if (frameId) {
+            window.cancelAnimationFrame(frameId);
+        }
+        card.classList.remove("is-stuck");
+        card.style.removeProperty("left");
+        card.style.removeProperty("width");
+        card.style.removeProperty("top");
+        sentinel.remove();
+    };
+}
+
+/**
  * Рендерит компактную карточку результата поиска для списка маршрутов.
  */
 function buildRouteSummaryCard(route) {
@@ -538,6 +612,7 @@ function setupSchedulePage() {
         const detailMode = Boolean(currentRouteQuery);
 
         renderRoutes(filteredRoutes, results, detailMode, selectedScheduleDay);
+        setupUpcomingStickyState();
 
         if (currentRouteQuery && filteredRoutes.length) {
             const route = filteredRoutes[0];
@@ -620,6 +695,16 @@ function setupSchedulePage() {
     };
 
     searchInput.addEventListener("input", applyFilter);
+    document.querySelector("[data-focus-schedule-search]")?.addEventListener("click", () => {
+        searchInput.scrollIntoView({ behavior: "smooth", block: "center" });
+        window.setTimeout(() => searchInput.focus({ preventScroll: true }), 250);
+    });
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "/" && !event.ctrlKey && !event.metaKey && document.activeElement !== searchInput) {
+            event.preventDefault();
+            searchInput.focus();
+        }
+    });
     results.addEventListener("click", (event) => {
         const dayButton = event.target.closest("[data-schedule-day]");
         if (!dayButton) {
