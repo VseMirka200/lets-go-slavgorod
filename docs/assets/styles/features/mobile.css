@@ -1,261 +1,430 @@
-@media (max-width: 780px) {
+/* Mobile is intentionally a separate, touch-first composition. */
+@media (max-width:780px) {
+    body {
+        background:linear-gradient(180deg,#101d33,#09101d 360px);
+        font-size:15px;
+    }
+    .portal-shell {
+        display:block;
+    }
     .portal-sidebar {
-        position: sticky;
-        z-index: 10;
-        top: 0;
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 10px 12px;
-        padding: 12px 14px;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.24);
+        position:sticky;
+        z-index:20;
+        top:0;
+        display:grid;
+        grid-template-columns:minmax(0,1fr) auto;
+        height:auto;
+        min-height:64px;
+        padding:12px 16px;
+        overflow:visible;
+        background:rgba(11,17,30,.92);
+        border:0;
+        border-bottom:1px solid var(--line);
+        box-shadow:0 8px 24px #05091455;
     }
     .portal-brand {
-        min-width: 0;
-        padding: 0;
-        font-size: 16px;
+        min-width:0;
+        padding:0;
+        font-size:16px;
     }
     .portal-brand img {
-        width: 30px;
-        height: 30px;
-    }
-    .portal-back, .portal-search {
-        margin: 0;
-        align-self: center;
+        width:34px;
+        height:34px;
+        border-radius:10px;
     }
     .portal-back {
-        padding: 8px 10px;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        color: var(--text);
-        font-size: 13px;
-        white-space: nowrap;
+        display:none;
     }
     .portal-search {
-        width: auto;
-        min-height: 38px;
-        padding: 7px 10px;
-        white-space: nowrap;
+        width:86px;
+        height:40px;
+        padding:0;
+        justify-content:center;
+        border-radius:10px;
+        color:transparent;
+    }
+    .portal-search::before {
+        content:"Поиск";
+        color:var(--text);
+        font-size:13px;
+        font-weight:750;
+        line-height:1;
     }
     .portal-search kbd {
-        display: none;
+        display:none;
     }
     .portal-menu {
-        grid-column: 1 / -1;
-        margin: 0 -14px -12px;
-        padding: 0 14px 10px;
+        grid-column:1/-1;
+        margin:10px 0 0;
     }
     .portal-menu summary {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        min-height: 40px;
-        padding: 8px 11px;
-        border: 1px solid #354157;
-        border-radius: 9px;
-        background: #202838;
-        color: var(--text);
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: 650;
-        list-style: none;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        min-height:42px;
+        padding:0 12px;
+        border:1px solid var(--line);
+        border-radius:10px;
+        background:#172237;
+        color:var(--text);
+        font-size:13px;
+        font-weight:750;
+        cursor:pointer;
+        list-style:none;
     }
     .portal-menu summary::-webkit-details-marker {
-        display: none;
+        display:none;
     }
     .portal-menu summary::after {
-        content: "☰";
-        color: var(--blue);
-        font-size: 18px;
+        content:"Меню +";
+        color:var(--blue);
     }
     .portal-menu[open] summary::after {
-        content: "×";
-        font-size: 23px;
-        line-height: 1;
+        content:"Закрыть ×";
     }
-    .portal-menu .portal-nav {
-        display: none;
+    .portal-menu>.portal-nav,.portal-menu[open]>.portal-nav {
+        display:none;
     }
-    .portal-menu[open] .portal-nav {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 6px;
-        margin: 8px 0 0;
-        padding: 8px;
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        background: #121824;
+    .portal-menu[open]>.portal-nav {
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:6px;
+        margin:8px 0 0;
+        padding:8px;
+        border:1px solid var(--line);
+        border-radius:12px;
+        background:#10192b;
     }
     .portal-menu .portal-nav p {
-        display: block;
-        grid-column: 1 / -1;
-        margin: 7px 4px 1px;
+        grid-column:1/-1;
+        margin:10px 5px 2px;
+        font-size:10px;
     }
     .portal-menu .portal-nav a {
-        min-width: 0;
-        margin: 0;
-        padding: 8px 9px;
-        border: 1px solid transparent;
-        border-radius: 7px;
-        font-size: 13px;
-        line-height: 1.25;
+        min-height:42px;
+        margin:0;
+        padding:10px;
+        border:1px solid transparent;
+        font-size:13px;
+        line-height:1.25;
     }
-    .portal-menu .portal-nav a.active {
-        border-color: #4f83bb;
+    .portal-menu .portal-nav .active {
+        border-color:var(--line-strong);
+        box-shadow:none;
     }
-    .portal-main, .schedule-portal-main {
-        width: 100%;
-        padding: 18px 14px 34px;
+    .portal-main,.schedule-portal-main {
+        width:100%;
+        padding:0 16px 44px;
     }
     .portal-topline {
-        display: flex;
-        justify-content: flex-start;
-        gap: 12px;
-        overflow-x: auto;
-        white-space: nowrap;
-        font-size: 13px;
+        display:flex;
+        justify-content:flex-start;
+        gap:16px;
+        padding-top:14px;
+        overflow-x:auto;
+        color:var(--muted);
+        font-size:12px;
+        white-space:nowrap;
+        scrollbar-width:none;
     }
-    .portal-hero, .schedule-portal-hero {
-        padding: 32px 0 26px;
+    .portal-topline::-webkit-scrollbar {
+        display:none;
+    }
+    .portal-hero,.schedule-portal-hero {
+        padding:42px 0 26px;
+    }
+    .portal-eyebrow {
+        font-size:10px;
+        letter-spacing:.1em;
     }
     .portal-hero h1 {
-        font-size: clamp(32px, 11vw, 46px);
-        letter-spacing: -0.04em;
+        margin:10px 0 14px;
+        font-size:clamp(37px,11vw,52px);
+        line-height:1;
+        letter-spacing:-.055em;
     }
-    .portal-hero p, .portal-card p {
-        font-size: 16px;
-        line-height: 1.5;
+    .portal-hero p,.portal-card p,.portal-section>p {
+        font-size:16px;
+        line-height:1.5;
     }
-    .portal-actions {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 9px;
-        margin-top: 20px;
+    .portal-actions,.portal-actions--downloads {
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        width:100%;
+        gap:9px;
+        margin-top:23px;
     }
     .portal-actions .portal-button {
-        width: 100%;
-        min-height: 46px;
-        padding: 9px 10px;
-        font-size: 14px;
+        min-height:48px;
+        padding:10px 8px;
+        border-radius:12px;
+        font-size:13px;
+        white-space:normal;
     }
-    /* Keep the most useful action prominent and group app stores together. */
-    .portal-actions--downloads .portal-button:first-child,
-    .portal-actions--downloads .portal-button:nth-child(2),
-    .portal-actions--downloads [data-install-web-app] {
-        grid-column: 1 / -1;
+    .portal-actions--downloads .portal-button:first-child,.portal-actions--downloads .portal-button:nth-child(2),.portal-actions--downloads [data-install-web-app] {
+        grid-column:1/-1;
     }
     .portal-actions--downloads .portal-button:first-child {
-        order: 1;
-        min-height: 52px;
+        min-height:54px;
+        font-size:15px;
     }
-    .portal-actions--downloads .portal-button:nth-child(3) {
-        order: 2;
+    .portal-note {
+        font-size:12px!important;
     }
-    .portal-actions--downloads .portal-button:nth-child(4) {
-        order: 3;
-    }
-    .portal-actions--downloads .portal-button:nth-child(2) {
-        order: 4;
-    }
-    .portal-actions--downloads [data-install-web-app] {
-        order: 5;
-    }
-    .portal-grid, .schedule-results {
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    }
-    .portal-grid, .portal-steps {
-        gap: 10px;
-        margin: 18px 0 34px;
+    .portal-grid {
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:10px;
+        margin:18px 0 42px;
     }
     .portal-card {
-        min-height: 0;
-        padding: 17px;
+        min-height:172px;
+        padding:16px;
+        border-radius:14px;
+    }
+    .portal-card:hover {
+        transform:none;
+    }
+    .portal-card span {
+        font-size:23px;
     }
     .portal-card h2 {
-        margin-top: 7px;
+        margin:20px 0 4px;
+        font-size:16px;
+        line-height:1.2;
+    }
+    .portal-card p {
+        font-size:12px;
+        line-height:1.45;
     }
     .portal-section {
-        padding: 26px 0;
+        padding:31px 0;
     }
     .portal-section h2 {
-        font-size: 25px;
+        margin-top:7px;
+        font-size:27px;
+        line-height:1.08;
+    }
+    .portal-steps {
+        grid-template-columns:1fr;
+        gap:9px;
+        margin-top:18px;
     }
     .portal-steps article {
-        padding: 15px;
+        padding:16px;
+        border-radius:12px;
+    }
+    .portal-steps p {
+        font-size:14px;
     }
     .portal-support {
-        gap: 16px;
-        margin-top: 24px;
-        padding: 19px;
+        display:block;
+        margin-top:28px;
+        padding:22px;
+        border-radius:15px;
+    }
+    .portal-support h2 {
+        font-size:23px;
+    }
+    .portal-support p {
+        font-size:14px;
     }
     .portal-support .portal-button {
-        width: 100%;
+        width:100%;
+        margin-top:18px;
     }
-    .schedule-portal-panel {
-        padding: 14px;
-        border-radius: 12px;
+    footer,.portal-footer {
+        padding-top:28px;
     }
-    .schedule-portal-search input {
-        min-height: 52px;
-        font-size: 16px;
-    }
-    .schedule-results {
-        gap: 10px;
-    }
-    .schedule-route-card {
-        padding: 13px;
-    }
-    .schedule-route-meta {
-        display: grid;
-        gap: 5px;
-    }
-    .schedule-day-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-    .schedule-day-card {
-        min-height: 82px;
-    }
-    .schedule-upcoming-card {
-        position: sticky;
-        top: 116px;
-        z-index: 2;
-        align-items: flex-start;
-        gap: 10px;
-    }
-    .schedule-upcoming-card ul {
-        justify-content: flex-start;
-        width: 100%;
-    }
-    .schedule-upcoming-card li {
-        min-width: 0;
-    }
-    .schedule-departures {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    dialog {
+        width:calc(100vw - 24px);
+        border-radius:15px;
     }
 }
-@media (max-width: 420px) {
-    .portal-sidebar {
-        grid-template-columns: 1fr;
-    }
-    .portal-back, .portal-search {
-        display: none;
-    }
-    .portal-actions:not(.portal-actions--downloads) {
-        grid-template-columns: 1fr;
-    }
-    .portal-actions .portal-button:first-child {
-        grid-column: auto;
-    }
-    .portal-hero h1 {
-        font-size: 31px;
+@media (max-width:780px) {
+    .schedule-portal-hero {
+        padding-bottom:20px;
     }
     .schedule-meta {
-        gap: 7px;
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:7px;
+        margin-top:18px;
     }
     .schedule-meta span {
-        padding: 8px 9px;
-        font-size: 13px;
+        display:grid;
+        gap:1px;
+        padding:9px;
+        font-size:11px;
+    }
+    .schedule-meta strong {
+        font-size:12px;
+    }
+    .schedule-portal-panel {
+        margin-inline:-4px;
+        padding:16px 12px;
+        border-radius:15px;
+    }
+    .schedule-portal-search {
+        display:grid;
+        gap:8px;
+        font-size:13px;
+    }
+    .schedule-portal-search input {
+        min-height:54px;
+        border-radius:11px;
+        font-size:16px;
+    }
+    .schedule-portal-status {
+        margin:14px 0;
+        font-size:13px;
+    }
+    .schedule-results {
+        grid-template-columns:1fr;
+        gap:10px;
+    }
+    .schedule-route-card {
+        padding:15px;
+        border-radius:12px;
+    }
+    .schedule-route-card:hover {
+        transform:none;
+    }
+    .schedule-route-card--summary {
+        min-height:122px;
+    }
+    .schedule-upcoming-card {
+        position:static;
+        display:block;
+        margin-bottom:12px;
+        padding:14px;
+        border-radius:12px;
+    }
+    .schedule-upcoming-card ul {
+        display:grid;
+        grid-template-columns:1fr;
+        gap:6px;
+        width:100%;
+        margin-top:11px;
+    }
+    .schedule-upcoming-card li {
+        padding:7px 9px;
     }
     .schedule-day-picker {
-        padding: 12px;
+        padding:13px;
+        border-radius:12px;
+    }
+    .schedule-day-picker h2 {
+        text-align:left;
+        font-size:16px;
+    }
+    .schedule-day-grid {
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:7px;
+    }
+    .schedule-day-card {
+        min-height:70px;
+    }
+    .schedule-departures {
+        grid-template-columns:1fr;
+        gap:8px;
+    }
+    .schedule-departure-group {
+        padding:11px;
+    }
+    .schedule-entry {
+        padding:10px;
+    }
+    .portal-footer {
+        margin-top:30px;
+    }
+}
+/* Departure points stay side-by-side on every phone width. */
+@media (max-width:780px) {
+    .schedule-departures {
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:7px;
+    }
+    .schedule-departure-group {
+        min-width:0;
+        padding:10px;
+    }
+    .schedule-entry {
+        padding:9px;
+    }
+}
+@media (max-width:780px) {
+    .portal-sidebar {
+        grid-template-columns:minmax(0,1fr);
+    }
+    .portal-search {
+        display:none;
+    }
+    .portal-search {
+        color:var(--text);
+        white-space:nowrap;
+    }
+    .portal-search::before {
+        content:none;
+    }
+    .schedule-portal-search {
+        grid-template-columns:minmax(0,1fr) !important;
+        gap:9px;
+    }
+    .schedule-portal-search > span {
+        padding-left:2px;
+        font-size:12px;
+        line-height:1.35;
+    }
+    .schedule-portal-search input {
+        min-width:0;
+        padding-inline:14px;
+    }
+    .schedule-upcoming-card {
+        position:sticky;
+        top:124px;
+        z-index:4;
+        margin:-15px -27px 14px;
+        border-radius:0 0 12px 12px;
+    }
+    .schedule-upcoming-card ul {
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        width:100%;
+        margin-top:11px;
+        overflow:visible;
+        padding:0;
+    }
+    .schedule-upcoming-card li {
+        min-width:0;
+    }
+}
+@media (max-width:390px) {
+    .portal-sidebar {
+        padding-inline:12px;
+    }
+    .portal-main,.schedule-portal-main {
+        padding-inline:12px;
+    }
+    .portal-brand span {
+        font-size:14px;
+    }
+    .portal-grid {
+        grid-template-columns:1fr;
+    }
+    .portal-card {
+        min-height:0;
+    }
+    .portal-card h2 {
+        margin-top:12px;
+    }
+}
+@media (max-width:780px) {
+    .schedule-upcoming-card {
+        margin:0 0 12px;
+        border-radius:12px;
+    }
+    .schedule-upcoming-card.is-stuck {
+        position:fixed;
+        margin:0;
+        border-radius:0 0 12px 12px;
     }
 }
