@@ -1,0 +1,17 @@
+name: Validate schedule data
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths: ["schedule-data/**", "tools/validate-schedule-data.mjs"]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/validate-schedule-data.mjs schedule-data/schedule.json

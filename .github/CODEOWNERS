@@ -1,0 +1,8 @@
+# Изменения в этих областях должны быть проверены владельцем репозитория.
+* @VseMirka200
+
+# Код CI и настройки сборки особенно чувствительны к вредоносным изменениям.
+/.github/ @VseMirka200
+/gradle/ @VseMirka200
+/*.gradle.kts @VseMirka200
+/app/build.gradle.kts @VseMirka200

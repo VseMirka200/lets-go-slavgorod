@@ -1,0 +1,59 @@
+# Gradle and Kotlin
+.gradle/
+.gradle-user-home/
+.android-user-home/
+.kotlin/
+**/build/
+out/
+
+# Local configuration and secrets
+local.properties
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+
+# Android build artifacts
+*.apk
+*.aab
+*.aar
+*.ap_
+*.dex
+captures/
+.externalNativeBuild/
+.cxx/
+
+# IntelliJ IDEA and Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+.navigation/
+
+# Fastlane generated files
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# Editors
+.vscode/
+.vs/
+*.swp
+*.swo
+*~
+
+# Logs, diagnostics and temporary files
+*.log
+*.hprof
+*.tmp
+.cache/
+tmp/
+temp/
+
+# Operating systems
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini

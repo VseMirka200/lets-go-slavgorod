@@ -1,0 +1,2496 @@
+{
+    "productionCalendar": {
+        "country": "RU",
+        "years": {
+            "2026": {
+                "nonWorkingDates": [
+                    "2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05",
+                    "2026-01-06", "2026-01-07", "2026-01-08", "2026-01-09", "2026-02-23",
+                    "2026-03-08", "2026-03-09", "2026-05-01", "2026-05-09", "2026-05-11",
+                    "2026-06-12", "2026-11-04", "2026-12-31"
+                ],
+                "preHolidayWorkingDates": [
+                    "2026-04-30", "2026-06-11", "2026-11-03"
+                ]
+            }
+        }
+    },
+    "scheduleChanges": [
+        {
+            "id": "102-weekend-schedule-2026-10",
+            "routeIds": ["102"],
+            "title": "График выходного дня",
+            "text": "По выходным и праздничным дням маршрут №102 работает по отдельному графику с 15 октября 2026 года.",
+            "validFrom": "2026-10-15"
+        }
+    ],
+    "routes":  [
+                   {
+                       "id":  "1",
+                       "routeNumber":  "1",
+                       "name":  "Вокзал - Совхоз",
+                       "description":  "Вокзал - Совхоз",
+                       "color":  "#32CD32",
+                       "travelTime":  "~24 минуты",
+                       "pricePrimary":  "40₽ город",
+                       "paymentMethods":  "Наличный / Картой",
+                       "remark":  "Примечание: указанное время отправления от начальных и конечных остановок маршрута.",
+                       "schedules":  [
+                                         {
+                                             "id":  "1_1",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "07:00",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_2",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "08:48",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_3",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "09:36",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_4",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "09:24",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_5",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "10:12",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_6",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "11:00",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_7",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "12:48",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_8",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "13:24",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_9",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "14:12",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_10",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "15:00",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_11",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "16:48",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_12",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "17:36",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_13",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "17:24",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_14",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "18:12",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_15",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "20:48",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_16",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "07:24",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_17",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "08:12",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_18",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "09:00",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_19",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "10:48",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_20",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "11:36",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_21",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "11:24",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_22",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "12:12",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_23",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "14:48",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_24",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "15:36",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_25",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "15:24",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_26",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "16:12",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_27",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "17:00",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_28",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "18:48",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_29",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "19:36",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_30",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "19:24",
+                                             "notes":  "Выход 1"
+                                         },
+                                         {
+                                             "id":  "1_31",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "08:30",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_32",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "08:18",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_33",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "09:06",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_34",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "10:54",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_35",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "11:42",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_36",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "12:30",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_37",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "12:18",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_38",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "13:06",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_39",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "14:54",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_40",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "15:42",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_41",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "16:30",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_42",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "16:18",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_43",
+                                             "departurePoint":  "Вокзал",
+                                             "departureTime":  "17:06",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_44",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "08:54",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_45",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "09:42",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_46",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "10:30",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_47",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "10:18",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_48",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "11:06",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_49",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "13:42",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_50",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "14:30",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_51",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "14:18",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_52",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "15:06",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_53",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "16:54",
+                                             "notes":  "Выход 3"
+                                         },
+                                         {
+                                             "id":  "1_54",
+                                             "departurePoint":  "Совхоз",
+                                             "departureTime":  "17:42",
+                                             "notes":  "Выход 3"
+                                         }
+                                     ]
+                   },
+                   {
+                       "id":  "3",
+                       "routeNumber":  "3",
+                       "name":  "Кольцевой",
+                       "description":  "Кольцевой маршрут (Радиозавод ↔ Мясокомбинат)",
+                       "color":  "#DC143C",
+                       "travelTime":  "~30 минут",
+                       "pricePrimary":  "40₽ город",
+                       "paymentMethods":  "Наличный / Картой",
+                       "remark":  "Примечание: указанное время отправления от начальных и конечных остановок маршрута.",
+                       "schedules":  [
+                                         {
+                                             "id":  "3_1",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "07:55"
+                                         },
+                                         {
+                                             "id":  "3_2",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "08:55"
+                                         },
+                                         {
+                                             "id":  "3_3",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "09:55"
+                                         },
+                                         {
+                                             "id":  "3_4",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "10:55"
+                                         },
+                                         {
+                                             "id":  "3_5",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "11:55"
+                                         },
+                                         {
+                                             "id":  "3_6",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "12:55"
+                                         },
+                                         {
+                                             "id":  "3_7",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "13:55"
+                                         },
+                                         {
+                                             "id":  "3_8",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "14:55"
+                                         },
+                                         {
+                                             "id":  "3_9",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "15:55"
+                                         },
+                                         {
+                                             "id":  "3_10",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "16:55"
+                                         },
+                                         {
+                                             "id":  "3_11",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "17:55"
+                                         },
+                                         {
+                                             "id":  "3_12",
+                                             "departurePoint":  "Мясокомбинат",
+                                             "departureTime":  "07:45"
+                                         },
+                                         {
+                                             "id":  "3_13",
+                                             "departurePoint":  "Мясокомбинат",
+                                             "departureTime":  "08:45"
+                                         },
+                                         {
+                                             "id":  "3_14",
+                                             "departurePoint":  "Мясокомбинат",
+                                             "departureTime":  "09:45"
+                                         },
+                                         {
+                                             "id":  "3_15",
+                                             "departurePoint":  "Мясокомбинат",
+                                             "departureTime":  "10:45"
+                                         },
+                                         {
+                                             "id":  "3_16",
+                                             "departurePoint":  "Мясокомбинат",
+                                             "departureTime":  "11:45"
+                                         },
+                                         {
+                                             "id":  "3_17",
+                                             "departurePoint":  "Мясокомбинат",
+                                             "departureTime":  "12:45"
+                                         },
+                                         {
+                                             "id":  "3_18",
+                                             "departurePoint":  "Мясокомбинат",
+                                             "departureTime":  "13:45"
+                                         },
+                                         {
+                                             "id":  "3_19",
+                                             "departurePoint":  "Мясокомбинат",
+                                             "departureTime":  "14:45"
+                                         },
+                                         {
+                                             "id":  "3_20",
+                                             "departurePoint":  "Мясокомбинат",
+                                             "departureTime":  "15:45"
+                                         },
+                                         {
+                                             "id":  "3_21",
+                                             "departurePoint":  "Мясокомбинат",
+                                             "departureTime":  "16:45"
+                                         },
+                                         {
+                                             "id":  "3_22",
+                                             "departurePoint":  "Мясокомбинат",
+                                             "departureTime":  "17:45"
+                                         },
+                                         {
+                                             "id":  "3_23",
+                                             "departurePoint":  "Мясокомбинат",
+                                             "departureTime":  "18:45"
+                                         }
+                                     ]
+                   },
+                   {
+                       "id":  "4",
+                       "routeNumber":  "4",
+                       "name":  "Славгород - Пригородное",
+                       "description":  "Мкр-н 2 - САД (Пригородные) - ЦРБ",
+                       "color":  "#BA55D3",
+                       "travelTime":  "~30 минут",
+                       "pricePrimary":  "40₽ город",
+                       "paymentMethods":  "Наличный / Картой",
+                       "remark":  "Примечание: указанное время отправления от начальных и конечных остановок маршрута.",
+                       "schedules":  [
+                                         {
+                                             "id":  "46026",
+                                             "departurePoint":  "Мкр-н 2",
+                                             "departureTime":  "07:10"
+                                         },
+                                         {
+                                             "id":  "46057",
+                                             "departurePoint":  "Мкр-н 2",
+                                             "departureTime":  "08:55"
+                                         },
+                                         {
+                                             "id":  "46085",
+                                             "departurePoint":  "Мкр-н 2",
+                                             "departureTime":  "08:30"
+                                         },
+                                         {
+                                             "id":  "46116",
+                                             "departurePoint":  "Мкр-н 2",
+                                             "departureTime":  "09:05"
+                                         },
+                                         {
+                                             "id":  "46146",
+                                             "departurePoint":  "Мкр-н 2",
+                                             "departureTime":  "16:50"
+                                         },
+                                         {
+                                             "id":  "46177",
+                                             "departurePoint":  "Мкр-н 2",
+                                             "departureTime":  "17:35"
+                                         },
+                                         {
+                                             "id":  "46207",
+                                             "departurePoint":  "Мкр-н 2",
+                                             "departureTime":  "17:10"
+                                         },
+                                         {
+                                             "id":  "46238",
+                                             "departurePoint":  "Мкр-н 2",
+                                             "departureTime":  "18:55"
+                                         },
+                                         {
+                                             "id":  "46269",
+                                             "departurePoint":  "САД (Пригородные)",
+                                             "departureTime":  "08:40"
+                                         },
+                                         {
+                                             "id":  "46299",
+                                             "departurePoint":  "САД (Пригородные)",
+                                             "departureTime":  "09:50"
+                                         },
+                                         {
+                                             "id":  "46330",
+                                             "departurePoint":  "САД (Пригородные)",
+                                             "departureTime":  "16:20"
+                                         },
+                                         {
+                                             "id":  "46360",
+                                             "departurePoint":  "САД (Пригородные)",
+                                             "departureTime":  "18:40"
+                                         },
+                                         {
+                                             "id":  "4-13",
+                                             "departurePoint":  "ЦРБ",
+                                             "departureTime":  "08:10"
+                                         },
+                                         {
+                                             "id":  "4-14",
+                                             "departurePoint":  "ЦРБ",
+                                             "departureTime":  "09:20"
+                                         },
+                                         {
+                                             "id":  "4-15",
+                                             "departurePoint":  "ЦРБ",
+                                             "departureTime":  "16:15"
+                                         },
+                                         {
+                                             "id":  "4-16",
+                                             "departurePoint":  "ЦРБ",
+                                             "departureTime":  "18:10"
+                                         }
+                                     ]
+                   },
+                   {
+                       "id":  "102",
+                       "routeNumber":  "102",
+                       "name":  "Славгород - Яровое",
+                       "description":  "Рынок (Славгород) - МСЧ-128 (Яровое)",
+                       "color":  "#1E90FF",
+                       "travelTime":  "~40 минут",
+                       "pricePrimary":  "45₽ город",
+                       "priceSecondary":  "70₽ межгород",
+                       "paymentMethods":  "Наличный / Картой",
+                       "remark":  "Примечание: указанное время отправления от начальных и конечных остановок маршрута.",
+                       "schedules":  [
+                                         {
+                                             "id":  "102_1",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "06:25",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_2",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "07:45",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_3",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "07:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_4",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "07:20",
+                                             "notes":  "С заездом на завод",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_5",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "08:40",
+                                             "notes":  "С заездом на завод",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_6",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "08:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_7",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "08:25",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_8",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "09:40",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_9",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "09:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_10",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "09:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_11",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "10:35",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_12",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "10:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_13",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "10:25",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_14",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "11:50",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_15",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "11:10",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_16",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "12:35",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_17",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "12:05",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_18",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "12:30",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_19",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "13:55",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_20",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "13:15",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_21",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "14:35",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_22",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "14:05",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_23",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "14:30",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_24",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "15:55",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_25",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "15:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_26",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "16:45",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_27",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "16:10",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_28",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "17:35",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_29",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "17:05",
+                                             "notes":  "С заездом на завод",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_30",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "17:25",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_31",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "18:50",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_32",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "18:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_33",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "19:50",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_34",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "19:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_35",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "20:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_36",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "20:30",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_37",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "07:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_38",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "07:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_39",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "08:35",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_40",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "08:55",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_41",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "08:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_42",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "09:40",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_43",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "09:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_44",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "09:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_45",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "10:40",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_46",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "10:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_47",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "10:15",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_48",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "11:35",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_49",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "11:10",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_50",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "12:30",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_51",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "12:55",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_52",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "12:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_53",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "13:40",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_54",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "13:05",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_55",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "14:30",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_56",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "14:55",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_57",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "14:15",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_58",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "15:45",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_59",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "15:10",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_60",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "16:30",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_61",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "16:55",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_62",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "16:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_63",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "17:45",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_64",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "17:10",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_65",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "18:40",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_66",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "18:10",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_67",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "19:35",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_68",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "19:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_69",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "19:25",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_70",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "20:00",
+                                             "notes":  "С заездом на завод",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_71",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "20:30",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102_72",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "21:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-0700-73",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "07:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-0740-74",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "07:40",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-0820-75",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "08:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-0900-76",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "09:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-0940-77",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "09:40",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1020-78",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "10:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1100-79",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "11:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1140-80",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "11:40",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1220-81",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "12:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1300-82",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "13:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1330-83",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "13:30",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1500-84",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "15:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1540-85",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "15:40",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1620-86",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "16:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1700-87",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "17:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1740-88",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "17:40",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1820-89",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "18:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1900-90",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "19:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1930-91",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "19:30",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-2000-92",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "20:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-0735-93",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "07:35",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-0820-94",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "08:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-0900-95",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "09:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-0940-96",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "09:40",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1020-97",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "10:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1100-98",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "11:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1140-99",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "11:40",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1220-100",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "12:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1300-101",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "13:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1330-102",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "13:30",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1400-103",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "14:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1540-104",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "15:40",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1620-105",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "16:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1700-106",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "17:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1740-107",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "17:40",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1820-108",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "18:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1900-109",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "19:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-1930-110",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "19:30",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-2000-111",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "20:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102-weekend-2030-112",
+                                             "departurePoint":  "МСЧ-128 (Яровое)",
+                                             "departureTime":  "20:30",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "SATURDAY",
+                                                                                        "SUNDAY"
+                                                                                    ],
+                                                                     "validFrom":  "2026-10-15",
+                                                                     "includedDates":  [
+                                                                                           "2026-11-04"
+                                                                                       ]
+                                                                 }
+                                         }
+                                     ]
+                   },
+                   {
+                       "id":  "105",
+                       "routeNumber":  "105",
+                       "name":  "Славгород",
+                       "description":  "Радиозавод",
+                       "color":  "#8A2BE2",
+                       "travelTime":  "~60 минут",
+                       "pricePrimary":  "45₽ город",
+                       "paymentMethods":  "Наличный / Картой",
+                       "remark":  "Примечание: указанное время отправления от начальных и конечных остановок маршрута.",
+                       "schedules":  [
+                                         {
+                                             "id":  "105-1",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "07:20"
+                                         },
+                                         {
+                                             "id":  "105-2",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "08:20"
+                                         },
+                                         {
+                                             "id":  "105-3",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "09:20"
+                                         },
+                                         {
+                                             "id":  "105-4",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "10:20"
+                                         },
+                                         {
+                                             "id":  "105-5",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "11:20"
+                                         },
+                                         {
+                                             "id":  "105-6",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "13:20"
+                                         },
+                                         {
+                                             "id":  "105-7",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "14:20"
+                                         },
+                                         {
+                                             "id":  "105-8",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "15:20"
+                                         },
+                                         {
+                                             "id":  "105-9",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "16:20"
+                                         },
+                                         {
+                                             "id":  "105-10",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "17:20"
+                                         },
+                                         {
+                                             "id":  "105-11",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "18:20"
+                                         },
+                                         {
+                                             "id":  "105-12",
+                                             "departurePoint":  "Радиозавод",
+                                             "departureTime":  "19:20"
+                                         }
+                                     ]
+                   },
+                   {
+                       "id":  "102B",
+                       "routeNumber":  "102Б",
+                       "name":  "Славгород - Яровое (через Зори)",
+                       "description":  "Рынок (Славгород) - Ст. Зори (Яровое)",
+                       "color":  "#008080",
+                       "travelTime":  "~45 минут",
+                       "pricePrimary":  "45₽ город",
+                       "priceSecondary":  "70₽ межгород",
+                       "paymentMethods":  "Наличный / Картой",
+                       "remark":  "Примечание: указанное время отправления от начальных и конечных остановок маршрута.",
+                       "schedules":  [
+                                         {
+                                             "id":  "102B_1",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "06:30",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102B_2",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "08:50",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102B_3",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "09:10",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102B_4",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "15:40",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102B_5",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "16:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102B_6",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "17:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102B_7",
+                                             "departurePoint":  "Рынок (Славгород)",
+                                             "departureTime":  "19:40",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102B_8",
+                                             "departurePoint":  "Ст. Зори (Яровое)",
+                                             "departureTime":  "07:10",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102B_9",
+                                             "departurePoint":  "Ст. Зори (Яровое)",
+                                             "departureTime":  "10:50",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102B_10",
+                                             "departurePoint":  "Ст. Зори (Яровое)",
+                                             "departureTime":  "08:30",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102B_11",
+                                             "departurePoint":  "Ст. Зори (Яровое)",
+                                             "departureTime":  "15:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102B_12",
+                                             "departurePoint":  "Ст. Зори (Яровое)",
+                                             "departureTime":  "17:40",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102B_13",
+                                             "departurePoint":  "Ст. Зори (Яровое)",
+                                             "departureTime":  "18:00",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         },
+                                         {
+                                             "id":  "102B_14",
+                                             "departurePoint":  "Ст. Зори (Яровое)",
+                                             "departureTime":  "19:20",
+                                             "serviceCalendar":  {
+                                                                     "daysOfWeek":  [
+                                                                                        "MONDAY",
+                                                                                        "TUESDAY",
+                                                                                        "WEDNESDAY",
+                                                                                        "THURSDAY",
+                                                                                        "FRIDAY"
+                                                                                    ]
+                                                                 }
+                                         }
+                                     ]
+                   }
+               ]
+}
