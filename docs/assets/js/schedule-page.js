@@ -322,16 +322,78 @@ function findNearestSchedule(schedules) {
         .sort((left, right) => left.minutes - right.minutes || left.index - right.index)[0].schedule;
 }
 
+const SCHEDULE_DAYS = [
+    { key: "MONDAY", label: "Понедельник" },
+    { key: "TUESDAY", label: "Вторник" },
+    { key: "WEDNESDAY", label: "Среда" },
+    { key: "THURSDAY", label: "Четверг" },
+    { key: "FRIDAY", label: "Пятница" },
+    { key: "SATURDAY", label: "Суббота" },
+    { key: "SUNDAY", label: "Воскресенье" }
+];
+
+function getTodayScheduleDay() {
+    const dayIndex = new Date().getDay();
+    return SCHEDULE_DAYS[(dayIndex + 6) % SCHEDULE_DAYS.length].key;
+}
+
+function scheduleRunsOnDay(schedule, day) {
+    const days = schedule.serviceCalendar?.daysOfWeek;
+    return !Array.isArray(days) || days.length === 0 || days.includes(day);
+}
+
+function getDayLabel(day) {
+    return SCHEDULE_DAYS.find((item) => item.key === day)?.label || "Сегодня";
+}
+
+function buildDayPicker(selectedDay) {
+    const today = getTodayScheduleDay();
+    return `
+        <section class="schedule-day-picker" aria-label="Выбор дня недели">
+            <h2>Выберите день недели</h2>
+            <div class="schedule-day-grid">
+                ${SCHEDULE_DAYS.map((day) => `
+                    <button class="schedule-day-card${day.key === selectedDay ? " is-selected" : ""}${day.key === today ? " is-today" : ""}" type="button" data-schedule-day="${day.key}" aria-pressed="${day.key === selectedDay}">
+                        <strong>${day.label}</strong>
+                        ${day.key === today ? "<span>Сегодня</span>" : ""}
+                    </button>
+                `).join("")}
+            </div>
+        </section>
+    `;
+}
+
+function buildUpcomingCard(schedules) {
+    const todaySchedules = schedules.filter((schedule) => scheduleRunsOnDay(schedule, getTodayScheduleDay()));
+    const groups = groupSchedulesByDeparturePoint(todaySchedules);
+    const entries = groups.map((group) => {
+        const next = findNearestSchedule(group.schedules);
+        if (!next) return "";
+        return `<li><strong>${escapeHtml(next.departureTime || "—")}</strong><span>${escapeHtml(group.label)}</span></li>`;
+    }).filter(Boolean).join("");
+
+    if (!entries) return "";
+    return `
+        <section class="schedule-upcoming-card" aria-label="Ближайшие отправления">
+            <div><span>Ближайшие отправления</span><small>${getDayLabel(getTodayScheduleDay())}</small></div>
+            <ul>${entries}</ul>
+        </section>
+    `;
+}
+
 /**
  * Рендерит компактную карточку результата поиска для списка маршрутов.
  */
 function buildRouteSummaryCard(route) {
     const routeNumber = escapeHtml(formatRouteNumber(route));
     const routeHref = escapeHtml(buildRouteHref(route));
+    const next = findNearestSchedule((route.schedules || []).filter((schedule) => scheduleRunsOnDay(schedule, getTodayScheduleDay())));
 
     return `
         <a class="schedule-route-card schedule-route-card--link schedule-route-card--summary" href="${routeHref}" aria-label="Открыть маршрут ${routeNumber}" data-search-text="${escapeHtml(buildSearchText(route))}">
-            <h2 class="schedule-route-summary-title">Автобус №${routeNumber}</h2>
+            <span class="schedule-route-summary-number">Автобус №${routeNumber}</span>
+            <h2 class="schedule-route-summary-title">${escapeHtml(route.name || "Маршрут не указан")}</h2>
+            <span class="schedule-route-summary-next">${next ? `Ближайшее: ${escapeHtml(next.departureTime)}` : "Отправлений на сегодня нет"}</span>
         </a>
     `;
 }
@@ -339,7 +401,7 @@ function buildRouteSummaryCard(route) {
 /**
  * Рендерит развёрнутую карточку маршрута с секциями по пунктам отправления.
  */
-function buildRouteDetailCard(route) {
+function buildRouteDetailCard(route, selectedDay = getTodayScheduleDay()) {
     const routeNumber = escapeHtml(formatRouteNumber(route));
     const title = escapeHtml(route.name || "Без названия");
     const description = escapeHtml(getRouteDescription(route) || "Описание не указано");
@@ -347,7 +409,8 @@ function buildRouteDetailCard(route) {
     const pricePrimary = escapeHtml(route.pricePrimary || "Цена не указана");
     const priceSecondary = escapeHtml(route.priceSecondary || "Цена не указана");
     const paymentMethods = escapeHtml(route.paymentMethods || "Способ оплаты не указан");
-    const schedules = Array.isArray(route.schedules) ? route.schedules : [];
+    const allSchedules = Array.isArray(route.schedules) ? route.schedules : [];
+    const schedules = allSchedules.filter((schedule) => scheduleRunsOnDay(schedule, selectedDay));
     const departureGroups = groupSchedulesByDeparturePoint(schedules);
     const schedulesMarkup = departureGroups.length
         ? departureGroups.map((group) => {
@@ -404,6 +467,8 @@ function buildRouteDetailCard(route) {
                 ${description ? `<p class="schedule-route-description">${description}</p>` : ""}
             </header>
             <div class="schedule-route-body">
+                ${buildUpcomingCard(allSchedules)}
+                ${buildDayPicker(selectedDay)}
                 <div class="schedule-departures">
                     ${schedulesMarkup}
                 </div>
@@ -412,7 +477,7 @@ function buildRouteDetailCard(route) {
     `;
 }
 
-function renderRoutes(routes, container, detailMode = false) {
+function renderRoutes(routes, container, detailMode = false, selectedDay = getTodayScheduleDay()) {
     if (!routes.length) {
         container.innerHTML = `
             <div class="schedule-empty-state">
@@ -423,7 +488,9 @@ function renderRoutes(routes, container, detailMode = false) {
         return;
     }
 
-    container.innerHTML = detailMode ? buildRouteDetailCard(routes[0]) : routes.map(buildRouteSummaryCard).join("");
+    container.innerHTML = detailMode
+        ? buildRouteDetailCard(routes[0], selectedDay)
+        : routes.map(buildRouteSummaryCard).join("");
 }
 
 /**
@@ -457,6 +524,7 @@ function setupSchedulePage() {
     currentRouteQuery = params.get("route") || "";
     let allRoutes = [];
     let activeLoadToken = 0;
+    let selectedScheduleDay = getTodayScheduleDay();
 
     // Фильтрация пересчитывается и при вводе текста, и после загрузки новых данных.
     const applyFilter = () => {
@@ -469,7 +537,7 @@ function setupSchedulePage() {
             : routeScopedRoutes;
         const detailMode = Boolean(currentRouteQuery);
 
-        renderRoutes(filteredRoutes, results, detailMode);
+        renderRoutes(filteredRoutes, results, detailMode, selectedScheduleDay);
 
         if (currentRouteQuery && filteredRoutes.length) {
             const route = filteredRoutes[0];
@@ -552,6 +620,15 @@ function setupSchedulePage() {
     };
 
     searchInput.addEventListener("input", applyFilter);
+    results.addEventListener("click", (event) => {
+        const dayButton = event.target.closest("[data-schedule-day]");
+        if (!dayButton) {
+            return;
+        }
+
+        selectedScheduleDay = dayButton.dataset.scheduleDay || getTodayScheduleDay();
+        applyFilter();
+    });
     load();
 }
 
