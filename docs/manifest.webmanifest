@@ -3,7 +3,7 @@
   "short_name": "Поехали!",
   "description": "Расписание автобусных маршрутов Славгорода и Ярового.",
   "lang": "ru",
-  "start_url": "./",
+  "start_url": "./schedule.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#10141d",

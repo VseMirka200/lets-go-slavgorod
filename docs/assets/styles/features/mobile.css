@@ -259,6 +259,11 @@
     .schedule-meta strong {
         font-size:12px;
     }
+    .schedule-install-button {
+        grid-column:1 / -1;
+        min-height:42px;
+        font-size:13px;
+    }
     .schedule-portal-panel {
         margin-inline:-4px;
         padding:16px 12px;
@@ -279,18 +284,30 @@
         font-size:13px;
     }
     .schedule-results {
-        grid-template-columns:1fr;
-        gap:10px;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:8px;
     }
     .schedule-route-card {
-        padding:15px;
+        padding:12px;
         border-radius:12px;
     }
     .schedule-route-card:hover {
         transform:none;
     }
+    .schedule-route-card--detail {
+        grid-column:1 / -1;
+    }
     .schedule-route-card--summary {
-        min-height:122px;
+        min-height:128px;
+    }
+    .schedule-route-summary-number {
+        font-size:12px;
+    }
+    .schedule-route-summary-title {
+        font-size:16px;
+    }
+    .schedule-route-summary-next {
+        font-size:12px;
     }
     .schedule-upcoming-card {
         position:static;
