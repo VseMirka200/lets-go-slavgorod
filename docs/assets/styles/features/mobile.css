@@ -259,6 +259,11 @@
     .schedule-meta strong {
         font-size:12px;
     }
+    .schedule-install-button {
+        grid-column:1 / -1;
+        min-height:42px;
+        font-size:13px;
+    }
     .schedule-portal-panel {
         margin-inline:-4px;
         padding:16px 12px;
