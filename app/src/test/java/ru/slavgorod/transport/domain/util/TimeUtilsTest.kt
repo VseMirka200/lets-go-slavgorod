@@ -40,7 +40,7 @@ class TimeUtilsTest {
 
         val dayOfWeek = TimeUtils.getDayOfWeek(calendar)
 
-        assertEquals(1, dayOfWeek) // Monday = 1
+        assertEquals(1, dayOfWeek) // Понедельник = 1
     }
 
     @Test

@@ -21,7 +21,7 @@ class AppStatusMessageTest {
             ),
             offlineNoDataMessage = "Offline",
             offlineCopyDateKnown = "Saved",
-            offlineCopyDateUnknown = "Saved unknown"
+            offlineCopyDateUnknown = "Сохранено: неизвестно"
         )
 
         assertEquals("Updated", result)
@@ -39,7 +39,7 @@ class AppStatusMessageTest {
             ),
             offlineNoDataMessage = "No data",
             offlineCopyDateKnown = "Saved",
-            offlineCopyDateUnknown = "Saved unknown"
+            offlineCopyDateUnknown = "Сохранено: неизвестно"
         )
 
         assertEquals("No data", result)
@@ -53,7 +53,7 @@ class AppStatusMessageTest {
             routesUiState = RoutesUiState(error = "Failed"),
             offlineNoDataMessage = "No data",
             offlineCopyDateKnown = "Saved",
-            offlineCopyDateUnknown = "Saved unknown"
+            offlineCopyDateUnknown = "Сохранено: неизвестно"
         )
 
         assertEquals("Failed", result)
@@ -67,7 +67,7 @@ class AppStatusMessageTest {
             routesUiState = RoutesUiState(),
             offlineNoDataMessage = "No data",
             offlineCopyDateKnown = "Saved",
-            offlineCopyDateUnknown = "Saved unknown"
+            offlineCopyDateUnknown = "Сохранено: неизвестно"
         )
 
         assertNull(result)

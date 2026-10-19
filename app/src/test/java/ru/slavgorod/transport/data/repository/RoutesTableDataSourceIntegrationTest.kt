@@ -264,7 +264,7 @@ class RoutesTableDataSourceIntegrationTest {
         override suspend fun readSnapshot() = repository.readSnapshot()
 
         override suspend fun writeSnapshot(json: String) {
-            throw IllegalStateException("Snapshot persistence failed")
+            throw IllegalStateException("Не удалось сохранить снимок")
         }
 
         override suspend fun hasSnapshot(): Boolean = repository.hasSnapshot()

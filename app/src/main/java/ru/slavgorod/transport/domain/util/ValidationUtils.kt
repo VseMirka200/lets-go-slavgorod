@@ -28,7 +28,7 @@ object ValidationUtils {
     fun isValidDayOfWeek(dayOfWeek: Int): Boolean {
         val isValid = dayOfWeek == 0 || dayOfWeek in Calendar.SUNDAY..Calendar.SATURDAY
         if (!isValid) {
-            Timber.e("Invalid day of week: %s", dayOfWeek)
+            Timber.e("Некорректный день недели: %s", dayOfWeek)
         }
         return isValid
     }

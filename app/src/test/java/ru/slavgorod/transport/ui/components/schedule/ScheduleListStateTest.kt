@@ -6,6 +6,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import ru.slavgorod.transport.data.model.BusSchedule
 import ru.slavgorod.transport.ui.model.DeparturePointSchedules
+import java.util.Calendar
 
 class ScheduleListStateTest {
 
@@ -28,8 +29,8 @@ class ScheduleListStateTest {
 
         assertEquals(1, displayState.upcomingEntries.size)
         assertEquals("Center", displayState.upcomingEntries.first().title)
-        assertEquals("08:00", displayState.upcomingEntries.first().schedule.departureTime)
-        assertEquals("09:00", displayState.upcomingEntries.first().nextDepartureTime)
+        assertEquals("08:00", displayState.upcomingEntries.first().nextSchedule.departureTime)
+        assertEquals("09:00", displayState.upcomingEntries.first().inTransitSchedule.departureTime)
     }
 
     @Test
@@ -55,6 +56,25 @@ class ScheduleListStateTest {
         assertEquals(listOf("weekday", "weekend"), displayState.descriptionFilterLabels)
         assertEquals(1, displayState.visibleSchedulesCount)
         assertEquals("1", displayState.visibleSections.single().schedules.single().id)
+    }
+
+    @Test
+    fun `display state identifies the bus currently in transit`() {
+        val displayState = buildScheduleListDisplayState(
+            departurePoints = listOf(
+                departurePoint(
+                    name = "Center",
+                    schedules = listOf(schedule("1", "09:30"), schedule("2", "11:00")),
+                    nextUpcomingId = "2"
+                )
+            ),
+            filterState = ScheduleFilterState(null, null),
+            scheduleExtraLabelProvider = null,
+            currentTimeMillis = timeMillis(hour = 10, minute = 0)
+        )
+
+        assertEquals("09:30", displayState.upcomingEntries.single().inTransitSchedule?.departureTime)
+        assertEquals("11:00", displayState.upcomingEntries.single().nextSchedule.departureTime)
     }
 
     @Test
@@ -121,4 +141,9 @@ class ScheduleListStateTest {
             departurePoint = "Center"
         )
     }
+
+    private fun timeMillis(hour: Int, minute: Int): Long = Calendar.getInstance().apply {
+        set(2026, Calendar.MAY, 15, hour, minute, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
 }

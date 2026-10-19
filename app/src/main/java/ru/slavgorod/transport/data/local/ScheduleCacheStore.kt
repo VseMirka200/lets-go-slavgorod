@@ -11,6 +11,12 @@ data class CachedScheduleSnapshot(
     val savedAtMillis: Long
 )
 
+/**
+ * Хранит последнюю целую копию JSON расписания во внутреннем хранилище приложения.
+ *
+ * Подсказка разработчику: сначала записывайте временный файл, чтобы сбой записи не
+ * оставил основной кэш в частично записанном состоянии.
+ */
 class ScheduleCacheStore(context: Context) {
 
     private val cacheDirectory = File(context.filesDir, CACHE_DIRECTORY_NAME)
@@ -33,14 +39,14 @@ class ScheduleCacheStore(context: Context) {
 
     suspend fun writeSnapshot(json: String) = withContext(Dispatchers.IO) {
         val normalizedJson = json.trim()
-        require(normalizedJson.isNotBlank()) { "Snapshot JSON cannot be blank" }
+        require(normalizedJson.isNotBlank()) { "JSON снимка не может быть пустым" }
 
         cacheDirectory.mkdirs()
         val tempFile = tempCacheFile()
         tempFile.writeText(normalizedJson, StandardCharsets.UTF_8)
 
         if (cacheFile.exists() && !cacheFile.delete()) {
-            throw IllegalStateException("Unable to replace existing schedule cache")
+            throw IllegalStateException("Не удалось заменить существующий кэш расписания")
         }
 
         if (!tempFile.renameTo(cacheFile)) {

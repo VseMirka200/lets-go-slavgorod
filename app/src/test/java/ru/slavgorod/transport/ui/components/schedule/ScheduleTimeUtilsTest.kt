@@ -33,6 +33,25 @@ class ScheduleTimeUtilsTest {
     }
 
     @Test
+    fun `resolveElapsedDepartureMinutes returns minutes since today's departure`() {
+        val elapsedMinutes = resolveElapsedDepartureMinutes("09:45", timeMillis(hour = 10, minute = 0))
+
+        assertEquals(15, elapsedMinutes)
+    }
+
+    @Test
+    fun `parseTravelDurationMinutes reads route duration`() {
+        assertEquals(24, parseTravelDurationMinutes("~24 минуты"))
+        assertEquals(90, parseTravelDurationMinutes("1 ч 30 мин"))
+    }
+
+    @Test
+    fun `buildScheduleTimerLabel includes seconds`() {
+        assertEquals("13м 12с", buildScheduleTimerLabel(13 * 60_000L + 12_000L))
+        assertEquals("1ч 2м 03с", buildScheduleTimerLabel(3_723_000L))
+    }
+
+    @Test
     fun `buildCountdownLabelArgs resolves minutes`() {
         assertEquals(CountdownLabelArgs.Minutes(15), buildCountdownLabelArgs(15))
     }

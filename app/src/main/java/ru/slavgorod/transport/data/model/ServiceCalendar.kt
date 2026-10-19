@@ -4,10 +4,10 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 
 /**
- * Calendar that determines when one scheduled trip is in service.
+ * Календарь, определяющий дни выполнения одного рейса.
  *
- * A missing [operatingDays] means that the trip is daily. An empty set means
- * that it only runs on explicitly included dates.
+ * Отсутствующее [operatingDays] означает, что рейс выполняется ежедневно.
+ * Пустой набор означает, что он выполняется только в явно включённые даты.
  */
 data class ServiceCalendar(
     val operatingDays: Set<DayOfWeek>? = null,

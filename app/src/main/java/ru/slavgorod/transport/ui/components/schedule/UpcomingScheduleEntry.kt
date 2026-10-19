@@ -4,6 +4,10 @@ import ru.slavgorod.transport.data.model.BusSchedule
 
 internal data class UpcomingScheduleEntry(
     val title: String,
-    val schedule: BusSchedule,
-    val nextDepartureTime: String? = null
-)
+    val inTransitSchedule: BusSchedule,
+    val nextSchedule: BusSchedule
+) {
+    /** Краткий псевдоним для вызывающего кода, которому нужен ближайший рейс. */
+    val schedule: BusSchedule
+        get() = nextSchedule
+}

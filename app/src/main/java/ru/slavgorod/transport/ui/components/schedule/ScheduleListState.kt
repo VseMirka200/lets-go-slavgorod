@@ -24,7 +24,8 @@ internal data class ScheduleListDisplayState(
 internal fun buildScheduleListDisplayState(
     departurePoints: List<DeparturePointSchedules>,
     filterState: ScheduleFilterState,
-    scheduleExtraLabelProvider: ((BusSchedule) -> String?)?
+    scheduleExtraLabelProvider: ((BusSchedule) -> String?)?,
+    currentTimeMillis: Long = System.currentTimeMillis()
 ): ScheduleListDisplayState {
     val allSchedules = departurePoints.flatMap { it.schedules }
     val pointSections = departurePoints.mapIndexed { index, departurePoint ->
@@ -39,7 +40,8 @@ internal fun buildScheduleListDisplayState(
         buildUpcomingScheduleEntry(
             title = departurePoint.name,
             schedules = departurePoint.schedules,
-            nextUpcomingId = departurePoint.nextUpcomingId
+            nextUpcomingId = departurePoint.nextUpcomingId,
+            currentTimeMillis = currentTimeMillis
         )
     }
     val descriptionFilterLabels = buildDescriptionFilterLabels(
@@ -130,7 +132,8 @@ private fun matchesDescriptionFilter(
 private fun buildUpcomingScheduleEntry(
     title: String,
     schedules: List<BusSchedule>?,
-    nextUpcomingId: String?
+    nextUpcomingId: String?,
+    currentTimeMillis: Long
 ): UpcomingScheduleEntry? {
     if (schedules.isNullOrEmpty() || nextUpcomingId == null) return null
 
@@ -138,16 +141,12 @@ private fun buildUpcomingScheduleEntry(
     val currentIndex = sortedSchedules.indexOfFirst { it.id == nextUpcomingId }
     if (currentIndex < 0) return null
 
-    val currentSchedule = sortedSchedules[currentIndex]
-    val nextDepartureTime = when {
-        sortedSchedules.size <= 1 -> null
-        currentIndex < sortedSchedules.lastIndex -> sortedSchedules[currentIndex + 1].departureTime
-        else -> sortedSchedules.firstOrNull()?.departureTime
-    }
+    val nextSchedule = sortedSchedules[currentIndex]
+    val inTransitSchedule = sortedSchedules.getOrNull(currentIndex - 1) ?: sortedSchedules.last()
 
     return UpcomingScheduleEntry(
         title = title,
-        schedule = currentSchedule,
-        nextDepartureTime = nextDepartureTime
+        inTransitSchedule = inTransitSchedule,
+        nextSchedule = nextSchedule
     )
 }

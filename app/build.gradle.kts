@@ -42,9 +42,9 @@ android {
                 keyPassword = releaseSigningCredentials.keyPassword
             } else if (project.isReleaseSigningRequested()) {
                 throw GradleException(
-                    "Release signing configuration is missing. " +
-                        "Set KEYSTORE_PATH/KEYSTORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD " +
-                        "or android.injected.signing.* before assembling a release build."
+                    "Отсутствует конфигурация подписи релизной сборки. " +
+                        "Задайте KEYSTORE_PATH/KEYSTORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD " +
+                        "или android.injected.signing.* перед сборкой релиза."
                 )
             } else {
                 storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")

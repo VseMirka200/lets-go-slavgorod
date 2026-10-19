@@ -9,6 +9,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import ru.slavgorod.transport.ui.components.app.AppIconButton
 import ru.slavgorod.transport.ui.components.app.NoRippleDropdownMenuItem
 
@@ -24,7 +25,10 @@ internal fun SettingsActionsMenu(
     onExportLogsClick: () -> Unit
 ) {
     Box {
-        AppIconButton(onClick = onOpen) {
+        AppIconButton(
+            onClick = onOpen,
+            contentColor = Color.White
+        ) {
             Icon(
                 imageVector = Icons.Default.MoreVert,
                 contentDescription = menuMoreDescription

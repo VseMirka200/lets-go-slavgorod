@@ -40,5 +40,9 @@ internal object RoutesJsonContract {
     const val SCHEDULE_PLATFORM = "platform"
     const val SCHEDULE_NOTES = "notes"
     const val SCHEDULE_REMARK = "remark"
+    const val SCHEDULE_LEGACY_NOTE = "note"
+    const val SCHEDULE_LEGACY_REMARKS = "remarks"
+    const val SCHEDULE_RUSSIAN_NOTE = "примечание"
+    const val SCHEDULE_RUSSIAN_NOTES = "примечания"
 
 }

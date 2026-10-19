@@ -47,6 +47,12 @@ internal fun shouldShowStartupSplash(
     return !shouldHideSplash
 }
 
+/**
+ * Управляет видимостью заставки во время начальной загрузки.
+ *
+ * Подсказка разработчику: максимальная длительность нужна как предохранитель, чтобы
+ * неисправная загрузка не удерживала пользователя на заставке бесконечно.
+ */
 @Composable
 internal fun rememberShouldShowStartupSplash(routesUiState: RoutesUiState): Boolean {
     var isSplashMinDurationReached by remember { mutableStateOf(false) }

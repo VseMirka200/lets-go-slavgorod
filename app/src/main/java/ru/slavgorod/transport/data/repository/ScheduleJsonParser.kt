@@ -2,8 +2,6 @@ package ru.slavgorod.transport.data.repository
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonParser
-import ru.slavgorod.transport.R
-import ru.slavgorod.transport.core.AppText
 import ru.slavgorod.transport.data.local.JsonDataSource
 import ru.slavgorod.transport.data.local.RoutesJsonContract
 import ru.slavgorod.transport.data.local.asJsonObjectOrNull
@@ -18,6 +16,12 @@ import timber.log.Timber
 import java.time.DayOfWeek
 import java.time.LocalDate
 
+/**
+ * Разбирает производные данные расписания из исходного JSON.
+ *
+ * Подсказка разработчику: поддержка legacy-полей нужна для уже опубликованных файлов;
+ * не удаляйте её без миграции данных на стороне источника.
+ */
 open class ScheduleJsonParser(
     private val jsonDataSource: JsonDataSource = JsonDataSource()
 ) {
@@ -38,7 +42,7 @@ open class ScheduleJsonParser(
                 ?.toMap()
                 .orEmpty()
         } catch (exception: Exception) {
-            Timber.w(exception, "Failed to build schedules index")
+            Timber.w(exception, "Не удалось построить индекс рейсов")
             emptyMap()
         }
     }
@@ -106,11 +110,11 @@ private fun buildBusSchedule(
         notes = scheduleJson.optionalText(RoutesJsonContract.SCHEDULE_NOTES),
         remark = scheduleJson.optionalText(
             RoutesJsonContract.SCHEDULE_REMARK,
-            "note",
-            "remarks",
+            RoutesJsonContract.SCHEDULE_LEGACY_NOTE,
+            RoutesJsonContract.SCHEDULE_LEGACY_REMARKS,
             "comment",
-            AppText.get(R.string.schedule_json_note_key),
-            AppText.get(R.string.schedule_json_notes_key)
+            RoutesJsonContract.SCHEDULE_RUSSIAN_NOTE,
+            RoutesJsonContract.SCHEDULE_RUSSIAN_NOTES
         ),
         departurePoint = departurePoint,
     )

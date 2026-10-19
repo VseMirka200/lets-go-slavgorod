@@ -323,6 +323,38 @@ function findNearestSchedule(schedules) {
         .sort((left, right) => left.minutes - right.minutes || left.index - right.index)[0].schedule;
 }
 
+function formatTimerDuration(durationMilliseconds) {
+    const totalSeconds = Math.max(0, Math.floor(durationMilliseconds / 1000));
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${hours ? `${hours}ч ` : ""}${minutes}м ${String(seconds).padStart(2, "0")}с`;
+}
+
+function getDepartureStatus(schedules) {
+    const now = new Date();
+    const parsed = schedules
+        .map((schedule, index) => ({ schedule, index, minutes: parseDepartureMinutes(schedule.departureTime) }))
+        .filter((item) => item.minutes !== null)
+        .sort((left, right) => left.minutes - right.minutes || left.index - right.index);
+    const departureDate = (item, dayOffset) => {
+        const departure = new Date(now);
+        departure.setHours(Math.floor(item.minutes / 60), item.minutes % 60, 0, 0);
+        departure.setDate(departure.getDate() + dayOffset);
+        return departure;
+    };
+    const next = parsed
+        .map((item) => ({ item, time: departureDate(item, departureDate(item, 0) > now ? 0 : 1) }))
+        .sort((left, right) => left.time - right.time)[0];
+    const inTransit = parsed
+        .map((item) => ({ item, time: departureDate(item, departureDate(item, 0) <= now ? 0 : -1) }))
+        .sort((left, right) => right.time - left.time)[0];
+    return {
+        inTransit: inTransit ? { schedule: inTransit.item.schedule, elapsedMilliseconds: now - inTransit.time } : null,
+        next: next ? { schedule: next.item.schedule, countdownMilliseconds: next.time - now } : null
+    };
+}
+
 const SCHEDULE_DAYS = [
     { key: "MONDAY", label: "Понедельник" },
     { key: "TUESDAY", label: "Вторник" },
@@ -368,15 +400,21 @@ function buildUpcomingCard(schedules) {
     const todaySchedules = schedules.filter((schedule) => scheduleRunsOnDay(schedule, getTodayScheduleDay()));
     const groups = groupSchedulesByDeparturePoint(todaySchedules);
     const entries = groups.map((group) => {
-        const next = findNearestSchedule(group.schedules);
-        if (!next) return "";
-        return `<li><strong>${escapeHtml(next.departureTime || "—")}</strong><span>${escapeHtml(group.label)}</span></li>`;
+        const { inTransit, next } = getDepartureStatus(group.schedules);
+        if (!inTransit && !next) return "";
+        const transitColumn = inTransit
+            ? `<div class="schedule-upcoming-time"><strong>${escapeHtml(inTransit.schedule.departureTime || "—")}</strong><span>${formatTimerDuration(inTransit.elapsedMilliseconds)}</span></div>`
+            : `<div class="schedule-upcoming-time schedule-upcoming-time--empty"><span>Нет автобуса в пути</span></div>`;
+        const nextColumn = next
+            ? `<div class="schedule-upcoming-time"><strong>${escapeHtml(next.schedule.departureTime || "—")}</strong><span>${formatTimerDuration(next.countdownMilliseconds)}</span></div>`
+            : `<div class="schedule-upcoming-time schedule-upcoming-time--empty"><span>Сегодня отправлений нет</span></div>`;
+        return `<li><span class="schedule-upcoming-point">${escapeHtml(group.label)}</span><div class="schedule-upcoming-times">${transitColumn}${nextColumn}</div></li>`;
     }).filter(Boolean).join("");
 
     if (!entries) return "";
     return `
-        <section class="schedule-upcoming-card" aria-label="Ближайшие отправления">
-            <div><span>Ближайшие отправления</span><small>${getDayLabel(getTodayScheduleDay())}</small></div>
+        <section class="schedule-upcoming-card" aria-label="Ближайшее отправление">
+            <div><span>Ближайшее отправление</span><small>${getDayLabel(getTodayScheduleDay())}</small></div>
             <ul>${entries}</ul>
         </section>
     `;
@@ -688,7 +726,7 @@ function setupSchedulePage() {
                 <div class="schedule-empty-state schedule-empty-state-error">
                     <strong>Источник недоступен</strong>
                     <p>Попробуйте обновить страницу позже.</p>
-                    <p class="schedule-error-detail">${escapeHtml(error.message || "unknown error")}</p>
+                    <p class="schedule-error-detail">${escapeHtml(error.message || "неизвестная ошибка")}</p>
                 </div>
             `;
         }
@@ -714,6 +752,11 @@ function setupSchedulePage() {
         selectedScheduleDay = dayButton.dataset.scheduleDay || getTodayScheduleDay();
         applyFilter();
     });
+    window.setInterval(() => {
+        if (currentRouteQuery && allRoutes.length) {
+            applyFilter();
+        }
+    }, 1_000);
     load();
 }
 

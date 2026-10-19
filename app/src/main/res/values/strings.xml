@@ -93,7 +93,7 @@
     <string name="fallback_invalid_data">Некорректные данные</string>
     <string name="fallback_price_not_specified">Цена не указана</string>
     <string name="action_retry">Повторить</string>
-    <string name="action_ok">OK</string>
+    <string name="action_ok">ОК</string>
     <string name="action_understood">Понятно</string>
     <string name="action_settings">Настройки</string>
     <string name="action_close">Закрыть</string>
@@ -157,7 +157,7 @@
     <string name="notification_schedule_channel_description">Системные уведомления об изменениях в расписании автобусов</string>
     <string name="notification_schedule_update_title">Изменения в расписании</string>
     <string name="settings_about_subtitle">Версия, обратная связь и исходный код</string>
-    <string name="settings_support_subtitle">Быстрый переход на страницу донатов</string>
+    <string name="settings_support_subtitle">Страница поддержки на сайте проекта</string>
     <string name="settings_reset_confirm">Сбросить</string>
     <string name="settings_reset_cancel">Отмена</string>
     <string name="home_screen_title">Главная</string>
@@ -188,10 +188,8 @@
     <string name="schedule_header_payment_methods">Способы оплаты</string>
     <string name="schedule_header_route">Маршрут</string>
     <string name="schedule_header_note">Примечание: указано время отправления от начальных и конечных остановок маршрута.</string>
-    <string name="schedule_upcoming_departures_title">БЛИЖАЙШИЕ ОТПРАВЛЕНИЯ</string>
-    <string name="schedule_upcoming_departures_title_for_day">БЛИЖАЙШИЕ ОТПРАВЛЕНИЯ · %1$s</string>
-    <string name="schedule_departure_label">отправление</string>
-    <string name="schedule_next_departure_label">следующее</string>
+    <string name="schedule_upcoming_departures_title">БЛИЖАЙШЕЕ ОТПРАВЛЕНИЕ</string>
+    <string name="schedule_upcoming_departures_title_for_day">БЛИЖАЙШЕЕ ОТПРАВЛЕНИЕ · %1$s</string>
     <string name="schedule_no_upcoming_departures">Нет предстоящих рейсов</string>
     <string name="schedule_time_soon">скоро</string>
     <string name="schedule_time_in_prefix">через %1$s</string>
@@ -270,7 +268,7 @@
     <string name="reset_data_store_main">основного DataStore</string>
     <string name="reset_data_store_theme">DataStore темы</string>
     <string name="reset_data_store_display">DataStore отображения</string>
-    <string name="reset_data_store_disclaimer">DataStore disclaimer</string>
+    <string name="reset_data_store_disclaimer">DataStore предупреждения</string>
     <string name="reset_data_store_schedule_cache">кэша расписания</string>
     <string name="reset_data_store_files">Ошибка очистки файлов DataStore</string>
     <string name="reset_data_store_shared_prefs">Ошибка очистки SharedPreferences</string>

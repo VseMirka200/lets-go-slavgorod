@@ -14,6 +14,12 @@ import ru.slavgorod.transport.data.local.toEnumOrDefault
 import ru.slavgorod.transport.logging.UserActionLogger
 import ru.slavgorod.transport.ui.model.ScheduleDaySelectionMode
 
+/**
+ * Хранит настройки отображения расписания в DataStore.
+ *
+ * Подсказка разработчику: перед записью нормализуйте значения настроек, чтобы старые
+ * или повреждённые данные не создавали недопустимую конфигурацию интерфейса.
+ */
 class DisplaySettingsViewModel(
     private val dataStore: DataStore<Preferences>
 ) : ViewModel() {

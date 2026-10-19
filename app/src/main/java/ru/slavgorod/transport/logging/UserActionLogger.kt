@@ -5,6 +5,12 @@ import ru.slavgorod.transport.R
 import ru.slavgorod.transport.core.AppText
 import timber.log.Timber
 
+/**
+ * Формирует единообразные записи о действиях пользователя через строковые ресурсы.
+ *
+ * Подсказка разработчику: добавляйте новые сообщения в resources, чтобы экспорт
+ * журнала оставался локализованным и не содержал жёстко заданного текста.
+ */
 internal object UserActionLogger {
 
     private const val TAG = "UserAction"

@@ -21,6 +21,12 @@ internal data class AppOverlaysConfig(
 )
 
 @Composable
+/**
+ * Показывает диалоги верхнего уровня и обрабатывает отложенную навигацию.
+ *
+ * Подсказка разработчику: задержка перед переходом даёт NavHost создать стартовый
+ * маршрут; не убирайте её без проверки ссылок, открывающих приложение извне.
+ */
 internal fun AppOverlays(config: AppOverlaysConfig) {
     if (config.showDisclaimerDialog) {
         DisclaimerDialog(

@@ -1,8 +1,6 @@
 package ru.slavgorod.transport.data.model
 
 import androidx.compose.runtime.Immutable
-import ru.slavgorod.transport.R
-import ru.slavgorod.transport.core.AppText
 import ru.slavgorod.transport.domain.util.ValidationUtils
 
 @Immutable
@@ -25,19 +23,18 @@ data class BusRoute(
 
     fun isValid(): Boolean {
         return validateModel(
-            exceptionMessage = AppText.get(R.string.validation_bus_route_failed),
-            ValidationCheck(ValidationUtils.hasMeaningfulText(id), "Invalid route ID: '$id'"),
+            ValidationCheck(ValidationUtils.hasMeaningfulText(id), "Некорректный идентификатор маршрута: '$id'"),
             ValidationCheck(
                 ValidationUtils.hasMeaningfulText(routeNumber),
-                "Invalid route number: '$routeNumber'"
+                "Некорректный номер маршрута: '$routeNumber'"
             ),
             ValidationCheck(
                 ValidationUtils.hasTrimmedLengthAtLeast(name, 3),
-                "Invalid route name: '$name'"
+                "Некорректное название маршрута: '$name'"
             ),
             ValidationCheck(
                 ValidationUtils.hasTrimmedLengthAtLeast(description, 2),
-                "Invalid description: '$description'"
+                "Некорректное описание: '$description'"
             )
         )
     }

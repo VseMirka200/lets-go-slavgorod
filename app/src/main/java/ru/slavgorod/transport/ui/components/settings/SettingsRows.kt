@@ -30,6 +30,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import ru.slavgorod.transport.ui.theme.scaleDpForFontScale
 
 @Composable
@@ -160,7 +161,7 @@ internal fun RowScope.SettingsRowTextContent(
     ) {
         Text(
             text = title,
-            style = titleStyle,
+            style = titleStyle.copy(lineHeight = 20.sp),
             fontWeight = FontWeight.Medium,
             maxLines = titleMaxLines,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis

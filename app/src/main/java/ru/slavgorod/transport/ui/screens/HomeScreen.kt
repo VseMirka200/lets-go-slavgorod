@@ -31,6 +31,12 @@ private val RouteCardsOuterPadding = 12.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+/**
+ * Главный экран со списком маршрутов и поиском.
+ *
+ * Подсказка разработчику: состояние поиска хранится во ViewModel, чтобы поворот экрана
+ * и возврат из навигации не сбрасывали введённый пользователем запрос.
+ */
 fun HomeScreen(
     navController: NavController,
     modifier: Modifier = Modifier,

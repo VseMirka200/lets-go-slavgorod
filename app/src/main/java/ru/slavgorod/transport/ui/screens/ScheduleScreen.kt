@@ -43,6 +43,12 @@ import java.time.Instant
 import java.time.ZoneId
 
 @Composable
+/**
+ * Показывает расписание одного маршрута и пересчитывает ближайшие рейсы по таймеру.
+ *
+ * Подсказка разработчику: ключи produceState должны включать идентификатор обновления,
+ * иначе экран продолжит показывать рейсы из предыдущей версии расписания.
+ */
 fun ScheduleScreen(
     routeId: String,
     routeRepository: RoutesTableDataSource,
@@ -106,7 +112,7 @@ fun ScheduleScreen(
             )
         } catch (_: CancellationException) {
         } catch (exception: Exception) {
-            Timber.tag("Schedule").e(exception, "Unexpected error loading schedule")
+            Timber.tag("Schedule").e(exception, "Непредвиденная ошибка загрузки расписания")
             value = ScheduleLoadState.Loaded(ScheduleScreenData(emptyList()))
         }
     }
@@ -210,7 +216,7 @@ private fun EmptyScheduleMessage(routeId: String) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center
             )
-            Timber.w("ScheduleScreen: no schedule entries configured for route %s", routeId)
+            Timber.w("ScheduleScreen: для маршрута %s не настроены рейсы", routeId)
         }
     }
 }

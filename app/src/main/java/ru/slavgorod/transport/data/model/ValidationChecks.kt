@@ -8,7 +8,6 @@ internal data class ValidationCheck(
 )
 
 internal fun validateModel(
-    exceptionMessage: String,
     vararg checks: ValidationCheck
 ): Boolean {
     return try {
@@ -20,7 +19,7 @@ internal fun validateModel(
 
         true
     } catch (exception: Exception) {
-        Timber.e(exception, exceptionMessage)
+        Timber.e(exception, "Не удалось проверить модель расписания")
         false
     }
 }

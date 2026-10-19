@@ -13,6 +13,12 @@ import ru.slavgorod.transport.notifications.AppForegroundTracker
 import ru.slavgorod.transport.notifications.ScheduleUpdateNotificationCoordinator
 import timber.log.Timber
 
+/**
+ * Настраивает зависимости и журналирование до создания первого экрана.
+ *
+ * Подсказка разработчику: обработчик необработанных исключений должен передать ошибку
+ * исходному обработчику, иначе Android не завершит аварийный сценарий штатно.
+ */
 class BusApplication : Application() {
 
     private val logStore by lazy(LazyThreadSafetyMode.NONE) {
@@ -32,9 +38,9 @@ class BusApplication : Application() {
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             try {
-                Timber.tag("BusApplication").e(throwable, "Uncaught exception in %s", thread.name)
+                Timber.tag("BusApplication").e(throwable, "Необработанное исключение в потоке %s", thread.name)
             } catch (_: Exception) {
-                Timber.tag("BusApplication").e(throwable, "Failed to log uncaught exception")
+                Timber.tag("BusApplication").e(throwable, "Не удалось записать необработанное исключение в журнал")
             }
             defaultHandler?.uncaughtException(thread, throwable)
         }
@@ -48,9 +54,9 @@ class BusApplication : Application() {
             }
             GlobalContext.get().get<AppForegroundTracker>().install()
             GlobalContext.get().get<ScheduleUpdateNotificationCoordinator>().start()
-            Timber.d("Koin initialized")
+            Timber.d("Koin инициализирован")
         } catch (exception: Exception) {
-            Timber.e(exception, "Failed to initialize Koin: %s", exception.message)
+            Timber.e(exception, "Не удалось инициализировать Koin: %s", exception.message)
         }
     }
 
@@ -60,7 +66,7 @@ class BusApplication : Application() {
 
             if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
                 Timber.plant(Timber.DebugTree())
-                Timber.d("Application onCreate()")
+                Timber.d("Выполнен Application.onCreate()")
                 return
             }
 
@@ -78,7 +84,7 @@ class BusApplication : Application() {
         } catch (exception: Exception) {
             Timber.tag("BusApplication").e(
                 exception,
-                "Failed to initialize logging: %s",
+                "Не удалось инициализировать журналирование: %s",
                 exception.message
             )
         }

@@ -141,7 +141,7 @@ img {
 .nav-featured:hover {
     color: #b6cdfc;
 }
-/* Hero-блок главной страницы */
+/* Главный визуальный блок страницы */
 .hero-layout {
     display: grid;
     grid-template-columns: 1.1fr 0.9fr;

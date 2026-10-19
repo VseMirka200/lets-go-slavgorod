@@ -322,13 +322,13 @@ class RoutesViewModelTest {
 
     private suspend fun TestScope.advanceRefresh() {
         withContext(Dispatchers.IO) {
-            // Wait for the refresh coroutine that is launched on Dispatchers.IO.
+            // Ожидаем coroutine обновления, запущенную на Dispatchers.IO.
         }
         advanceTimeBy(Constants.PULL_TO_REFRESH_MIN_DELAY_MS + Constants.SEARCH_DEBOUNCE_MS + 1)
         advanceUntilIdle()
         shadowOf(Looper.getMainLooper()).idle()
         withContext(Dispatchers.IO) {
-            // Wait for DataStore and repository callbacks triggered by refresh.
+            // Ожидаем колбэки DataStore и репозитория, вызванные обновлением.
         }
         advanceUntilIdle()
         shadowOf(Looper.getMainLooper()).idle()

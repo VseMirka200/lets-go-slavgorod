@@ -42,6 +42,12 @@ data class RoutesUiState(
 )
 
 @OptIn(FlowPreview::class)
+/**
+ * Связывает данные расписания с состоянием главного экрана.
+ *
+ * Подсказка разработчику: поиск намеренно обрабатывается после debounce, поэтому не
+ * обновляйте список маршрутов напрямую из обработчика ввода.
+ */
 class RoutesViewModel(
     private val routeRepository: RoutesTableDataSource,
     private val appForegroundTracker: AppForegroundTracker,
@@ -134,7 +140,7 @@ class RoutesViewModel(
             try {
                 routeRepository.refreshRoutesFromLocal(notifyUser = false)
             } catch (exception: Exception) {
-                Timber.e(exception, "Failed to load routes")
+                Timber.e(exception, "Не удалось загрузить маршруты")
             }
         }
     }

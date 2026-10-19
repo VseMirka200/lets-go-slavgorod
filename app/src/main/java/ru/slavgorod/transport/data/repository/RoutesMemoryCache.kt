@@ -1,41 +1,38 @@
 package ru.slavgorod.transport.data.repository
 
-import ru.slavgorod.transport.core.Constants
 import ru.slavgorod.transport.data.model.BusRoute
 import ru.slavgorod.transport.data.model.BusSchedule
 
+/**
+ * Согласованный снимок маршрутов, рейсов и исходного JSON в оперативной памяти.
+ *
+ * Подсказка разработчику: не возвращайте частичный индекс маршрутов — он должен
+ * соответствовать полному StateFlow маршрутов, опубликованному репозиторием.
+ */
 internal class RoutesMemoryCache {
 
-    private val routesCache = object : LinkedHashMap<String, BusRoute>(16, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, BusRoute>?): Boolean {
-            return size > Constants.ROUTES_MAX_CACHE_SIZE
-        }
-    }
+    @Volatile
+    private var routesById: Map<String, BusRoute> = emptyMap()
 
+    @Volatile
     var latestJson: String? = null
         private set
 
     @Volatile
-    private var routeSchedulesCache: Map<String, List<BusSchedule>> = emptyMap()
+    private var schedulesByRoute: Map<String, List<BusSchedule>> = emptyMap()
 
     val hasCachedData: Boolean
-        get() = latestJson != null || routesCache.isNotEmpty()
-
-    val hasSchedules: Boolean
-        get() = routeSchedulesCache.isNotEmpty()
+        get() = latestJson != null || routesById.isNotEmpty()
 
     val hasRoutes: Boolean
-        get() = routesCache.isNotEmpty()
+        get() = routesById.isNotEmpty()
 
-    fun routeById(routeId: String): BusRoute? = routesCache[routeId]
+    fun routeById(routeId: String): BusRoute? = routesById[routeId]
 
-    fun schedulesForRoute(routeId: String): List<BusSchedule>? = routeSchedulesCache[routeId]
+    fun schedulesForRoute(routeId: String): List<BusSchedule>? = schedulesByRoute[routeId]
 
     fun updateRoutes(routes: List<BusRoute>) {
-        routesCache.clear()
-        routes.forEach { route ->
-            routesCache[route.id] = route
-        }
+        routesById = routes.associateBy(BusRoute::id)
     }
 
     fun updateLatestJson(json: String) {
@@ -43,6 +40,6 @@ internal class RoutesMemoryCache {
     }
 
     fun updateSchedules(schedulesByRoute: Map<String, List<BusSchedule>>) {
-        routeSchedulesCache = schedulesByRoute
+        this.schedulesByRoute = schedulesByRoute
     }
 }

@@ -8,6 +8,12 @@ import java.io.File
 import java.nio.charset.StandardCharsets
 import java.util.Date
 
+/**
+ * Хранит экспортируемый журнал приложения в ограниченном по размеру текстовом файле.
+ *
+ * Подсказка разработчику: шаблон начала записи синхронизирован с форматом времени;
+ * меняйте их вместе, иначе очистка старых записей перестанет работать.
+ */
 class AppLogStore(context: Context) {
 
     private val appContext = context.applicationContext

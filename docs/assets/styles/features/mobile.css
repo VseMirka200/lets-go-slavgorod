@@ -1,4 +1,4 @@
-/* Mobile is intentionally a separate, touch-first composition. */
+/* Мобильная версия намеренно использует отдельную композицию для сенсорного управления. */
 @media (max-width:780px) {
     body {
         background:linear-gradient(180deg,#101d33,#09101d 360px);
@@ -355,7 +355,7 @@
         margin-top:30px;
     }
 }
-/* Departure points stay side-by-side on every phone width. */
+/* Пункты отправления остаются рядом при любой ширине экрана телефона. */
 @media (max-width:780px) {
     .schedule-departures {
         grid-template-columns:repeat(2,minmax(0,1fr));

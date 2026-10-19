@@ -4,6 +4,12 @@ import ru.slavgorod.transport.data.local.CachedScheduleSnapshot
 import ru.slavgorod.transport.data.local.ScheduleCacheStore
 import ru.slavgorod.transport.domain.util.DateTimeFormatterUtils
 
+/**
+ * Адаптер снимка расписания для репозитория маршрутов.
+ *
+ * Подсказка разработчику: формат времени сохранения принадлежит этому слою, чтобы
+ * экран не зависел от устройства и способа хранения кэша.
+ */
 class ScheduleSnapshotRepository(
     private val cacheStore: ScheduleCacheStore
 ) : ScheduleSnapshotStore {

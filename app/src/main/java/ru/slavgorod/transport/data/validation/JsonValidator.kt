@@ -2,11 +2,17 @@ package ru.slavgorod.transport.data.validation
 
 import ru.slavgorod.transport.data.model.BusRoute
 
+/**
+ * Отбрасывает невалидные маршруты до публикации данных в интерфейсе.
+ *
+ * Подсказка разработчику: это последняя граница входного JSON; не заменяйте проверку
+ * молчаливым исправлением полей, иначе источник ошибок будет сложнее обнаружить.
+ */
 object JsonValidator {
 
     fun validateRoutes(routes: List<BusRoute>): List<BusRoute> {
         val validRoutes = routes.filter(::isValidRoute)
-        require(validRoutes.isNotEmpty()) { "No valid routes found in JSON data" }
+        require(validRoutes.isNotEmpty()) { "В JSON-данных не найдено корректных маршрутов" }
         return validRoutes
     }
 

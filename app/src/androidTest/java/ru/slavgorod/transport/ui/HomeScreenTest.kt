@@ -94,7 +94,7 @@ class HomeScreenTest {
 
     @Test
     fun errorState_displaysErrorMessage() {
-        val errorMessage = "Test error"
+        val errorMessage = "Тестовая ошибка"
         composeTestRule.setContent {
             ErrorState(errorMessage = errorMessage)
         }
@@ -141,7 +141,7 @@ class HomeScreenTest {
     fun routesListState_displaysRoutes() {
         val routes = listOf(
             route(id = "102", routeNumber = "102", name = "Yarovoye"),
-            route(id = "105", routeNumber = "105", name = "Rail Depot")
+            route(id = "105", routeNumber = "105", name = "Железнодорожное депо")
         )
 
         composeTestRule.setContent {
@@ -195,7 +195,7 @@ class HomeScreenTest {
         val menuDescription = context.getString(R.string.home_menu_more)
         val refreshScheduleText = context.getString(R.string.home_refresh_schedule)
         val searchQuery = "Yarovoye"
-        val filteredOutRouteText = "Rail Depot"
+        val filteredOutRouteText = "Железнодорожное депо"
 
         composeTestRule.setContent {
             HomeScreen(
@@ -282,8 +282,8 @@ class HomeScreenTest {
                 {
                   "id": "105",
                   "routeNumber": "105",
-                  "name": "Rail Depot",
-                  "description": "Rail Depot",
+                  "name": "Железнодорожное депо",
+                  "description": "Железнодорожное депо",
                   "color": "#F2B705",
                   "travelTime": "15 min",
                   "pricePrimary": "20",

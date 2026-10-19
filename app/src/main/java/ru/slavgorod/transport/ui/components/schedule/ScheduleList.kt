@@ -30,6 +30,12 @@ import java.time.ZoneId
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
+/**
+ * Отрисовывает расписание по пунктам отправления и выбранному дню.
+ *
+ * Подсказка разработчику: remember должен зависеть от времени и даты, иначе статус
+ * ближайшего рейса не обновится после смены минуты или полуночи.
+ */
 fun ScheduleList(
     scheduleState: ScheduleUiState,
     swapScheduleColumns: Boolean = false,
@@ -111,7 +117,9 @@ fun ScheduleList(
         upcomingDeparturePoints,
         selectedDescriptionFilterLabel,
         selectedDeparturePointFilterId,
-        scheduleExtraLabelProvider
+        scheduleExtraLabelProvider,
+        currentTimeMillis,
+        route.travelTime
     ) {
         val selectedDayDisplayState = buildScheduleListDisplayState(
             departurePoints = displayedDeparturePoints,
@@ -119,7 +127,8 @@ fun ScheduleList(
                 selectedDescriptionLabel = selectedDescriptionFilterLabel,
                 selectedDeparturePointId = selectedDeparturePointFilterId
             ),
-            scheduleExtraLabelProvider = scheduleExtraLabelProvider
+            scheduleExtraLabelProvider = scheduleExtraLabelProvider,
+            currentTimeMillis = currentTimeMillis
         )
         val todayDisplayState = buildScheduleListDisplayState(
             departurePoints = upcomingDeparturePoints,
@@ -127,7 +136,8 @@ fun ScheduleList(
                 selectedDescriptionLabel = null,
                 selectedDeparturePointId = null
             ),
-            scheduleExtraLabelProvider = null
+            scheduleExtraLabelProvider = null,
+            currentTimeMillis = currentTimeMillis
         )
         selectedDayDisplayState.copy(upcomingEntries = todayDisplayState.upcomingEntries)
     }

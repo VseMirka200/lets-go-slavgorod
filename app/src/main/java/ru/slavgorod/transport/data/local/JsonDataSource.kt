@@ -2,12 +2,19 @@ package ru.slavgorod.transport.data.local
 
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.slavgorod.transport.data.model.BusRoute
 import ru.slavgorod.transport.data.validation.JsonValidator
 import timber.log.Timber
 
+/**
+ * Преобразует корневой JSON-файл в модели маршрутов.
+ *
+ * Подсказка разработчику: не скрывайте CancellationException в общем обработчике,
+ * иначе отменённая загрузка будет ошибочно выглядеть как пустой ответ.
+ */
 class JsonDataSource {
 
     suspend fun parseRoutesFromJson(jsonString: String): List<BusRoute> =
@@ -25,8 +32,10 @@ class JsonDataSource {
                 }
 
                 JsonValidator.validateRoutes(routes)
+            } catch (exception: CancellationException) {
+                throw exception
             } catch (exception: Exception) {
-                Timber.e(exception, "Error parsing routes JSON: %s", exception.message)
+                Timber.e(exception, "Ошибка разбора JSON маршрутов: %s", exception.message)
                 emptyList()
             }
         }

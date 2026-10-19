@@ -28,8 +28,8 @@ import ru.slavgorod.transport.ui.components.settings.SettingsMenuRow
 import ru.slavgorod.transport.ui.components.settings.SettingsScreenScaffold
 import ru.slavgorod.transport.ui.viewmodel.ThemeViewModel
 
-private const val DONATION_URL = "https://pay.cloudtips.ru/p/1fa22ea5"
-private const val OPEN_DONATION_FAILED = "Failed to open donation page"
+private const val PROJECT_SUPPORT_URL = "https://vsemirka200.github.io/lets-go-slavgorod/#support"
+private const val OPEN_PROJECT_SUPPORT_FAILED = "Failed to open project support page"
 
 @Composable
 fun SettingsMainScreen(
@@ -97,8 +97,8 @@ fun SettingsMainScreen(
                 when (entry.modalSheet) {
                     SettingsModalSheet.SUPPORT -> {
                         context.openExternalUrl(
-                            url = DONATION_URL,
-                            failureLogMessage = OPEN_DONATION_FAILED
+                            url = PROJECT_SUPPORT_URL,
+                            failureLogMessage = OPEN_PROJECT_SUPPORT_FAILED
                         )
                     }
 

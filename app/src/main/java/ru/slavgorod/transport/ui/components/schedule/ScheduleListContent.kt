@@ -102,7 +102,11 @@ internal fun ScheduleListScaffold(
         ScheduleTitleBar(route = route, onBackClick = onBackClick, actions = {
             onShareClick?.let { share ->
                 AppIconButton(onClick = share) {
-                    Icon(Icons.Default.Share, contentDescription = "Поделиться маршрутом")
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Поделиться маршрутом",
+                        tint = Color.White
+                    )
                 }
             }
         })

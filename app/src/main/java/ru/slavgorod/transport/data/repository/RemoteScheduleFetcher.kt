@@ -1,6 +1,7 @@
 package ru.slavgorod.transport.data.repository
 
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.CancellationException
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import ru.slavgorod.transport.core.Constants
@@ -13,6 +14,12 @@ interface ScheduleFetcher {
     suspend fun fetchWithRetry(): String?
 }
 
+/**
+ * Загружает JSON расписания с ограниченным числом повторных попыток.
+ *
+ * Подсказка разработчику: задержки повторов намеренно внедряются зависимостью, чтобы
+ * сетевой сценарий можно было проверять без реального ожидания в тестах.
+ */
 class RemoteScheduleFetcher(
     private val remoteJsonUrlProvider: suspend () -> String = { Constants.REMOTE_JSON_URL },
     private val onlineChecker: () -> Boolean,
@@ -52,7 +59,7 @@ class RemoteScheduleFetcher(
 
             httpClient.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
-                    Timber.w("Remote table returned code %d", response.code)
+                    Timber.w("Удалённое расписание вернуло код %d", response.code)
                     null
                 } else {
                     response.body?.string()
@@ -60,8 +67,10 @@ class RemoteScheduleFetcher(
                         ?.takeIf { it.isNotBlank() }
                 }
             }
+        } catch (exception: CancellationException) {
+            throw exception
         } catch (exception: Exception) {
-            Timber.w(exception, "Failed to fetch remote table JSON")
+            Timber.w(exception, "Не удалось загрузить JSON удалённого расписания")
             null
         }
     }
