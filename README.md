@@ -53,3 +53,8 @@ cd lets-go-slavgorod
 - [Политика безопасности](docs/policies/SECURITY.md)
 - [Правила участия в разработке](docs/guides/CONTRIBUTING.md)
 - [Структура документации](docs/README.md)
+
+## Contributors / Участники
+
+- [VseMirka200](https://github.com/VseMirka200) — владелец репозитория и сопровождающий проекта.
+- **ChatGPT (OpenAI)** — ИИ-ассистент, участвовал в подготовке этого раздела README. Это упоминание не означает авторство коммитов или наличие отдельного GitHub-аккаунта.
