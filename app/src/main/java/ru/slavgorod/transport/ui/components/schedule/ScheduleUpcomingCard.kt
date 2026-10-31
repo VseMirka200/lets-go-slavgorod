@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -25,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -130,7 +130,7 @@ internal fun UpcomingSchedulesContent(
                     ),
                     fontWeight = FontWeight.ExtraBold,
                     color = colors.content,
-                    maxLines = 1,
+                    maxLines = Int.MAX_VALUE,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .weight(1f)
@@ -272,6 +272,23 @@ private fun UpcomingScheduleBoardRow(
 ) {
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         val availableWidth = this.maxWidth
+        val fontScale = LocalDensity.current.fontScale
+        if (availableWidth / fontScale < 300.dp) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                UpcomingPointSummary(title, colors, textSpec.primaryTextSize)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    UpcomingTimeColumn(
+                        inTransitTime, inTransitLabel.orEmpty(), colors.content,
+                        textSpec.primaryTextSize, textSpec.supportingTextSize, Modifier.weight(1f)
+                    )
+                    UpcomingTimeColumn(
+                        nextDepartureTime, nextCountdownLabel, colors.content,
+                        textSpec.primaryTextSize, textSpec.supportingTextSize, Modifier.weight(1f)
+                    )
+                }
+            }
+            return@BoxWithConstraints
+        }
         val rowSpec = resolveUpcomingScheduleRowSpec(
             availableWidth = availableWidth,
             compactMode = compactMode,
@@ -296,14 +313,12 @@ private fun UpcomingScheduleBoardRow(
             Box(
                 modifier = Modifier
                     .weight(rowSpec.timeColumnsWeight)
-                    .fillMaxHeight()
                     .align(Alignment.CenterVertically),
                 contentAlignment = Alignment.Center
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight()
                         .align(Alignment.Center),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -328,8 +343,7 @@ private fun UpcomingScheduleBoardRow(
                 Box(
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .width(1.dp)
-                        .fillMaxHeight()
+                        .width(1.dp).height(40.dp)
                         .background(colors.divider)
                 )
             }
@@ -345,13 +359,12 @@ private fun UpcomingPointSummary(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier.fillMaxHeight(),
+        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(),
+                .fillMaxWidth(),
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Center
         ) {
@@ -383,8 +396,7 @@ private fun UpcomingTimeColumn(
 ) {
     Column(
         modifier = modifier
-            .fillMaxWidth()
-            .fillMaxHeight(),
+            .fillMaxWidth(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -401,8 +413,8 @@ private fun UpcomingTimeColumn(
                 fontWeight = FontWeight.ExtraBold
             ),
             color = bodyColor,
-            maxLines = 1,
-            softWrap = false,
+            maxLines = Int.MAX_VALUE,
+            softWrap = true,
             overflow = TextOverflow.Clip,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
@@ -421,8 +433,8 @@ private fun UpcomingTimeColumn(
                 fontWeight = FontWeight.SemiBold
             ),
             color = bodyColor.copy(alpha = 0.78f),
-            maxLines = 1,
-            softWrap = false,
+            maxLines = Int.MAX_VALUE,
+            softWrap = true,
             overflow = TextOverflow.Clip,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()

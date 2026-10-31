@@ -2,7 +2,10 @@ package ru.slavgorod.transport.ui.screens.settings
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -43,10 +46,10 @@ internal fun ResetConfirmationDialog(
         onDismissRequest = {},
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = scaleDpForFontScale(12.dp, fontScale)),
+                .padding(horizontal = 16.dp, vertical = 24.dp),
             contentAlignment = Alignment.Center
         ) {
             Surface(
@@ -55,10 +58,10 @@ internal fun ResetConfirmationDialog(
                 shadowElevation = 10.dp,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .widthIn(max = scaleDpForFontScale(420.dp, fontScale))
+                    .widthIn(max = 420.dp).heightIn(max = maxHeight)
             ) {
                 Column(
-                    modifier = Modifier.padding(scaleDpForFontScale(24.dp, fontScale)),
+                    modifier = Modifier.verticalScroll(rememberScrollState()).padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(scaleDpForFontScale(16.dp, fontScale))
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(scaleDpForFontScale(12.dp, fontScale))) {
@@ -96,20 +99,20 @@ internal fun ResetConfirmationDialog(
                         )
                     }
 
-                    Row(
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(scaleDpForFontScale(12.dp, fontScale))
+                        verticalArrangement = Arrangement.spacedBy(scaleDpForFontScale(12.dp, fontScale))
                     ) {
                         AppDestructiveButton(
                             onClick = onConfirm,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(confirmText)
                         }
 
                         AppSecondaryButton(
                             onClick = onCancel,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(cancelText)
                         }

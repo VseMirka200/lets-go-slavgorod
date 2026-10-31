@@ -146,7 +146,7 @@ internal fun ScheduleHeaderInfoItem(
     labelStyle: TextStyle,
     valueStyle: TextStyle,
     modifier: Modifier = Modifier,
-    allowWrapping: Boolean = false
+    allowWrapping: Boolean = true
 ) {
     Column(
         modifier = modifier,
@@ -156,7 +156,7 @@ internal fun ScheduleHeaderInfoItem(
             text = label,
             style = labelStyle,
             color = HeaderLabelColor,
-            maxLines = 1,
+            maxLines = Int.MAX_VALUE,
             overflow = TextOverflow.Ellipsis
         )
         Text(

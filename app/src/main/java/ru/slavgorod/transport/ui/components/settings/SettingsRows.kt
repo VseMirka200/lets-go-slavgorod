@@ -93,7 +93,7 @@ fun SettingsRadioRow(
                 title = title,
                 subtitle = subtitle,
                 titleStyle = MaterialTheme.typography.bodyMedium,
-                subtitleMaxLines = 1
+                subtitleMaxLines = Int.MAX_VALUE
             )
         }
     )

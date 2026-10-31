@@ -3,9 +3,11 @@ package ru.slavgorod.transport.ui.components.schedule
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ButtonDefaults
@@ -19,6 +21,7 @@ import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Locale
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 internal fun ScheduleDayPicker(
     selectedDay: DayOfWeek?,
@@ -26,17 +29,18 @@ internal fun ScheduleDayPicker(
     onDaySelected: (DayOfWeek) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    FlowRow(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         DayOfWeek.entries.forEach { day ->
             OutlinedButton(
                 modifier = Modifier
-                    .weight(1f)
-                    .height(36.dp),
+                    .widthIn(min = 40.dp * LocalDensity.current.fontScale.coerceAtLeast(1f))
+                    .heightIn(min = 48.dp),
                 onClick = { onDaySelected(day) },
                 shape = DAY_BUTTON_SHAPE,
                 contentPadding = PaddingValues(0.dp),

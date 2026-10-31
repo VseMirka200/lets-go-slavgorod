@@ -205,6 +205,7 @@ private fun AboutActionRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
+                modifier = Modifier.weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(scaleDpForFontScale(12.dp, fontScale)),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -216,6 +217,7 @@ private fun AboutActionRow(
                 )
 
                 Text(
+                    modifier = Modifier.weight(1f),
                     text = title,
                     style = MaterialTheme.typography.bodyLarge
                 )

@@ -11,18 +11,18 @@
     <string name="about_privacy_policy">Политика конфиденциальности</string>
     <string name="about_open_privacy_policy_failed">Не удалось открыть политику конфиденциальности</string>
     <string name="about_vk_group">Группа ВКонтакте</string>
-    <string name="about_open_vk_group_failed">Не удалось открыть группу ВК</string>
+    <string name="about_open_vk_group_failed">Не удалось открыть группу ВКонтакте</string>
     <string name="developer_name">VseMirka200</string>
     <string name="about_version_format">Версия %1$s</string>
     <string name="about_developer_format">Разработчик: %1$s</string>
-    <string name="disclaimer_title">Важное сообщение</string>
+    <string name="disclaimer_title">Неофициальное приложение</string>
     <string name="disclaimer_warning_icon">Предупреждение</string>
     <string name="disclaimer_info_icon">Информация</string>
-    <string name="disclaimer_main_text">Приложение «Поехали! Славгород» является неофициальным справочным приложением.</string>
+    <string name="disclaimer_main_text">«Поехали! Славгород» — независимое справочное приложение.</string>
     <string name="disclaimer_description_text">Приложение не связано с администрацией, государственными учреждениями, такими перевозчиками, как ООО &quot;Славгородское АТП&quot;, МУП &quot;Торговый ряд г. Славгород&quot;, или иными муниципальными организациями и не является их официальным приложением.</string>
     <string name="disclaimer_purpose_text">Проект носит справочный характер.</string>
     <string name="disclaimer_accuracy_text">Данные в приложении могут отличаться.</string>
-    <string name="disclaimer_accept">Ознакомился</string>
+    <string name="disclaimer_accept">Я ознакомился(лась)</string>
     <string name="disclaimer_dont_show_again">Не показывать это сообщение снова</string>
     <string name="disclaimer_button_understand">Понятно</string>
     <string name="disclaimer_button_close">Закрыть</string>
@@ -296,4 +296,13 @@
     <string name="schedule_json_notes_key">примечания</string>
     <string name="route_header_city_suffix">город</string>
     <string name="route_header_intercity_suffix">межгород</string>
+    <string name="disclaimer_summary">Оно не является официальным приложением администрации города, перевозчиков или муниципальных организаций и не связано с ними.</string>
+    <string name="disclaimer_details">Подробнее об организациях</string>
+    <string name="welcome_continue">Продолжить</string>
+    <string name="welcome_finish">Начать пользоваться</string>
+    <string name="welcome_community_title">Будьте в курсе новостей</string>
+    <string name="welcome_community_text">Подписывайтесь на группу ВКонтакте или канал МАКС проекта «Поехали! Славгород», чтобы следить за новостями и обновлениями приложения.</string>
+    <string name="welcome_thanks_title">Спасибо, что вы с нами!</string>
+    <string name="welcome_thanks_text">Спасибо, что пользуетесь приложением «Поехали! Славгород». Поделитесь впечатлениями и оставьте отзыв в RuStore или Google Play — это поможет сделать приложение лучше.</string>
+    <string name="welcome_link_failed">Не удалось открыть ссылку. Попробуйте ещё раз позже.</string>
 </resources>

@@ -5,7 +5,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.slavgorod.transport.ui.theme.scaleDpForFontScale
-import ru.slavgorod.transport.ui.theme.scaleSpForFontScale
 
 internal enum class ScheduleResponsiveLayoutMode {
     TIGHT,
@@ -74,6 +73,7 @@ internal fun resolveScheduleResponsiveLayout(
     containerWidth: Dp,
     fontScale: Float = 1f
 ): ScheduleResponsiveLayoutSpec {
+    val readableWidth = containerWidth / fontScale.coerceAtLeast(1f)
     val clampedWidth =
         containerWidth.value.coerceIn(MIN_LAYOUT_WIDTH.value, MAX_LAYOUT_WIDTH.value).dp
     val progress =
@@ -82,37 +82,37 @@ internal fun resolveScheduleResponsiveLayout(
 
     return ScheduleResponsiveLayoutSpec(
         mode = when {
-            containerWidth < 200.dp -> ScheduleResponsiveLayoutMode.TIGHT
-            containerWidth < 420.dp -> ScheduleResponsiveLayoutMode.COMPACT
+            readableWidth < 200.dp -> ScheduleResponsiveLayoutMode.TIGHT
+            readableWidth < 420.dp -> ScheduleResponsiveLayoutMode.COMPACT
             else -> ScheduleResponsiveLayoutMode.REGULAR
         },
         section = ScheduleSectionLayoutSpec(
             sectionHorizontalPadding = lerpDp(8.dp, 16.dp, progress, fontScale),
             sectionVerticalSpacing = lerpDp(6.dp, 10.dp, progress, fontScale),
             sectionColumnSpacing = lerpDp(1.dp, 6.dp, progress, fontScale),
-            twoColumnLayoutMinWidth = TWO_COLUMN_LAYOUT_MIN_WIDTH
+            twoColumnLayoutMinWidth = TWO_COLUMN_LAYOUT_MIN_WIDTH * fontScale.coerceAtLeast(1f)
         ),
         header = ScheduleHeaderLayoutSpec(
             headerHorizontalPadding = lerpDp(8.dp, 16.dp, progress, fontScale),
             headerVerticalPadding = lerpDp(6.dp, 12.dp, progress, fontScale),
             headerItemSpacing = lerpDp(4.dp, 8.dp, progress, fontScale),
-            headerTitleFontSize = lerpSp(16.sp, 19.sp, progress, fontScale),
-            headerSubtitleFontSize = lerpSp(11.sp, 14.sp, progress, fontScale)
+            headerTitleFontSize = lerpSp(16.sp, 19.sp, progress),
+            headerSubtitleFontSize = lerpSp(11.sp, 14.sp, progress)
         ),
         card = ScheduleCardLayoutSpec(
             cardHorizontalPadding = lerpDp(8.dp, 14.dp, progress, fontScale),
             cardVerticalPadding = lerpDp(8.dp, 12.dp, progress, fontScale),
             cardInnerSpacing = lerpDp(4.dp, 8.dp, progress, fontScale),
-            departureTimeFontSize = lerpSp(19.sp, 24.sp, progress, fontScale),
+            departureTimeFontSize = lerpSp(19.sp, 24.sp, progress),
             departureTimeColumnWidth = lerpDp(52.dp, 68.dp, progress, fontScale),
-            supportingTextFontSize = lerpSp(13.sp, 16.sp, progress, fontScale),
-            stackCardContent = containerWidth < 200.dp
+            supportingTextFontSize = lerpSp(13.sp, 16.sp, progress),
+            stackCardContent = readableWidth < 200.dp
         ),
         upcoming = ScheduleUpcomingLayoutSpec(
             upcomingHorizontalPadding = lerpDp(10.dp, 16.dp, progress, fontScale),
-            upcomingHeaderFontSize = lerpSp(13.sp, 18.sp, progress, fontScale),
-            upcomingPrimaryTextSize = lerpSp(16.sp, 20.sp, progress, fontScale),
-            upcomingSupportingTextSize = lerpSp(9.sp, 13.sp, progress, fontScale),
+            upcomingHeaderFontSize = lerpSp(13.sp, 18.sp, progress),
+            upcomingPrimaryTextSize = lerpSp(16.sp, 20.sp, progress),
+            upcomingSupportingTextSize = lerpSp(9.sp, 13.sp, progress),
             upcomingMinRowHeight = lerpDp(20.dp, 30.dp, progress, fontScale),
             upcomingCardContentPadding = lerpDp(8.dp, 12.dp, progress, fontScale),
             upcomingCardTopPadding = lerpDp(4.dp, 8.dp, progress, fontScale),
@@ -142,10 +142,8 @@ private fun lerpDp(start: Dp, stop: Dp, fraction: Float, fontScale: Float): Dp {
     )
 }
 
-private fun lerpSp(start: TextUnit, stop: TextUnit, fraction: Float, fontScale: Float): TextUnit {
+// sp already follows Android's font scale (including nonlinear accessibility scaling).
+private fun lerpSp(start: TextUnit, stop: TextUnit, fraction: Float): TextUnit {
     val clampedFraction = fraction.coerceIn(0f, 1f)
-    return scaleSpForFontScale(
-        (start.value + (stop.value - start.value) * clampedFraction).sp,
-        fontScale
-    )
+    return (start.value + (stop.value - start.value) * clampedFraction).sp
 }
