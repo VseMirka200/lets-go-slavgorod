@@ -53,4 +53,3 @@ cd lets-go-slavgorod
 - [Политика безопасности](docs/policies/SECURITY.md)
 - [Правила участия в разработке](docs/guides/CONTRIBUTING.md)
 - [Структура документации](docs/README.md)
-
