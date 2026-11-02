@@ -35,7 +35,7 @@ androidxTestCore = "1.6.1"
 robolectric = "4.11.1"
 
 # Desugaring
-desugarJdkLibs = "2.1.2"
+desugarJdkLibs = "2.1.5"
 
 # Logging
 timber = "5.0.1"
