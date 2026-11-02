@@ -40,7 +40,7 @@ desugarJdkLibs = "2.1.2"
 # Logging
 timber = "5.0.1"
 koin = "3.5.6"
-okhttp = "4.12.0"
+okhttp = "5.5.1"
 gson = "2.11.0"
 
 # Detekt
