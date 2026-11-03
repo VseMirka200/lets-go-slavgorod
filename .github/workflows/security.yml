@@ -47,9 +47,11 @@ jobs:
         with:
           languages: java-kotlin
           build-mode: manual
-      - name: Build Android sources for analysis
+      - name: Compile Android sources without Gradle build cache for CodeQL
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon :app:assembleDebug
+          # CodeQL needs to observe the actual Kotlin compiler process.
+          # Using FROM-CACHE for compileDebugKotlin produces an empty database.
+          ./gradlew --no-daemon --no-build-cache --rerun-tasks :app:assembleDebug
       - name: Analyze code
         uses: github/codeql-action/analyze@v4
