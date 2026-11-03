@@ -60,6 +60,6 @@ jobs:
           chmod +x gradlew
           # CodeQL needs to observe the actual Kotlin compiler process.
           # Using FROM-CACHE for compileDebugKotlin produces an empty database.
-          ./gradlew --no-daemon --no-build-cache --rerun-tasks :app:assembleDebug
+          ./gradlew --no-daemon --dependency-verification=strict --no-build-cache --rerun-tasks :app:assembleDebug
       - name: Analyze code
         uses: github/codeql-action/analyze@1fc58d04a4d4374f921bdac573c3811c240f9c26 # v4

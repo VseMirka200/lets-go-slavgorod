@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { validateSchedule } from "./validate-schedule-data.mjs";
+import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { validateSchedule, MAX_SCHEDULE_BYTES } from "./validate-schedule-data.mjs";
 
 const valid = () => ({
   routes: [{ id: "1", routeNumber: "1", name: "Маршрут", description: "Описание",
@@ -63,4 +68,22 @@ test("checks actual daysOfWeek and preHolidayWorkingDates fields", () => {
   data.routes[0].schedules[0].serviceCalendar = { daysOfWeek: ["NOT_A_DAY"] };
   data.productionCalendar = { years: { "2026": { preHolidayWorkingDates: ["2026-02-30"] } } };
   assert.equal(validateSchedule(data).length, 2);
+});
+
+test("CLI accepts exact byte limit and rejects oversized input", () => {
+  const dir = mkdtempSync(join(tmpdir(), "schedule-validation-"));
+  try {
+    const file = join(dir, "schedule.json");
+    const json = JSON.stringify(valid());
+    const exact = json + " ".repeat(MAX_SCHEDULE_BYTES - Buffer.byteLength(json));
+    const cli = fileURLToPath(new URL("./validate-schedule-data.mjs", import.meta.url));
+    writeFileSync(file, exact);
+    assert.equal(spawnSync(process.execPath, [cli, file]).status, 0);
+    writeFileSync(file, exact + " ");
+    const result = spawnSync(process.execPath, [cli, file], { encoding: "utf8" });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /2 MiB/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

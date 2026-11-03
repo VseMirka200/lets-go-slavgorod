@@ -47,12 +47,5 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run unit tests, Android lint, Detekt and assemble debug APK
-        run: ./gradlew --no-daemon --write-verification-metadata sha256 testDebugUnitTest lintDebug detekt assembleDebug
+        run: ./gradlew --no-daemon --dependency-verification=strict testDebugUnitTest lintDebug detekt assembleDebug
 
-      - name: Export dependency checksums for review
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: dependency-verification-bootstrap
-          path: gradle/verification-metadata.xml
-          if-no-files-found: error
-          retention-days: 3
