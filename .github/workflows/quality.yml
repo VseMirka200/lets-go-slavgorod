@@ -22,6 +22,9 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
+      - name: Verify Windows and macOS AAPT2 artifacts
+        run: python tools/verify-platform-artifacts.py
+
       - name: Scan complete fetched Git history for secrets
         shell: bash
         run: |
@@ -50,24 +53,3 @@ jobs:
         run: ./gradlew --no-daemon --dependency-verification=strict testDebugUnitTest lintDebug detekt assembleDebug
 
 
-  platform-artifacts:
-    name: Verify platform artifacts
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Resolve official Windows and macOS AAPT2 checksums
-        shell: bash
-        run: |
-          set -euo pipefail
-          artifact_dir="$(mktemp -d)"
-          trap 'rm -rf "$artifact_dir"' EXIT
-          version="9.5.0-16666295"
-          for platform in windows osx; do
-            file="aapt2-$version-$platform.jar"
-            url="https://dl.google.com/dl/android/maven2/com/android/tools/build/aapt2/$version/$file"
-            curl --fail --location --retry 3 "$url" --output "$artifact_dir/$file"
-            curl --fail --location --retry 3 "$url.sha1" --output "$artifact_dir/$file.sha1"
-            published_sha1="$(tr -d '[:space:]' < "$artifact_dir/$file.sha1")"
-            echo "$published_sha1  $artifact_dir/$file" | sha1sum --check --strict
-            sha256sum "$artifact_dir/$file"
-          done
