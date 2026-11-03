@@ -58,9 +58,6 @@
                     <a href="https://github.com/VseMirka200/lets-go-slavgorod/releases" target="_blank" rel="noreferrer">
                         Скачать APK (GitHub)
                     </a>
-                    <a href="https://github.com/VseMirka200/lets-go-slavgorod/issues/new?template=feedback.yml" target="_blank" rel="noreferrer">
-                        Обратная связь
-                    </a>
                     <a href="https://max.ru/channel_letsgoslavgorod" target="_blank" rel="noreferrer">
                         Канал в МАКС
                     </a>
@@ -156,17 +153,6 @@
                             Загрузите актуальную версию из релизов GitHub.
                         </p>
                     </a>
-                    <a class="portal-card" href="https://github.com/VseMirka200/lets-go-slavgorod/issues/new?template=feedback.yml" target="_blank" rel="noreferrer">
-                        <span>
-                            💬
-                        </span>
-                        <h2>
-                            Обратная связь
-                        </h2>
-                        <p>
-                            Сообщите об ошибке, неточности данных или новой идее.
-                        </p>
-                    </a>
                 </section>
                 <section id="how" class="portal-section">
                     <span class="portal-eyebrow">
@@ -213,16 +199,13 @@
                         Открытая документация, правила проекта и способы помочь.
                     </p>
                     <div class="portal-actions portal-document-actions">
-                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/guides/CONTRIBUTING.md" target="_blank" rel="noreferrer">
+                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/CONTRIBUTING.md" target="_blank" rel="noreferrer">
                             Участие
                         </a>
-                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/guides/FEEDBACK_LESSONS_RU.md" target="_blank" rel="noreferrer">
-                            Обратная связь
-                        </a>
-                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/guides/LIBRARIES.md" target="_blank" rel="noreferrer">
+                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/LIBRARIES.md" target="_blank" rel="noreferrer">
                             Библиотеки
                         </a>
-                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/guides/SECURITY_CHECKS.md" target="_blank" rel="noreferrer">
+                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/SECURITY_CHECKS.md" target="_blank" rel="noreferrer">
                             Проверки безопасности
                         </a>
                         <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/policies/SECURITY.md" target="_blank" rel="noreferrer">
@@ -277,7 +260,6 @@
             const pages = [
             ["Расписание", "schedule.html"],
             ["Скачать APK (GitHub)", "https://github.com/VseMirka200/lets-go-slavgorod/releases"],
-            ["Обратная связь", "https://github.com/VseMirka200/lets-go-slavgorod/issues/new?template=feedback.yml"],
             ["Документация", "#project"]
             ];
             const searchDialog = document.querySelector("#search-dialog");
@@ -291,11 +273,7 @@
                 ${title}
             </a>
             `)
-            .join("") || "
-            <span>
-                Ничего не найдено.
-            </span>
-            ";
+            .join("") || `<span>Ничего не найдено.</span>`;
             };
             const openSearch = () => {
             renderResults("");
