@@ -1,21 +1,28 @@
-# Security Policy
+# Политика безопасности
 
-## Supported Versions
+«Поехали! Славгород» — независимое Android-приложение с расписанием транспорта.
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+## Поддерживаемые версии
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+Актуальный опубликованный выпуск на момент обновления политики: **3.0.2**.
+Исправления безопасности ориентированы на актуальную опубликованную версию.
+Поддержка более ранних выпусков отдельно не гарантируется.
 
-## Reporting a Vulnerability
+## Как сообщить об уязвимости
 
-Use this section to tell people how to report a vulnerability.
+**Не публикуйте сведения об уязвимости в открытых GitHub Issues, PR или Discussions.**
+Отправьте приватное сообщение на **vladislav-olyushin@mail.ru**.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+Укажите затронутую версию или компонент, шаги воспроизведения и
+потенциальное влияние. Не пересылайте пароли, токены, закрытые ключи,
+персональные данные или приватные журналы.
+
+Подробнее: [политика безопасности проекта](docs/policies/SECURITY.md).
+
+## Область действия
+
+В область действия входят Android-приложение, код и конфигурация сборки,
+публичный сайт и обработка данных расписания. Проект не является
+официальным источником транспортной информации; ошибки в расписании
+можно также сообщать в обычных GitHub Issues, если они не затрагивают
+конфиденциальные данные.
