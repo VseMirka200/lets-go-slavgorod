@@ -66,6 +66,13 @@ export function validateSchedule(data) {
       const calendar = trip.serviceCalendar === undefined ? {} : trip.serviceCalendar;
       if (!object(calendar)) { fail(label + ": serviceCalendar должен быть объектом"); continue; }
       period(calendar, label);
+      if (calendar.daysOfWeek !== undefined) {
+        const days = array(calendar.daysOfWeek, label + " daysOfWeek");
+        const allowed = new Set(["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]);
+        if (days.some((day) => !allowed.has(day)) || new Set(days).size !== days.length) {
+          fail(label + ": неверные или повторяющиеся daysOfWeek");
+        }
+      }
       const included = dates(calendar.includedDates, label + " includedDates");
       const excluded = dates(calendar.excludedDates, label + " excludedDates");
       for (const value of excluded) if (included.includes(value)) fail(label + ": дата одновременно включена и исключена");
@@ -91,7 +98,7 @@ export function validateSchedule(data) {
     else for (const [year, entry] of Object.entries(calendar.years)) {
       if (!/^\d{4}$/.test(year) || !object(entry)) { fail("Некорректный год производственного календаря"); continue; }
       const nonWorking = dates(entry.nonWorkingDates, year + " nonWorkingDates");
-      const working = dates(entry.workingDates, year + " workingDates");
+      const working = dates(entry.preHolidayWorkingDates, year + " preHolidayWorkingDates");
       for (const value of [...nonWorking, ...working]) if (date(value) && !value.startsWith(year + "-")) fail("Дата календаря не соответствует году");
       for (const value of working) if (nonWorking.includes(value)) fail("Дата одновременно рабочая и нерабочая");
     }

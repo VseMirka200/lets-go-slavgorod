@@ -57,3 +57,10 @@ test("checks production-calendar dates and year", () => {
   data.productionCalendar = { years: { "2026": { nonWorkingDates: ["2027-01-01"] } } };
   assert.ok(validateSchedule(data).length > 0);
 });
+
+test("checks actual daysOfWeek and preHolidayWorkingDates fields", () => {
+  const data = valid();
+  data.routes[0].schedules[0].serviceCalendar = { daysOfWeek: ["NOT_A_DAY"] };
+  data.productionCalendar = { years: { "2026": { preHolidayWorkingDates: ["2026-02-30"] } } };
+  assert.equal(validateSchedule(data).length, 2);
+});
