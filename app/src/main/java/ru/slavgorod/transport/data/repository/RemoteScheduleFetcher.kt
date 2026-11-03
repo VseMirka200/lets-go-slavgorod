@@ -55,9 +55,13 @@ class RemoteScheduleFetcher(
                     Timber.w("Remote table returned code %d", response.code)
                     null
                 } else {
-                    response.body?.string()
-                        ?.trim()
-                        ?.takeIf { it.isNotBlank() }
+                    response.body?.let { body ->
+                        if (body.contentLength() > MAX_SCHEDULE_BYTES) return@let null
+                        val source = body.source()
+                        source.request(MAX_SCHEDULE_BYTES + 1)
+                        if (source.buffer.size > MAX_SCHEDULE_BYTES) return@let null
+                        body.string().trim().takeIf { it.isNotBlank() }
+                    }
                 }
             }
         } catch (exception: Exception) {
@@ -71,6 +75,7 @@ class RemoteScheduleFetcher(
     }
 
     private companion object {
+        const val MAX_SCHEDULE_BYTES = 2L * 1024 * 1024
         private val DEFAULT_RETRY_DELAYS_MILLIS = listOf(400L, 1_000L)
     }
 }
