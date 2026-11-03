@@ -2,21 +2,33 @@
 
 Репозиторий проверяет каждый pull request в `main`:
 
-- `Tests, lint and Detekt`: unit-тесты, Android Lint и Detekt;
+- `Tests, lint and Detekt`: unit-тесты, Android Lint, Detekt и сборка debug APK;
 - `Dependency review`: блокирует добавление зависимостей с уязвимостями уровня `moderate` и выше в runtime-области;
 - `CodeQL`: ищет потенциальные уязвимости в Kotlin/Java-коде;
-- `Validate schedule data`: проверяет структуру и данные расписания при их изменении.
+- `Validate schedule data`: проверяет структуру и данные расписания на каждом PR, без фильтра по путям.
 
 ## Обязательные настройки GitHub
 
-Автоматические проверки сами по себе не запрещают прямую запись в ветку. В настройках репозитория откройте **Settings → Rules → Rulesets** и создайте правило для `main`:
+Автоматические проверки сами по себе не запрещают прямую запись в ветку. После загрузки всех исправлений в `main` и успешного CI включите Pull Requests,
+оставьте squash единственным способом слияния и создайте активный Ruleset
+для `refs/heads/main`:
 
 1. включите **Require a pull request before merging**;
-2. включите **Require approvals** и установите минимум один review;
-3. включите **Require review from Code Owners**;
-4. включите **Require status checks to pass** и выберите `Tests, lint and Detekt`, `Dependency review`, `CodeQL` и `Validate schedule data`;
-5. включите **Block force pushes** и запретите удаление ветки;
-6. не добавляйте обход правила для обычных участников.
+2. выберите обязательные проверки `Tests, lint and Detekt`, `Dependency review`, `CodeQL` и `Validate schedule data`;
+3. включите **Require branches to be up to date** (strict status checks);
+4. заблокируйте force push и удаление ветки;
+5. оставьте список bypass пустым, включая администратора.
+
+Обязательные одобрения и Code Owner review требуют второго сопровождающего,
+способного проверить PR владельца. Для единственного сопровождающего допустим
+минимум 0 одобрений. При появлении второго сопровождающего согласуйте более
+строгий review отдельно.
+
+Проверьте на реальном PR наличие всех четырёх статусов. Dependency Review
+работает для каждого PR; его пропуск на push ожидаем и не подтверждает
+прохождение проверки зависимостей.
+
+Подробнее и текущее состояние: [настройка защиты GitHub](GITHUB_SECURITY_SETUP.md).
 
 В разделе **Settings → Code security and analysis** включите Secret scanning и Push protection. Они не дадут отправить в GitHub распознанные токены и ключи.
 
