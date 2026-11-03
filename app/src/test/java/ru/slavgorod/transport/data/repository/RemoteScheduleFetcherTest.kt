@@ -10,6 +10,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class RemoteScheduleFetcherTest {
@@ -57,4 +58,32 @@ class RemoteScheduleFetcherTest {
 
         assertEquals("""{"source":"b"}""", fetcher.fetchWithRetry())
     }
+
+    @Test
+    fun `rejects oversized declared response`() = runTest {
+        server.enqueue(MockResponse().setBody("x".repeat(2 * 1024 * 1024 + 1)))
+        assertNull(fetcherWithoutRetries().fetchWithRetry())
+    }
+
+    @Test
+    fun `rejects oversized chunked response without content length`() = runTest {
+        server.enqueue(
+            MockResponse().setChunkedBody("x".repeat(2 * 1024 * 1024 + 1), 8192)
+        )
+        assertNull(fetcherWithoutRetries().fetchWithRetry())
+    }
+
+    @Test
+    fun `accepts response at byte limit`() = runTest {
+        val body = "x".repeat(2 * 1024 * 1024)
+        server.enqueue(MockResponse().setBody(body))
+        assertEquals(body, fetcherWithoutRetries().fetchWithRetry())
+    }
+
+    private fun fetcherWithoutRetries() = RemoteScheduleFetcher(
+        remoteJsonUrlProvider = { server.url("/schedule.json").toString() },
+        onlineChecker = { true },
+        retryDelaysMillis = emptyList(),
+        delayProvider = {}
+    )
 }

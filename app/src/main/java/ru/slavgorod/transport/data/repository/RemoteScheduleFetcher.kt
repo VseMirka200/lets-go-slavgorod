@@ -3,6 +3,7 @@ package ru.slavgorod.transport.data.repository
 import kotlinx.coroutines.delay
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.ResponseBody
 import ru.slavgorod.transport.core.Constants
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
@@ -55,9 +56,7 @@ class RemoteScheduleFetcher(
                     Timber.w("Remote table returned code %d", response.code)
                     null
                 } else {
-                    response.body?.string()
-                        ?.trim()
-                        ?.takeIf { it.isNotBlank() }
+                    response.body?.let(::readBoundedBody)
                 }
             }
         } catch (exception: Exception) {
@@ -66,11 +65,20 @@ class RemoteScheduleFetcher(
         }
     }
 
+    private fun readBoundedBody(body: ResponseBody): String? {
+        if (body.contentLength() > MAX_SCHEDULE_BYTES) return null
+        val source = body.source()
+        source.request(MAX_SCHEDULE_BYTES + 1)
+        if (source.buffer.size > MAX_SCHEDULE_BYTES) return null
+        return body.string().trim().takeIf { it.isNotBlank() }
+    }
+
     private fun normalizeRemoteJsonUrl(rawUrl: String): String {
         return rawUrl.trim().ifBlank { Constants.REMOTE_JSON_URL }
     }
 
     private companion object {
+        const val MAX_SCHEDULE_BYTES = 2L * 1024 * 1024
         private val DEFAULT_RETRY_DELAYS_MILLIS = listOf(400L, 1_000L)
     }
 }
