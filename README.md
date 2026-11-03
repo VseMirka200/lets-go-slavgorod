@@ -52,4 +52,4 @@ cd lets-go-slavgorod
 - [Политика конфиденциальности](docs/policies/PRIVACY.md)
 - [Политика безопасности](docs/policies/SECURITY.md)
 - [Правила участия в разработке](docs/guides/CONTRIBUTING.md)
-- [Структура документации](docs/README.md)
+- [Настройка безопасности и CI](docs/guides/GITHUB_SECURITY_SETUP.md)
