@@ -29,6 +29,8 @@ internal fun SettingsSheetHost(
     val scheduleUpdatesSectionTitle = stringResource(R.string.settings_schedule_updates_title)
     val scheduleNotificationsSectionTitle =
         stringResource(R.string.settings_schedule_notifications_title)
+    val feedbackSectionTitle = stringResource(R.string.settings_feedback_title)
+    val sourceSectionTitle = stringResource(R.string.settings_source_title)
 
     when (activeSheet) {
         SettingsModalSheet.THEME -> {
@@ -79,9 +81,15 @@ internal fun SettingsSheetHost(
             }
         }
 
-        SettingsModalSheet.MAPS -> {
-            SettingsBottomSheet(onDismiss = { onCloseSheet("Приложение карт") }) {
-                MapSettingsSection()
+        SettingsModalSheet.SCHEDULE_SOURCE -> {
+            SettingsBottomSheet(onDismiss = { onCloseSheet(sourceSectionTitle) }) {
+                ScheduleSourceSettingsSection()
+            }
+        }
+
+        SettingsModalSheet.FEEDBACK -> {
+            SettingsBottomSheet(onDismiss = { onCloseSheet(feedbackSectionTitle) }) {
+                FeedbackSettingsSection()
             }
         }
 

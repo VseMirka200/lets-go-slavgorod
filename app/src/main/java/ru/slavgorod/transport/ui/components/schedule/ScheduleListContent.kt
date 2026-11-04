@@ -83,7 +83,6 @@ internal fun ScheduleListScaffold(
     swapScheduleColumns: Boolean,
     onBackClick: (() -> Unit)?,
     onShareClick: (() -> Unit)?,
-    onStopsClick: (() -> Unit)?,
     contentPadding: PaddingValues,
     currentTimeMillis: Long,
     scheduleExtraLabelProvider: ((BusSchedule) -> String?)?
@@ -136,8 +135,7 @@ internal fun ScheduleListScaffold(
                         ScheduleRouteStickyHeader(
                             route = route,
                             routeRemarkText = routeRemarkText,
-                            layout = layout,
-                            onStopsClick = onStopsClick
+                            layout = layout
                         )
                     }
                     item(key = "schedule_day_selection") {
@@ -158,7 +156,6 @@ internal fun ScheduleListScaffold(
                         showInlineDayPicker = showInlineDayPicker,
                         currentDay = currentDay,
                         onDaySelected = onDaySelected,
-                        onStopsClick = onStopsClick,
                     )
 
                     scheduleSections(
@@ -207,15 +204,13 @@ private fun LazyListScope.scheduleStickyHeader(
     isDaySelected: Boolean,
     showInlineDayPicker: Boolean,
     currentDay: DayOfWeek,
-    onDaySelected: (DayOfWeek) -> Unit,
-    onStopsClick: (() -> Unit)?
+    onDaySelected: (DayOfWeek) -> Unit
 ) {
     item(key = "route_header_and_upcoming") {
         ScheduleRouteStickyHeader(
             route = route,
             routeRemarkText = routeRemarkText,
-            layout = layout,
-            onStopsClick = onStopsClick
+            layout = layout
         )
     }
 
@@ -275,8 +270,7 @@ private fun Modifier.returnToDaySelectionOnSwipe(
 private fun ScheduleRouteStickyHeader(
     route: BusRoute,
     routeRemarkText: String?,
-    layout: ScheduleResponsiveLayoutSpec,
-    onStopsClick: (() -> Unit)?
+    layout: ScheduleResponsiveLayoutSpec
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         ScheduleHeaderDetails(
@@ -284,8 +278,7 @@ private fun ScheduleRouteStickyHeader(
             layout = layout,
             modifier = Modifier,
             horizontalPadding = layout.header.headerHorizontalPadding,
-            noteText = routeRemarkText,
-            onStopsClick = onStopsClick
+            noteText = routeRemarkText
         )
     }
 }

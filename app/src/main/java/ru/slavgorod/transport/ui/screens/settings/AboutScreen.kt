@@ -15,8 +15,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material3.Icon
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -40,6 +40,7 @@ import ru.slavgorod.transport.ui.components.settings.SettingsSurfaceCard
 import ru.slavgorod.transport.ui.theme.scaleDpForFontScale
 
 private const val DETAILS_URL = "https://vsemirka200.github.io/lets-go-slavgorod/"
+private const val SOURCE_CODE_URL = "https://github.com/VseMirka200/lets-go-slavgorod"
 private const val PRIVACY_POLICY_URL =
     "https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/policies/PRIVACY.md"
 private const val VK_GROUP_URL = "https://vk.ru/letsgoslavgorod"
@@ -112,6 +113,23 @@ fun AboutScreen(
                             context.openExternalUrl(
                                 url = PRIVACY_POLICY_URL,
                                 failureLogMessage = context.getString(R.string.about_open_privacy_policy_failed)
+                            )
+                        }
+                    )
+                    AboutActionRow(
+                        title = stringResource(R.string.about_source_code),
+                        leadingIcon = { iconModifier ->
+                            Icon(
+                                imageVector = Icons.Outlined.Code,
+                                contentDescription = null,
+                                modifier = iconModifier,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        onClick = {
+                            context.openExternalUrl(
+                                url = SOURCE_CODE_URL,
+                                failureLogMessage = context.getString(R.string.about_open_source_code_failed)
                             )
                         }
                     )
@@ -206,7 +224,6 @@ internal fun AboutSocialFooter(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(scaleDpForFontScale(4.dp, fontScale))
     ) {
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Row(
             horizontalArrangement = Arrangement.spacedBy(scaleDpForFontScale(12.dp, fontScale)),
             verticalAlignment = Alignment.CenterVertically

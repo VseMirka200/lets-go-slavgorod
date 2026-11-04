@@ -9,12 +9,14 @@
 - Activity Compose;
 - Compose BOM, Compose UI, Material, Material 3 и Navigation Compose.
 
-## Данные и фоновые задачи
+## Данные и сетевые запросы
 
 - Kotlin Coroutines;
 - AndroidX DataStore Preferences;
 - Gson для обработки JSON;
 - OkHttp для сетевых запросов.
+
+Периодическая проверка расписания связана с жизненным циклом открытого приложения; WorkManager для неё не используется.
 
 ## Логирование и внедрение зависимостей
 
@@ -38,3 +40,7 @@
 - Desugar JDK Libraries.
 
 Актуальные версии зависимостей определяются файлами Gradle проекта, прежде всего `gradle/libs.versions.toml`.
+
+## Публикация расписания и сайт
+
+Редакторы используют Google Таблицы и опубликованный Google Apps Script. GitHub Actions и Node.js выполняют проверку и синхронизацию резервной копии. Сайт в `docs/` использует HTML, CSS и JavaScript. Подробности — в [описании передачи расписания](SCHEDULE_DATA.md).

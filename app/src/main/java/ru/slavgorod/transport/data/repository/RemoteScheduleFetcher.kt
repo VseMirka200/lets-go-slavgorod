@@ -12,6 +12,8 @@ interface ScheduleFetcher {
     fun isOnline(): Boolean
 
     suspend fun fetchWithRetry(): String?
+
+    suspend fun fetchBackupWithRetry(): String? = null
 }
 
 /**
@@ -23,6 +25,7 @@ interface ScheduleFetcher {
 class RemoteScheduleFetcher(
     private val remoteJsonUrlProvider: suspend () -> String = { Constants.REMOTE_JSON_URL },
     private val onlineChecker: () -> Boolean,
+    private val backupJsonUrlProvider: suspend () -> String? = { null },
     private val httpClient: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(Constants.REMOTE_CONNECTION_TIMEOUT.toLong(), TimeUnit.MILLISECONDS)
         .readTimeout(Constants.REMOTE_READ_TIMEOUT.toLong(), TimeUnit.MILLISECONDS)
@@ -36,8 +39,18 @@ class RemoteScheduleFetcher(
     override suspend fun fetchWithRetry(): String? {
         if (!isOnline()) return null
 
+        return fetchWithRetryFrom { normalizeRemoteJsonUrl(remoteJsonUrlProvider()) }
+    }
+
+    override suspend fun fetchBackupWithRetry(): String? {
+        if (!isOnline()) return null
+        val backupUrl = backupJsonUrlProvider()?.takeIf { it.isNotBlank() } ?: return null
+        return fetchWithRetryFrom { backupUrl }
+    }
+
+    private suspend fun fetchWithRetryFrom(urlProvider: suspend () -> String): String? {
         repeat(retryDelaysMillis.size + 1) { attempt ->
-            val result = fetchOnce()
+            val result = fetchOnce(urlProvider)
             if (!result.isNullOrBlank()) {
                 return result
             }
@@ -50,10 +63,10 @@ class RemoteScheduleFetcher(
         return null
     }
 
-    private suspend fun fetchOnce(): String? {
+    private suspend fun fetchOnce(urlProvider: suspend () -> String): String? {
         return try {
             val request = Request.Builder()
-                .url(normalizeRemoteJsonUrl(remoteJsonUrlProvider()))
+                .url(urlProvider())
                 .get()
                 .build()
 

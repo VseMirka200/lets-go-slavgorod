@@ -1,12 +1,6 @@
 import java.io.File
 import org.gradle.api.GradleException
 import org.gradle.api.Project
-import org.gradle.api.DefaultTask
-import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.TaskAction
 
 plugins {
     alias(libs.plugins.androidApplication)
@@ -14,21 +8,13 @@ plugins {
     alias(libs.plugins.detekt)
 }
 
-// A generated assets directory is registered through the Android Variant API.
-// Unlike sourceSets.assets.srcDir(taskProvider), this is supported by recent AGP.
-abstract class GenerateRouteStopsAsset : DefaultTask() {
-    @get:InputFile
-    abstract val sourceFile: RegularFileProperty
-
-    @get:OutputDirectory
-    abstract val outputDirectory: DirectoryProperty
-
-    @TaskAction
-    fun copyCatalog() {
-        val destination = outputDirectory.file("route-stops.json").get().asFile
-        destination.parentFile.mkdirs()
-        sourceFile.get().asFile.copyTo(destination, overwrite = true)
-    }
+val scheduleSourceUrl = providers.gradleProperty("scheduleSourceUrl")
+    .orElse(providers.environmentVariable("SCHEDULE_SOURCE_URL"))
+    .orElse("https://script.google.com/macros/s/AKfycbzus49Rc3LBZPDNcwqGteLHFViRCV9nItnX5PgvSkqSiId3mVxg1tp--7o4Cre2Mv40GA/exec")
+    .get()
+require(scheduleSourceUrl.startsWith("https://") && !scheduleSourceUrl.contains('"') &&
+    !scheduleSourceUrl.contains('\\') && !scheduleSourceUrl.contains('\n') && !scheduleSourceUrl.contains('\r')) {
+    "scheduleSourceUrl должен быть HTTPS-адресом без кавычек и переносов строк"
 }
 
 android {
@@ -44,6 +30,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
+        buildConfigField("String", "SCHEDULE_SOURCE_URL", "\"$scheduleSourceUrl\"")
 
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
@@ -120,6 +107,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     lint {
@@ -147,24 +135,6 @@ kotlin {
     }
 }
 
-
-// schedule-data/route-stops.json remains the sole editable source of route stops.
-// AGP tracks the generator and its output via the Variant API (no SourceSet Provider).
-androidComponents {
-    onVariants(selector().all()) { variant ->
-        val variantCapitalized = variant.name.replaceFirstChar { it.uppercaseChar() }
-        val generateTask = tasks.register<GenerateRouteStopsAsset>(
-            "generate${variantCapitalized}RouteStopsAsset"
-        ) {
-            sourceFile.set(rootProject.layout.projectDirectory.file("schedule-data/route-stops.json"))
-            outputDirectory.set(layout.buildDirectory.dir("generated/routeStopsAssets/${variant.name}"))
-        }
-        variant.sources.assets?.addGeneratedSourceDirectory(
-            generateTask,
-            GenerateRouteStopsAsset::outputDirectory
-        )
-    }
-}
 
 dependencies {
     implementation(libs.androidx.core.ktx)

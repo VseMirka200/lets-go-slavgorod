@@ -1,8 +1,7 @@
 /**
- * Стандартная точка входа Google Apps Script, которая отдаёт JSON расписания.
- * Пользователь может переопределить её через query-параметр `source`.
+ * Адрес источника задаётся в data-schedule-source страницы расписания.
  */
-const DEFAULT_SCHEDULE_SOURCE = "https://raw.githubusercontent.com/VseMirka200/lets-go-slavgorod/main/schedule-data/schedule.json";
+const DEFAULT_SCHEDULE_SOURCE = document.body.dataset.scheduleSource;
 
 /**
  * Префикс для всех записей localStorage, связанных с кэшем расписания.
@@ -606,15 +605,51 @@ function renderRoutes(routes, container, detailMode = false, selectedDay = getTo
 }
 
 /**
- * Загружает опубликованный JSON-файл расписания из GitHub.
+ * Загружает JSON или публичный Google Apps Script. JSONP используется только
+ * для явно настроенного доверенного адреса script.google.com, не из URL страницы.
  */
 async function loadScheduleData() {
+    const url = new URL(DEFAULT_SCHEDULE_SOURCE);
+    if (url.protocol !== "https:") {
+        throw new Error("Источник расписания должен использовать HTTPS");
+    }
+    if (url.hostname === "script.google.com" && /^\/macros\/s\/[^/]+\/exec$/.test(url.pathname)) {
+        return loadGoogleSchedule(url);
+    }
     const response = await fetch(DEFAULT_SCHEDULE_SOURCE, { cache: "no-store" });
     if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
     }
 
     return response.json();
+}
+
+function loadGoogleSchedule(url) {
+    return new Promise((resolve, reject) => {
+        const callbackName = `scheduleJsonp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const script = document.createElement("script");
+        let timeout;
+        const cleanup = () => {
+            window.clearTimeout(timeout);
+            delete window[callbackName];
+            script.remove();
+        };
+        window[callbackName] = (payload) => {
+            cleanup();
+            resolve(payload);
+        };
+        script.onerror = () => {
+            cleanup();
+            reject(new Error("Не удалось загрузить источник расписания"));
+        };
+        url.searchParams.set("callback", callbackName);
+        script.src = url.toString();
+        timeout = window.setTimeout(() => {
+            cleanup();
+            reject(new Error("Время ожидания источника расписания истекло"));
+        }, 15_000);
+        document.head.appendChild(script);
+    });
 }
 
 /**
@@ -626,10 +661,12 @@ function setupSchedulePage() {
     const searchInput = document.getElementById("schedule-search");
     const loadStateLabel = document.getElementById("schedule-load-state");
     const updatedAtLabel = document.getElementById("schedule-updated-at");
+    const sourceLink = document.querySelector("[data-schedule-source-link]");
 
     if (!results || !statusMessage || !searchInput || !loadStateLabel || !updatedAtLabel) {
         return;
     }
+    if (sourceLink && DEFAULT_SCHEDULE_SOURCE) sourceLink.href = DEFAULT_SCHEDULE_SOURCE;
 
     // Параметр route открывает конкретный маршрут из единого файла расписания.
     const params = new URLSearchParams(window.location.search);
@@ -694,7 +731,7 @@ function setupSchedulePage() {
             applyFilter();
         } else {
             loadStateLabel.textContent = "Загрузка...";
-            statusMessage.textContent = "Загружаем расписание из GitHub...";
+            statusMessage.textContent = "Загружаем расписание...";
             results.innerHTML = "";
         }
 
@@ -704,6 +741,9 @@ function setupSchedulePage() {
                 return;
             }
             const routes = sortRoutes(parseRoutesPayload(payload).filter(Boolean));
+            if (!routes.length) {
+                throw new Error("Источник не вернул корректное расписание");
+            }
 
             allRoutes = routes.map((route) => ({
                 ...route,
@@ -716,12 +756,15 @@ function setupSchedulePage() {
             loadStateLabel.textContent = `Загружено: ${allRoutes.length}`;
             applyFilter();
         } catch (error) {
+            if (loadToken !== activeLoadToken) {
+                return;
+            }
             if (cached) {
                 loadStateLabel.textContent = `Загружено: ${allRoutes.length}`;
                 return;
             }
             loadStateLabel.textContent = "Ошибка загрузки";
-            statusMessage.textContent = "Не удалось получить расписание из GitHub.";
+            statusMessage.textContent = "Не удалось получить расписание.";
             results.innerHTML = `
                 <div class="schedule-empty-state schedule-empty-state-error">
                     <strong>Источник недоступен</strong>

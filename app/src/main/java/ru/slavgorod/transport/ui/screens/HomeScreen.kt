@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -14,6 +16,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -21,6 +24,8 @@ import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 import ru.slavgorod.transport.R
 import ru.slavgorod.transport.core.Constants
+import ru.slavgorod.transport.domain.util.DateTimeFormatterUtils
+import ru.slavgorod.transport.data.repository.ScheduleDataSource
 import ru.slavgorod.transport.logging.UserActionLogger
 import ru.slavgorod.transport.ui.components.SearchBar
 import ru.slavgorod.transport.ui.components.app.AppScreenScaffold
@@ -137,6 +142,31 @@ fun HomeScreen(
                     }
                 }
             }
+
+            val lastUpdated = uiState.dataSourceStatus.lastUpdatedAtMillis
+            if (uiState.dataSourceStatus.source == ScheduleDataSource.GITHUB_BACKUP) {
+                Text(
+                    text = stringResource(R.string.schedule_source_backup),
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center
+                )
+            }
+            Text(
+                text = if (lastUpdated != null) {
+                    stringResource(
+                        R.string.home_schedule_updated_at,
+                        DateTimeFormatterUtils.formatFullDateTime(lastUpdated)
+                    )
+                } else {
+                    stringResource(R.string.home_schedule_updated_unknown)
+                },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }

@@ -9,8 +9,6 @@ private const val RESET_SETTINGS_ROUTE = "reset_settings"
 private const val ROUTE_ID_ARG = "routeId"
 private const val SCHEDULE_BASE_ROUTE = "schedule"
 private const val SCHEDULE_ROUTE = "$SCHEDULE_BASE_ROUTE/{$ROUTE_ID_ARG}"
-private const val ROUTE_STOPS_BASE_ROUTE = "route_stops"
-private const val ROUTE_STOPS_ROUTE = "$ROUTE_STOPS_BASE_ROUTE/{$ROUTE_ID_ARG}"
 
 sealed class Screen(val route: String) {
     data object Home : Screen(HOME_ROUTE)
@@ -24,13 +22,6 @@ sealed class Screen(val route: String) {
         }
     }
 
-    data object RouteStops : Screen(ROUTE_STOPS_ROUTE) {
-        const val ARG_ROUTE_ID = ROUTE_ID_ARG
-        const val BASE_ROUTE = ROUTE_STOPS_BASE_ROUTE
-
-        fun createRoute(routeId: String): String = "$BASE_ROUTE/$routeId"
-    }
-
     data object Settings : Screen(SETTINGS_ROUTE)
     data object DisplaySettings : Screen(DISPLAY_SETTINGS_ROUTE)
     data object About : Screen(ABOUT_ROUTE)
@@ -40,8 +31,7 @@ sealed class Screen(val route: String) {
         fun isRoutesDestination(route: String?): Boolean {
             return when (route) {
                 HOME_ROUTE,
-                SCHEDULE_ROUTE,
-                ROUTE_STOPS_ROUTE -> true
+                SCHEDULE_ROUTE -> true
 
                 else -> false
             }

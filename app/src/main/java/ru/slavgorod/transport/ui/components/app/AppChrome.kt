@@ -213,8 +213,7 @@ internal fun ScheduleHeaderDetails(
     layout: ScheduleResponsiveLayoutSpec,
     modifier: Modifier = Modifier,
     horizontalPadding: androidx.compose.ui.unit.Dp = 0.dp,
-    noteText: String? = null,
-    onStopsClick: (() -> Unit)? = null
+    noteText: String? = null
 ) {
     if (route == null) return
     Card(
@@ -230,8 +229,7 @@ internal fun ScheduleHeaderDetails(
             route = route,
             layout = layout,
             horizontalPadding = horizontalPadding,
-            noteText = noteText,
-            onStopsClick = onStopsClick
+            noteText = noteText
         )
     }
 }

@@ -41,7 +41,6 @@ fun ScheduleList(
     daySelectionMode: ScheduleDaySelectionMode = ScheduleDaySelectionMode.DAY_FIRST,
     onBackClick: (() -> Unit)? = null,
     onShareClick: (() -> Unit)? = null,
-    onStopsClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(bottom = 24.dp),
     currentTimeMillis: Long = System.currentTimeMillis(),
@@ -197,7 +196,6 @@ fun ScheduleList(
                 onBackClick
             },
             onShareClick = onShareClick,
-            onStopsClick = onStopsClick,
             contentPadding = contentPadding,
             currentTimeMillis = currentTimeMillis,
             scheduleExtraLabelProvider = scheduleExtraLabelProvider

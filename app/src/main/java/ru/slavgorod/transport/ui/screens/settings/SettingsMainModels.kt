@@ -2,7 +2,8 @@ package ru.slavgorod.transport.ui.screens.settings
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Payments
@@ -20,7 +21,8 @@ internal enum class SettingsModalSheet {
     SUPPORT,
     SCHEDULE_UPDATES,
     SCHEDULE_NOTIFICATIONS,
-    MAPS
+    SCHEDULE_SOURCE,
+    FEEDBACK
 }
 
 internal data class SettingsEntry(
@@ -52,16 +54,22 @@ internal fun buildSettingsEntries(): List<SettingsEntry> {
             modalSheet = SettingsModalSheet.SCHEDULE_UPDATES
         ),
         SettingsEntry(
+            icon = Icons.Default.Link,
+            title = stringResource(R.string.settings_source_title),
+            subtitle = stringResource(R.string.settings_source_subtitle),
+            modalSheet = SettingsModalSheet.SCHEDULE_SOURCE
+        ),
+        SettingsEntry(
             icon = Icons.Default.Notifications,
             title = stringResource(R.string.settings_schedule_notifications_title),
             subtitle = stringResource(R.string.settings_schedule_notifications_subtitle),
             modalSheet = SettingsModalSheet.SCHEDULE_NOTIFICATIONS
         ),
         SettingsEntry(
-            icon = Icons.Default.Map,
-            title = stringResource(R.string.settings_maps_title),
-            subtitle = stringResource(R.string.settings_maps_subtitle),
-            modalSheet = SettingsModalSheet.MAPS
+            icon = Icons.Default.Feedback,
+            title = stringResource(R.string.settings_feedback_title),
+            subtitle = stringResource(R.string.settings_feedback_subtitle),
+            modalSheet = SettingsModalSheet.FEEDBACK
         ),
         SettingsEntry(
             icon = Icons.Default.Info,

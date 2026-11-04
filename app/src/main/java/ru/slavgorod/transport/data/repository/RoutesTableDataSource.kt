@@ -1,6 +1,7 @@
 package ru.slavgorod.transport.data.repository
 
 import android.content.Context
+import com.google.gson.JsonParser
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +29,7 @@ import ru.slavgorod.transport.data.network.NetworkMonitor
 import ru.slavgorod.transport.logging.UserActionLogger
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
+import java.time.Instant
 
 /**
  * Единая точка загрузки расписания из сети, сохранённой копии и памяти.
@@ -52,9 +54,6 @@ class RoutesTableDataSource(
     externalScope: CoroutineScope? = null,
     autoLoadOnInit: Boolean = true
 ) {
-
-    // The catalogue can be updated independently from the timetable via GitHub.
-    private val stopCatalogStore = RouteStopsCatalogStore(context.applicationContext, httpClient)
 
     private val _routes = MutableStateFlow<List<BusRoute>>(emptyList())
     val routes: StateFlow<List<BusRoute>> = _routes.asStateFlow()
@@ -136,18 +135,9 @@ class RoutesTableDataSource(
                 )
             }
 
-            // Fetch the editable stop catalogue even if the timetable itself has not changed.
-            val stopsChanged = stopCatalogStore.refresh()
-            if (stopsChanged && memoryCache.hasRoutes) {
-                val currentJson = memoryCache.latestJson
-                if (!currentJson.isNullOrBlank()) {
-                    val currentRoutes = scheduleJsonParser.parseRoutes(currentJson)
-                    if (currentRoutes.isNotEmpty()) updateRoutesState(currentRoutes)
-                }
-            }
-
             val remoteJson = remoteScheduleFetcher.fetchWithRetry()
             if (remoteJson.isNullOrBlank()) {
+                if (!memoryCache.hasCachedData && loadBackup()) return@withLock RoutesLoadState.BACKUP_LOADED
                 return@withLock reportUnavailableData(
                     hasCachedData = memoryCache.hasCachedData,
                     reportStatus = reportStatus,
@@ -158,6 +148,7 @@ class RoutesTableDataSource(
             val parsedRoutes = scheduleJsonParser.parseRoutes(remoteJson)
             if (parsedRoutes.isEmpty()) {
                 Timber.w("JSON удалённого расписания пуст или некорректен; обновление пропущено")
+                if (!memoryCache.hasCachedData && loadBackup()) return@withLock RoutesLoadState.BACKUP_LOADED
                 return@withLock reportInvalidJson(memoryCache.hasCachedData, reportStatus)
             }
 
@@ -168,6 +159,35 @@ class RoutesTableDataSource(
             persistRemoteRoutes(remoteJson, parsedRoutes, notifyUser)
         }
     }
+
+    private suspend fun loadBackup(): Boolean {
+        val json = remoteScheduleFetcher.fetchBackupWithRetry() ?: return false
+        val timestamp = backupTimestamp(json) ?: return false
+        val routes = scheduleJsonParser.parseRoutes(json)
+        if (routes.isEmpty()) return false
+        memoryCache.updateLatestJson(json)
+        updateRoutesState(routes)
+        cacheSchedulesFromJson(json)
+        try {
+            scheduleSnapshotRepository.writeSnapshot(json)
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: Exception) {
+            Timber.w(exception, "Не удалось сохранить резервную копию расписания")
+        }
+        publishDataSourceStatus(
+            source = ScheduleDataSource.GITHUB_BACKUP,
+            lastUpdatedAtMillis = timestamp,
+            loadState = RoutesLoadState.BACKUP_LOADED,
+            markScheduleUpdated = true
+        )
+        return true
+    }
+
+    private fun backupTimestamp(json: String): Long? = runCatching {
+        val value = JsonParser.parseString(json).asJsonObject.get("backupCreatedAt").asString
+        Instant.parse(value).toEpochMilli()
+    }.getOrNull()
 
     private fun reportUnavailableData(
         hasCachedData: Boolean,
@@ -182,7 +202,7 @@ class RoutesTableDataSource(
         }
         reportLoadState(
             loadState = loadState,
-            source = if (hasCachedData) ScheduleDataSource.SAVED_COPY else ScheduleDataSource.NONE,
+            source = cachedDataSource(hasCachedData),
             reportStatus = reportStatus
         )
         return loadState
@@ -194,10 +214,16 @@ class RoutesTableDataSource(
     ): RoutesLoadState {
         reportLoadState(
             loadState = RoutesLoadState.EMPTY_OR_INVALID_JSON,
-            source = if (hasCachedData) ScheduleDataSource.SAVED_COPY else ScheduleDataSource.NONE,
+            source = cachedDataSource(hasCachedData),
             reportStatus = reportStatus
         )
         return RoutesLoadState.EMPTY_OR_INVALID_JSON
+    }
+
+    private fun cachedDataSource(hasCachedData: Boolean): ScheduleDataSource = when {
+        !hasCachedData -> ScheduleDataSource.NONE
+        memoryCache.latestJson?.let(::backupTimestamp) != null -> ScheduleDataSource.GITHUB_BACKUP
+        else -> ScheduleDataSource.SAVED_COPY
     }
 
     private fun reportNoChanges(reportStatus: Boolean): RoutesLoadState {
@@ -255,15 +281,8 @@ class RoutesTableDataSource(
     }
 
     private fun updateRoutesState(routes: List<BusRoute>) {
-        val stopNamesByRoute = stopCatalogStore.stopNames()
-        val enrichedRoutes = routes.map { route ->
-            val bundled = stopNamesByRoute[route.id].orEmpty()
-            // The editable route-stops.json catalog is authoritative for known routes.
-            // Schedule trips and departure points remain untouched.
-            if (bundled.isNotEmpty()) route.copy(stopNames = bundled) else route
-        }
-        memoryCache.updateRoutes(enrichedRoutes)
-        _routes.value = enrichedRoutes
+        memoryCache.updateRoutes(routes)
+        _routes.value = routes
     }
 
     private fun cacheSchedulesFromJson(json: String) {
@@ -306,8 +325,12 @@ class RoutesTableDataSource(
             scheduleSnapshotRepository.formatSavedAt(snapshot.savedAtMillis)
         )
         publishDataSourceStatus(
-            source = ScheduleDataSource.SAVED_COPY,
-            lastUpdatedAtMillis = snapshot.savedAtMillis,
+            source = if (backupTimestamp(snapshot.json) != null) {
+                ScheduleDataSource.GITHUB_BACKUP
+            } else {
+                ScheduleDataSource.SAVED_COPY
+            },
+            lastUpdatedAtMillis = backupTimestamp(snapshot.json) ?: snapshot.savedAtMillis,
             loadState = RoutesLoadState.SAVED_COPY_LOADED
         )
         return true
@@ -334,6 +357,7 @@ private fun RoutesLoadState.logMessageResId(): Int = when (this) {
 enum class RoutesLoadState {
     IDLE,
     SUCCESS,
+    BACKUP_LOADED,
     NO_CHANGES,
     SAVED_COPY_LOADED,
     OFFLINE_USING_SAVED_COPY,
@@ -347,6 +371,7 @@ enum class ScheduleDataSource {
     NONE,
     SAVED_COPY,
     BUNDLED,
+    GITHUB_BACKUP,
     REMOTE_CACHE
 }
 

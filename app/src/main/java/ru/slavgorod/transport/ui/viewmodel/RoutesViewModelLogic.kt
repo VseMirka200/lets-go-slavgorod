@@ -30,6 +30,7 @@ internal fun filterRoutesByQuery(routes: List<BusRoute>, query: String): List<Bu
 
 internal fun resolveScheduleStatusLabel(dataSourceStatus: ScheduleDataSourceStatus): Int {
     return when {
+        dataSourceStatus.source == ScheduleDataSource.GITHUB_BACKUP -> R.string.schedule_source_backup
         dataSourceStatus.loadState == RoutesLoadState.NO_CHANGES -> R.string.schedule_status_live
         dataSourceStatus.loadState == RoutesLoadState.SAVED_COPY_LOADED -> R.string.schedule_status_saved
         dataSourceStatus.loadState == RoutesLoadState.OFFLINE_USING_SAVED_COPY -> R.string.schedule_status_offline_copy
@@ -68,6 +69,7 @@ internal fun resolveRoutesErrorMessage(
 internal fun buildRefreshLogMessage(loadState: RoutesLoadState): String {
     return when (loadState) {
         RoutesLoadState.SUCCESS -> AppText.get(R.string.log_state_success)
+        RoutesLoadState.BACKUP_LOADED -> AppText.get(R.string.schedule_source_backup)
         RoutesLoadState.NO_CHANGES -> AppText.get(R.string.log_state_no_changes)
         RoutesLoadState.SAVED_COPY_LOADED -> AppText.get(R.string.log_state_saved_copy_loaded)
         RoutesLoadState.OFFLINE_USING_SAVED_COPY -> AppText.get(R.string.log_state_offline_saved_copy)
@@ -85,6 +87,7 @@ internal fun buildRefreshUiMessage(
 ): UiMessageSpec? {
     return when (loadState) {
         RoutesLoadState.SUCCESS -> buildMessageWithUpdatedAt(lastUpdatedAtMillis)
+        RoutesLoadState.BACKUP_LOADED -> UiMessageSpec(R.string.schedule_source_backup)
         RoutesLoadState.NO_CHANGES -> UiMessageSpec(R.string.schedule_update_no_changes)
         RoutesLoadState.SAVED_COPY_LOADED -> null
         RoutesLoadState.OFFLINE_USING_SAVED_COPY -> null

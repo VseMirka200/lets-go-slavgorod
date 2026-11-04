@@ -2,19 +2,17 @@ package ru.slavgorod.transport.ui.components.app
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -36,11 +34,10 @@ internal fun ScheduleHeaderDetailsContent(
     layout: ScheduleResponsiveLayoutSpec,
     modifier: Modifier = Modifier,
     horizontalPadding: Dp = 0.dp,
-    noteText: String? = null,
-    onStopsClick: (() -> Unit)? = null
+    noteText: String? = null
 ) {
     val hasNoteText = !noteText.isNullOrBlank()
-    val headerItemSpacing = layout.header.headerItemSpacing
+    val headerItemSpacing = maxOf(layout.header.headerItemSpacing, 8.dp)
     val bottomPadding = if (hasNoteText) 0.dp else 8.dp
     val headerScale = 1.12f
     val headerLabelStyle = MaterialTheme.typography.labelSmall.copy(
@@ -49,7 +46,8 @@ internal fun ScheduleHeaderDetailsContent(
     )
     val headerValueStyle = MaterialTheme.typography.bodyMedium.copy(
         fontSize = layout.header.headerSubtitleFontSize * headerScale,
-        lineHeight = layout.header.headerSubtitleFontSize * headerScale * 1.12f
+        lineHeight = layout.header.headerSubtitleFontSize * headerScale * 1.2f,
+        fontWeight = FontWeight.SemiBold
     )
     val compactInfoColumnSpacing = 4.dp
     val travelTimeColumnWeight = 0.82f
@@ -104,33 +102,14 @@ internal fun ScheduleHeaderDetailsContent(
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(compactInfoColumnSpacing)
-            ) {
-                route.paymentMethods?.let { paymentMethods ->
+            route.paymentMethods?.let { paymentMethods ->
                     ScheduleHeaderInfoItem(
                         label = paymentLabel,
                         value = paymentMethods,
                         labelStyle = headerLabelStyle,
                         valueStyle = headerValueStyle,
-                        modifier = Modifier.weight(travelTimeColumnWeight)
+                        modifier = Modifier.fillMaxWidth()
                     )
-                }
-
-                if (route.stopNames.isNotEmpty() && onStopsClick != null) {
-                    TextButton(
-                        onClick = onStopsClick,
-                        modifier = Modifier.weight(priceColumnWeight),
-                        colors = ButtonDefaults.textButtonColors(contentColor = AppHeaderContentColor),
-                        contentPadding = PaddingValues(horizontal = 0.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.schedule_header_stops),
-                            style = headerValueStyle
-                        )
-                    }
-                }
             }
         }
 
@@ -139,7 +118,7 @@ internal fun ScheduleHeaderDetailsContent(
 
             Text(
                 text = noteText,
-                style = headerValueStyle,
+                style = headerValueStyle.copy(fontWeight = FontWeight.Normal),
                 color = AppHeaderSupportingTextColor,
                 textAlign = TextAlign.Start,
                 modifier = Modifier

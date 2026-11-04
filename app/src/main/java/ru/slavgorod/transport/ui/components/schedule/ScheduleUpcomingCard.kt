@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import ru.slavgorod.transport.R
 
 @Composable
@@ -92,6 +93,8 @@ internal fun UpcomingSchedulesContent(
         val cardWidth = this.maxWidth
         val isTightLayout = cardWidth < 320.dp || compactMode
         val isCompactLayout = cardWidth < 380.dp || compactMode
+        val stackedRows = (cardWidth - layout.upcoming.upcomingCardContentPadding * 2) /
+            LocalDensity.current.fontScale < 300.dp
         val cardContentPadding = layout.upcoming.upcomingCardContentPadding
         val contentSpacing = layout.section.sectionVerticalSpacing
 
@@ -138,7 +141,7 @@ internal fun UpcomingSchedulesContent(
                 )
             }
             Column(verticalArrangement = Arrangement.spacedBy(contentSpacing)) {
-                UpcomingScheduleColumnHeaders(
+                if (!stackedRows) UpcomingScheduleColumnHeaders(
                     colors = colors,
                     textSpec = UpcomingScheduleTextSpec(
                         primaryTextSize = layout.upcoming.upcomingPrimaryTextSize,
@@ -179,7 +182,7 @@ internal fun UpcomingSchedulesContent(
 
                     if (index != entries.lastIndex) {
                         HorizontalDivider(
-                            thickness = 1.5.dp,
+                            thickness = 1.dp,
                             color = colors.divider,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -206,7 +209,7 @@ private data class UpcomingScheduleBoardColors(
 ) {
     companion object {
         fun default() = UpcomingScheduleBoardColors(
-            board = Color(0xFF0D47A1),
+            board = Color(0xFF103B80),
             content = Color.White,
             divider = Color(0xFF5F91E6).copy(alpha = 0.46f)
         )
@@ -255,8 +258,8 @@ private fun resolveUpcomingScheduleRowSpec(
             else -> textSpec.primaryTextSize * 1.18f
         },
         timeLabelTextSize = when {
-            isTight -> textSpec.supportingTextSize * 0.85f
-            isCompact -> textSpec.supportingTextSize * 0.92f
+            isTight -> textSpec.supportingTextSize.value.coerceAtLeast(11f).sp
+            isCompact -> textSpec.supportingTextSize.value.coerceAtLeast(11f).sp
             else -> textSpec.supportingTextSize
         },
         timeColumnsWeight = when {
@@ -357,11 +360,13 @@ private fun UpcomingScheduleBoardRow(
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     UpcomingTimeColumn(
                         inTransitTime, inTransitLabel.orEmpty(), colors.content,
-                        textSpec.primaryTextSize, textSpec.supportingTextSize, Modifier.weight(1f)
+                        textSpec.primaryTextSize, textSpec.supportingTextSize.value.coerceAtLeast(11f).sp, Modifier.weight(1f),
+                        heading = stringResource(R.string.schedule_in_transit_column)
                     )
                     UpcomingTimeColumn(
                         nextDepartureTime, nextCountdownLabel, colors.content,
-                        textSpec.primaryTextSize, textSpec.supportingTextSize, Modifier.weight(1f)
+                        textSpec.primaryTextSize, textSpec.supportingTextSize.value.coerceAtLeast(11f).sp, Modifier.weight(1f),
+                        heading = stringResource(R.string.schedule_next_departure_column)
                     )
                 }
             }
@@ -470,7 +475,8 @@ private fun UpcomingTimeColumn(
     bodyColor: Color,
     timeTextSize: TextUnit,
     labelTextSize: TextUnit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    heading: String? = null
 ) {
     Column(
         modifier = modifier
@@ -478,6 +484,14 @@ private fun UpcomingTimeColumn(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        if (heading != null) {
+            UpcomingScheduleColumnHeader(
+                text = heading,
+                color = bodyColor,
+                textSize = labelTextSize.value.coerceAtLeast(11f).sp,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
+            )
+        }
         Text(
             text = time,
             style = MaterialTheme.typography.displaySmall.copy(

@@ -29,7 +29,6 @@ object PreferencesKeys {
     val scheduleNotificationsEnabled = booleanPreferencesKey("schedule_notifications_enabled")
     val appTheme = stringPreferencesKey("app_theme")
     val remoteJsonUrl = stringPreferencesKey("remote_json_url")
-    val preferredMapApp = stringPreferencesKey("preferred_map_app")
 }
 
 fun <T> DataStore<Preferences>.stateInPreferences(

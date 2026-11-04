@@ -51,8 +51,7 @@ fun ScheduleScreen(
     routeId: String,
     routeRepository: RoutesTableDataSource,
     routesViewModel: RoutesViewModel? = null,
-    onBackClick: (() -> Unit)? = null,
-    onStopsClick: (() -> Unit)? = null
+    onBackClick: (() -> Unit)? = null
 ) {
     LaunchedEffect(routeId) {
         UserActionLogger.screenOpened(R.string.schedule_screen_opened, routeId)
@@ -142,7 +141,6 @@ fun ScheduleScreen(
                 swapScheduleColumns = swapScheduleColumns,
                 daySelectionMode = scheduleDaySelectionMode,
                 onBackClick = onBackClick,
-                onStopsClick = onStopsClick,
                 contentPadding = PaddingValues(bottom = 48.dp),
                 currentTimeMillis = currentTimeTick,
                 onShareClick = {

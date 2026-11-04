@@ -96,7 +96,7 @@
                         Маршруты — без лишних поисков.
                     </h1>
                     <p>
-                        «Поехали! Славгород» помогает быстро найти автобус, остановку и ближайшее отправление. Данные расписания обновляются из репозитория проекта.
+                        «Поехали! Славгород» помогает быстро найти автобус и ближайшее отправление. Расписание ведётся в Google Таблице и передаётся на сайт и в приложение.
                     </p>
                     <div class="portal-actions portal-actions--downloads">
                         <a class="portal-button primary" href="schedule.html">
@@ -202,6 +202,15 @@
                         </article>
                     </div>
                 </section>
+                <section id="schedule-data" class="portal-section">
+                    <span class="portal-eyebrow">Расписание</span>
+                    <h2>Откуда берутся данные</h2>
+                    <p>Расписание редактируется в Google Таблице. Сайт и приложение получают его через Google Apps Script. При недоступности источника сайт показывает ранее сохранённые в браузере данные, если они есть.</p>
+                    <p>В приложении сохраняется локальная копия; при отсутствии локальных данных предусмотрен резерв на GitHub. Время загрузки не означает, что перевозчик подтвердил расписание: перед поездкой уточняйте важные отправления.</p>
+                    <div class="portal-actions">
+                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/guides/SCHEDULE_DATA.md" target="_blank" rel="noreferrer">Как обновляется расписание</a>
+                    </div>
+                </section>
                 <section id="project" class="portal-section">
                     <span class="portal-eyebrow">
                         Проект
@@ -213,6 +222,7 @@
                         Открытая документация, правила проекта и способы помочь.
                     </p>
                     <div class="portal-actions portal-document-actions">
+                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/guides/SCHEDULE_DATA.md" target="_blank" rel="noreferrer">Расписание и источники</a>
                         <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/guides/CONTRIBUTING.md" target="_blank" rel="noreferrer">
                             Участие
                         </a>
@@ -278,6 +288,7 @@
             ["Расписание", "schedule.html"],
             ["Скачать APK (GitHub)", "https://github.com/VseMirka200/lets-go-slavgorod/releases"],
             ["Обратная связь", "https://github.com/VseMirka200/lets-go-slavgorod/issues/new?template=feedback.yml"],
+            ["Как обновляется расписание", "#schedule-data"],
             ["Документация", "#project"]
             ];
             const searchDialog = document.querySelector("#search-dialog");
@@ -291,11 +302,7 @@
                 ${title}
             </a>
             `)
-            .join("") || "
-            <span>
-                Ничего не найдено.
-            </span>
-            ";
+            .join("") || "<span>Ничего не найдено.</span>";
             };
             const openSearch = () => {
             renderResults("");
