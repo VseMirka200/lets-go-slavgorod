@@ -8,15 +8,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -70,18 +70,9 @@ fun AboutScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        start = scaleDpForFontScale(
-                            Constants.SETTINGS_SCREEN_EDGE_PADDING.dp,
-                            fontScale
-                        ),
-                        end = scaleDpForFontScale(
-                            Constants.SETTINGS_SCREEN_EDGE_PADDING.dp,
-                            fontScale
-                        ),
-                        top = scaleDpForFontScale(
-                            Constants.SETTINGS_SCREEN_EDGE_PADDING.dp,
-                            fontScale
-                        ),
+                        start = scaleDpForFontScale(Constants.SETTINGS_SCREEN_EDGE_PADDING.dp, fontScale),
+                        end = scaleDpForFontScale(Constants.SETTINGS_SCREEN_EDGE_PADDING.dp, fontScale),
+                        top = scaleDpForFontScale(Constants.SETTINGS_SCREEN_EDGE_PADDING.dp, fontScale),
                         bottom = scaleDpForFontScale(12.dp, fontScale)
                     )
                     .then(if (scrollEnabled) Modifier.verticalScroll(rememberScrollState()) else Modifier),
@@ -125,14 +116,19 @@ fun AboutScreen(
                         }
                     )
                 }
-                Text(
-                    text = stringResource(R.string.about_version_format, Constants.APP_VERSION),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = scaleDpForFontScale(8.dp, fontScale)),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                AboutSocialFooter(
+                    onVkClick = {
+                        context.openExternalUrl(
+                            url = VK_GROUP_URL,
+                            failureLogMessage = context.getString(R.string.about_open_vk_group_failed)
+                        )
+                    },
+                    onMaxClick = {
+                        context.openExternalUrl(
+                            url = MAX_CHANNEL_URL,
+                            failureLogMessage = context.getString(R.string.about_open_max_channel_failed)
+                        )
+                    }
                 )
             }
         }
@@ -153,10 +149,7 @@ private fun AboutHeaderBlock(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .padding(
-                horizontal = scaleDpForFontScale(
-                    Constants.SETTINGS_SCREEN_EDGE_PADDING.dp,
-                    fontScale
-                ),
+                horizontal = scaleDpForFontScale(Constants.SETTINGS_SCREEN_EDGE_PADDING.dp, fontScale),
                 vertical = scaleDpForFontScale(4.dp, fontScale)
             ),
         horizontalArrangement = Arrangement.spacedBy(scaleDpForFontScale(12.dp, fontScale)),
@@ -185,6 +178,11 @@ private fun AboutHeaderBlock(modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 20.sp
+            )
+            Text(
+                text = stringResource(R.string.about_version_format, Constants.APP_VERSION),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

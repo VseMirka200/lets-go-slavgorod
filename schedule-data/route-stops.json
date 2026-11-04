@@ -1,0 +1,482 @@
+{
+  "1": [
+    {
+      "name": "Вокзал (Автостанция Славгород)",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ул. 8 лет Октября",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ул. Лермонтова",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Центр",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Рынок",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ул. Мамонтова",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ул. Алтайская",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Роддом",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ЦРБ",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Совхоз",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Райпо",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Больница",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ул. Степная",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Гостиница \"Славгород\"",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Сбербанк",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    }
+  ],
+  "3": [
+    {
+      "name": "Радиозавод",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Мясокомбинат",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    }
+  ],
+  "4": [
+    {
+      "name": "Мкр-н 2",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "САД (Пригородное)",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ЦРБ",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    }
+  ],
+  "102": [
+    {
+      "name": "Рынок",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Центр",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Сбербанк",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ул. Лермонтова",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ул. 8 лет Октября",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Сельхозтехникум",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Автостанция Славгород",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Телевышка",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Мебельная фабрика",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Дачи",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ул. Керамблоки",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Пограничный",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Дачи-2",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Дачи-1",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Развилка",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Химзавод",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ул. Алтайская",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ул. 40 лет Октября",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Магазин Уют",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Училище",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Медсанчасть № 128",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    }
+  ],
+  "105": [
+    {
+      "name": "Радиозавод",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    }
+  ],
+  "102B": [
+    {
+      "name": "Рынок",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Центр",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Главпочтамт",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Военный городок",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ТЦ Славянский",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ул. К. Маркса, 119",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Сбербанк",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "2-й микрорайон",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ул. Тимирязева",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ул. Лермонтова",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ул. 60 лет ВЛКСМ",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Депо",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Автостанция Славгород",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Телевышка",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Мебельная фабрика",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Дачи",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ул. Керамблоки",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Пограничный",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Дачи-2",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Дачи-1",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Развилка",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ул. Заводская",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ул. Кирова",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ул. Верещагина",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Квартал В",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ул. Первомайская",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "ул. Строительная",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Кольцо",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Михайловка",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Школа № 19",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Степные Зори",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Училище",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Автовокзал Яровое",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Магазин Уют",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Школа № 10",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    },
+    {
+      "name": "Музей",
+      "latitude": null,
+      "longitude": null,
+      "verified": false
+    }
+  ]
+}

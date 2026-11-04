@@ -76,7 +76,6 @@ fun RouteStopsScreen(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 18.dp, bottom = 28.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            item { ScheduleSourceBanner(uiState.dataSourceStatus) }
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -115,7 +114,7 @@ fun RouteStopsScreen(
             }
             item {
                 Button(
-                    onClick = { openRouteMap(context, route.name, preferredMap) },
+                    onClick = { openRouteMap(context, route.id, stops, preferredMap) },
                     modifier = Modifier.fillMaxWidth(),
                     contentPadding = PaddingValues(vertical = 14.dp, horizontal = 14.dp),
                     shape = RoundedCornerShape(16.dp)
@@ -143,7 +142,7 @@ fun RouteStopsScreen(
             ) { index, stopName ->
                 Card(
                     modifier = Modifier.fillMaxWidth().clickable {
-                        openStopMap(context, stopName, route.name, preferredMap)
+                        openStopMap(context, route.id, stopName, preferredMap)
                     },
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(

@@ -1,8 +1,8 @@
 ﻿package ru.slavgorod.transport.ui.components.schedule
 
 import android.annotation.SuppressLint
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,8 +19,8 @@ import androidx.compose.ui.unit.dp
 import ru.slavgorod.transport.data.model.BusSchedule
 import ru.slavgorod.transport.domain.util.UpcomingScheduleResolver
 import ru.slavgorod.transport.logging.UserActionLogger
-import ru.slavgorod.transport.ui.model.ScheduleDaySelectionMode
 import ru.slavgorod.transport.ui.model.ScheduleUiState
+import ru.slavgorod.transport.ui.model.ScheduleDaySelectionMode
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate

@@ -169,19 +169,6 @@ internal fun SettingsContent(
                 )
             }
         }
-        AboutSocialFooter(
-            onVkClick = {
-                context.openExternalUrl(
-                    url = "https://vk.ru/letsgoslavgorod",
-                    failureLogMessage = context.getString(R.string.about_open_vk_group_failed)
-                )
-            },
-            onMaxClick = {
-                context.openExternalUrl(
-                    url = "https://max.ru/channel_letsgoslavgorod",
-                    failureLogMessage = context.getString(R.string.about_open_max_channel_failed)
-                )
-            }
-        )
+
     }
 }

@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,8 +33,8 @@ import ru.slavgorod.transport.data.repository.RoutesTableDataSource
 import ru.slavgorod.transport.logging.UserActionLogger
 import ru.slavgorod.transport.ui.components.schedule.ScheduleList
 import ru.slavgorod.transport.ui.model.DeparturePointSchedules
-import ru.slavgorod.transport.ui.model.ScheduleDaySelectionMode
 import ru.slavgorod.transport.ui.model.ScheduleUiState
+import ru.slavgorod.transport.ui.model.ScheduleDaySelectionMode
 import ru.slavgorod.transport.ui.viewmodel.DisplaySettingsViewModel
 import ru.slavgorod.transport.ui.viewmodel.RoutesViewModel
 import timber.log.Timber
@@ -137,13 +137,12 @@ fun ScheduleScreen(
             )
 
             Column(modifier = Modifier.fillMaxSize()) {
-                ScheduleSourceBanner(uiState.dataSourceStatus)
                 ScheduleList(
                 scheduleState = scheduleUiState,
                 swapScheduleColumns = swapScheduleColumns,
                 daySelectionMode = scheduleDaySelectionMode,
                 onBackClick = onBackClick,
-                    onStopsClick = onStopsClick,
+                onStopsClick = onStopsClick,
                 contentPadding = PaddingValues(bottom = 48.dp),
                 currentTimeMillis = currentTimeTick,
                 onShareClick = {
@@ -162,9 +161,7 @@ fun ScheduleScreen(
                         dailyLabel = dailyLabel
                     )
                 },
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
+                modifier = Modifier.weight(1f).fillMaxWidth()
                 )
             }
         }

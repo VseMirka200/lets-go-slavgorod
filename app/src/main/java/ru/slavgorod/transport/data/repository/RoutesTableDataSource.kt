@@ -16,7 +16,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
-import org.json.JSONObject
 import ru.slavgorod.transport.R
 import ru.slavgorod.transport.core.Constants
 import ru.slavgorod.transport.core.search
@@ -54,19 +53,8 @@ class RoutesTableDataSource(
     autoLoadOnInit: Boolean = true
 ) {
 
-    // Bundled stop catalogue is independent of the remote timetable/cache.
-    // It keeps route stop details available when the server only lists endpoints.
-    private val bundledStopCatalog: Map<String, List<String>> = runCatching {
-        val json = context.applicationContext.assets.open("route-stops.json")
-            .bufferedReader().use { it.readText() }
-        val root = JSONObject(json)
-        root.keys().asSequence().associateWith { id ->
-            val names = root.optJSONArray(id)
-            (0 until (names?.length() ?: 0)).mapNotNull { index ->
-                names?.optString(index)?.trim()?.takeIf(String::isNotEmpty)
-            }.distinct()
-        }
-    }.getOrElse { emptyMap() }
+    // The catalogue can be updated independently from the timetable via GitHub.
+    private val stopCatalogStore = RouteStopsCatalogStore(context.applicationContext, httpClient)
 
     private val _routes = MutableStateFlow<List<BusRoute>>(emptyList())
     val routes: StateFlow<List<BusRoute>> = _routes.asStateFlow()
@@ -146,6 +134,16 @@ class RoutesTableDataSource(
                     reportStatus = reportStatus,
                     isNetworkError = false
                 )
+            }
+
+            // Fetch the editable stop catalogue even if the timetable itself has not changed.
+            val stopsChanged = stopCatalogStore.refresh()
+            if (stopsChanged && memoryCache.hasRoutes) {
+                val currentJson = memoryCache.latestJson
+                if (!currentJson.isNullOrBlank()) {
+                    val currentRoutes = scheduleJsonParser.parseRoutes(currentJson)
+                    if (currentRoutes.isNotEmpty()) updateRoutesState(currentRoutes)
+                }
             }
 
             val remoteJson = remoteScheduleFetcher.fetchWithRetry()
@@ -257,11 +255,12 @@ class RoutesTableDataSource(
     }
 
     private fun updateRoutesState(routes: List<BusRoute>) {
+        val stopNamesByRoute = stopCatalogStore.stopNames()
         val enrichedRoutes = routes.map { route ->
-            val bundled = bundledStopCatalog[route.id].orEmpty()
-            // Never replace a longer, potentially newer server-side stop list.
-            // Do not modify trip departure points or timetable times.
-            if (bundled.size > route.stopNames.size) route.copy(stopNames = bundled) else route
+            val bundled = stopNamesByRoute[route.id].orEmpty()
+            // The editable route-stops.json catalog is authoritative for known routes.
+            // Schedule trips and departure points remain untouched.
+            if (bundled.isNotEmpty()) route.copy(stopNames = bundled) else route
         }
         memoryCache.updateRoutes(enrichedRoutes)
         _routes.value = enrichedRoutes
