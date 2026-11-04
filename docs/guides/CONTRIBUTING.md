@@ -22,7 +22,7 @@ cd lets-go-slavgorod
 ./gradlew assembleDebug
 ```
 
-На Windows используйте `gradlew.bat` вместо `./gradlew`.
+На Windows запускайте `./gradlew` из Git Bash или WSL. Сборка непосредственно из PowerShell и `cmd.exe` не поддерживается.
 
 Проект использует Android Gradle Plugin и Gradle Wrapper из репозитория. Для работы выбирайте JDK, совместимый с текущими версиями Android Gradle Plugin и Gradle, и установленный Android SDK для `compileSdk 36`.
 

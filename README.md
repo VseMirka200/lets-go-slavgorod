@@ -41,7 +41,7 @@ cd lets-go-slavgorod
 ./gradlew assembleDebug
 ```
 
-В Windows используйте `gradlew.bat assembleDebug`.
+В Windows запускайте `./gradlew assembleDebug` из Git Bash или WSL.
 
 ## Полезные ссылки
 

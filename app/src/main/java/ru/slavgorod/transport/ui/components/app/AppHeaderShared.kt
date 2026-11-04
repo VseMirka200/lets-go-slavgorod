@@ -2,12 +2,15 @@ package ru.slavgorod.transport.ui.components.app
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -33,7 +36,8 @@ internal fun ScheduleHeaderDetailsContent(
     layout: ScheduleResponsiveLayoutSpec,
     modifier: Modifier = Modifier,
     horizontalPadding: Dp = 0.dp,
-    noteText: String? = null
+    noteText: String? = null,
+    onStopsClick: (() -> Unit)? = null
 ) {
     val hasNoteText = !noteText.isNullOrBlank()
     val headerItemSpacing = layout.header.headerItemSpacing
@@ -44,10 +48,6 @@ internal fun ScheduleHeaderDetailsContent(
         lineHeight = layout.header.headerSubtitleFontSize * headerScale * 1.12f
     )
     val headerValueStyle = MaterialTheme.typography.bodyMedium.copy(
-        fontSize = layout.header.headerSubtitleFontSize * headerScale,
-        lineHeight = layout.header.headerSubtitleFontSize * headerScale * 1.12f
-    )
-    val routeValueStyle = headerValueStyle.copy(
         fontSize = layout.header.headerSubtitleFontSize * headerScale,
         lineHeight = layout.header.headerSubtitleFontSize * headerScale * 1.12f
     )
@@ -64,7 +64,6 @@ internal fun ScheduleHeaderDetailsContent(
     val travelTimeLabel = stringResource(R.string.schedule_header_travel_time)
     val priceLabel = stringResource(R.string.schedule_header_price)
     val paymentLabel = stringResource(R.string.schedule_header_payment_methods)
-    val routeLabel = stringResource(R.string.schedule_header_route)
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -105,22 +104,34 @@ internal fun ScheduleHeaderDetailsContent(
                 }
             }
 
-            route.paymentMethods?.let { paymentMethods ->
-                ScheduleHeaderInfoItem(
-                    label = paymentLabel,
-                    value = paymentMethods,
-                    labelStyle = headerLabelStyle,
-                    valueStyle = headerValueStyle
-                )
-            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(compactInfoColumnSpacing)
+            ) {
+                route.paymentMethods?.let { paymentMethods ->
+                    ScheduleHeaderInfoItem(
+                        label = paymentLabel,
+                        value = paymentMethods,
+                        labelStyle = headerLabelStyle,
+                        valueStyle = headerValueStyle,
+                        modifier = Modifier.weight(travelTimeColumnWeight)
+                    )
+                }
 
-            ScheduleHeaderInfoItem(
-                label = routeLabel,
-                value = route.description,
-                labelStyle = headerLabelStyle,
-                valueStyle = routeValueStyle,
-                allowWrapping = true
-            )
+                if (route.stopNames.isNotEmpty() && onStopsClick != null) {
+                    TextButton(
+                        onClick = onStopsClick,
+                        modifier = Modifier.weight(priceColumnWeight),
+                        colors = ButtonDefaults.textButtonColors(contentColor = AppHeaderContentColor),
+                        contentPadding = PaddingValues(horizontal = 0.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.schedule_header_stops),
+                            style = headerValueStyle
+                        )
+                    }
+                }
+            }
         }
 
         if (hasNoteText) {

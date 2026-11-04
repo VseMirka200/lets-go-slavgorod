@@ -6,9 +6,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,8 +32,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -41,13 +41,12 @@ import androidx.compose.ui.unit.dp
 import ru.slavgorod.transport.R
 import ru.slavgorod.transport.data.model.BusRoute
 import ru.slavgorod.transport.data.model.BusSchedule
-import ru.slavgorod.transport.data.model.ScheduleChange
+import ru.slavgorod.transport.ui.components.app.AppIconButton
+import ru.slavgorod.transport.ui.components.app.ScheduleHeaderDetails
+import ru.slavgorod.transport.ui.components.app.ScheduleTitleBar
 import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Locale
-import ru.slavgorod.transport.ui.components.app.ScheduleHeaderDetails
-import ru.slavgorod.transport.ui.components.app.AppIconButton
-import ru.slavgorod.transport.ui.components.app.ScheduleTitleBar
 
 internal data class ScheduleListFilterUiState(
     val selectedDescriptionLabel: String?,
@@ -69,7 +68,6 @@ internal data class ScheduleListFilterCallbacks(
 internal fun ScheduleListScaffold(
     route: BusRoute,
     routeRemarkText: String?,
-    scheduleChanges: List<ScheduleChange>,
     selectedDay: DayOfWeek?,
     isDaySelected: Boolean,
     isDaySelectionScreen: Boolean,
@@ -85,6 +83,7 @@ internal fun ScheduleListScaffold(
     swapScheduleColumns: Boolean,
     onBackClick: (() -> Unit)?,
     onShareClick: (() -> Unit)?,
+    onStopsClick: (() -> Unit)?,
     contentPadding: PaddingValues,
     currentTimeMillis: Long,
     scheduleExtraLabelProvider: ((BusSchedule) -> String?)?
@@ -137,7 +136,8 @@ internal fun ScheduleListScaffold(
                         ScheduleRouteStickyHeader(
                             route = route,
                             routeRemarkText = routeRemarkText,
-                            layout = layout
+                            layout = layout,
+                            onStopsClick = onStopsClick
                         )
                     }
                     item(key = "schedule_day_selection") {
@@ -150,7 +150,6 @@ internal fun ScheduleListScaffold(
                     scheduleStickyHeader(
                         route = route,
                         routeRemarkText = routeRemarkText,
-                        scheduleChanges = scheduleChanges,
                         displayState = displayState,
                         layout = layout,
                         currentTimeMillis = currentTimeMillis,
@@ -159,6 +158,7 @@ internal fun ScheduleListScaffold(
                         showInlineDayPicker = showInlineDayPicker,
                         currentDay = currentDay,
                         onDaySelected = onDaySelected,
+                        onStopsClick = onStopsClick,
                     )
 
                     scheduleSections(
@@ -200,7 +200,6 @@ private fun scheduleListContentPadding(
 private fun LazyListScope.scheduleStickyHeader(
     route: BusRoute,
     routeRemarkText: String?,
-    scheduleChanges: List<ScheduleChange>,
     displayState: ScheduleListDisplayState,
     layout: ScheduleResponsiveLayoutSpec,
     currentTimeMillis: Long,
@@ -208,26 +207,16 @@ private fun LazyListScope.scheduleStickyHeader(
     isDaySelected: Boolean,
     showInlineDayPicker: Boolean,
     currentDay: DayOfWeek,
-    onDaySelected: (DayOfWeek) -> Unit
+    onDaySelected: (DayOfWeek) -> Unit,
+    onStopsClick: (() -> Unit)?
 ) {
     item(key = "route_header_and_upcoming") {
         ScheduleRouteStickyHeader(
             route = route,
             routeRemarkText = routeRemarkText,
-            layout = layout
+            layout = layout,
+            onStopsClick = onStopsClick
         )
-    }
-
-    if (scheduleChanges.isNotEmpty()) {
-        item(key = "schedule_changes") {
-            ScheduleChangesCard(
-                changes = scheduleChanges,
-                modifier = Modifier.padding(
-                    horizontal = layout.section.sectionHorizontalPadding,
-                    vertical = layout.section.sectionVerticalSpacing
-                )
-            )
-        }
     }
 
     if (isDaySelected && displayState.upcomingEntries.isNotEmpty()) {
@@ -286,7 +275,8 @@ private fun Modifier.returnToDaySelectionOnSwipe(
 private fun ScheduleRouteStickyHeader(
     route: BusRoute,
     routeRemarkText: String?,
-    layout: ScheduleResponsiveLayoutSpec
+    layout: ScheduleResponsiveLayoutSpec,
+    onStopsClick: (() -> Unit)?
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         ScheduleHeaderDetails(
@@ -294,7 +284,8 @@ private fun ScheduleRouteStickyHeader(
             layout = layout,
             modifier = Modifier,
             horizontalPadding = layout.header.headerHorizontalPadding,
-            noteText = routeRemarkText
+            noteText = routeRemarkText,
+            onStopsClick = onStopsClick
         )
     }
 }

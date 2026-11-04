@@ -1,8 +1,8 @@
 ﻿package ru.slavgorod.transport.ui.components.schedule
 
 import android.annotation.SuppressLint
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,11 +17,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import ru.slavgorod.transport.data.model.BusSchedule
-import ru.slavgorod.transport.data.model.ScheduleChange
 import ru.slavgorod.transport.domain.util.UpcomingScheduleResolver
 import ru.slavgorod.transport.logging.UserActionLogger
-import ru.slavgorod.transport.ui.model.ScheduleUiState
 import ru.slavgorod.transport.ui.model.ScheduleDaySelectionMode
+import ru.slavgorod.transport.ui.model.ScheduleUiState
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -42,10 +41,10 @@ fun ScheduleList(
     daySelectionMode: ScheduleDaySelectionMode = ScheduleDaySelectionMode.DAY_FIRST,
     onBackClick: (() -> Unit)? = null,
     onShareClick: (() -> Unit)? = null,
+    onStopsClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(bottom = 24.dp),
     currentTimeMillis: Long = System.currentTimeMillis(),
-    scheduleChanges: List<ScheduleChange> = emptyList(),
     scheduleExtraLabelProvider: ((BusSchedule) -> String?)? = null
 ) {
     val sectionCollapseStates = remember { mutableStateMapOf<String, Boolean>() }
@@ -149,7 +148,6 @@ fun ScheduleList(
         ScheduleListScaffold(
             route = route,
             routeRemarkText = routeRemarkText,
-            scheduleChanges = scheduleChanges,
             selectedDay = selectedDay,
             isDaySelected = selectedDay != null,
             isDaySelectionScreen = isDaySelectionScreen,
@@ -199,6 +197,7 @@ fun ScheduleList(
                 onBackClick
             },
             onShareClick = onShareClick,
+            onStopsClick = onStopsClick,
             contentPadding = contentPadding,
             currentTimeMillis = currentTimeMillis,
             scheduleExtraLabelProvider = scheduleExtraLabelProvider

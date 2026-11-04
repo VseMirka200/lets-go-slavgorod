@@ -24,9 +24,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -138,6 +138,15 @@ internal fun UpcomingSchedulesContent(
                 )
             }
             Column(verticalArrangement = Arrangement.spacedBy(contentSpacing)) {
+                UpcomingScheduleColumnHeaders(
+                    colors = colors,
+                    textSpec = UpcomingScheduleTextSpec(
+                        primaryTextSize = layout.upcoming.upcomingPrimaryTextSize,
+                        supportingTextSize = layout.upcoming.upcomingSupportingTextSize
+                    ),
+                    fullWidthMode = squareCorners,
+                    compactMode = compactMode
+                )
                 entries.forEachIndexed { index, entry ->
                     val nextCountdownLabel = resolveDepartureMillis(
                         departureTime = entry.nextSchedule.departureTime,
@@ -259,6 +268,75 @@ private fun resolveUpcomingScheduleRowSpec(
 }
 
 @Composable
+private fun UpcomingScheduleColumnHeaders(
+    colors: UpcomingScheduleBoardColors,
+    textSpec: UpcomingScheduleTextSpec,
+    fullWidthMode: Boolean,
+    compactMode: Boolean
+) {
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val availableWidth = this.maxWidth
+        val fontScale = LocalDensity.current.fontScale
+        val labels: @Composable () -> Unit = {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                UpcomingScheduleColumnHeader(
+                    text = stringResource(R.string.schedule_in_transit_column),
+                    color = colors.content,
+                    textSize = textSpec.supportingTextSize,
+                    modifier = Modifier.weight(1f)
+                )
+                UpcomingScheduleColumnHeader(
+                    text = stringResource(R.string.schedule_next_departure_column),
+                    color = colors.content,
+                    textSize = textSpec.supportingTextSize,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        if (availableWidth / fontScale < 300.dp) {
+            labels()
+        } else {
+            val rowSpec = resolveUpcomingScheduleRowSpec(
+                availableWidth = availableWidth,
+                compactMode = compactMode,
+                fullWidthMode = fullWidthMode,
+                textSpec = textSpec
+            )
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Spacer(modifier = Modifier.weight(1f))
+                Box(modifier = Modifier.weight(rowSpec.timeColumnsWeight)) {
+                    labels()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UpcomingScheduleColumnHeader(
+    text: String,
+    color: Color,
+    textSize: TextUnit,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelMedium.copy(
+            platformStyle = PlatformTextStyle(includeFontPadding = false),
+            fontSize = textSize,
+            lineHeight = textSize * 1.1f,
+            fontWeight = FontWeight.Bold
+        ),
+        color = color.copy(alpha = 0.78f),
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        textAlign = TextAlign.Center,
+        modifier = modifier
+    )
+}
+
+@Composable
 private fun UpcomingScheduleBoardRow(
     title: String,
     inTransitTime: String,
@@ -343,7 +421,8 @@ private fun UpcomingScheduleBoardRow(
                 Box(
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .width(1.dp).height(40.dp)
+                        .width(1.dp)
+                        .height(40.dp)
                         .background(colors.divider)
                 )
             }

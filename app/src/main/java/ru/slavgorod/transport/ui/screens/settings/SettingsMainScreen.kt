@@ -3,6 +3,7 @@ package ru.slavgorod.transport.ui.screens.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -149,19 +150,38 @@ internal fun SettingsContent(
     onEntryClick: (SettingsEntry) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .padding(all = Constants.SETTINGS_SCREEN_EDGE_PADDING.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        entries.forEach { entry ->
-            SettingsMenuRow(
-                title = entry.title,
-                subtitle = entry.subtitle,
-                icon = entry.icon,
-                onClick = { onEntryClick(entry) }
-            )
+    val context = LocalContext.current
+    Column(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(all = Constants.SETTINGS_SCREEN_EDGE_PADDING.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            entries.forEach { entry ->
+                SettingsMenuRow(
+                    title = entry.title,
+                    subtitle = entry.subtitle,
+                    icon = entry.icon,
+                    onClick = { onEntryClick(entry) }
+                )
+            }
         }
+        AboutSocialFooter(
+            onVkClick = {
+                context.openExternalUrl(
+                    url = "https://vk.ru/letsgoslavgorod",
+                    failureLogMessage = context.getString(R.string.about_open_vk_group_failed)
+                )
+            },
+            onMaxClick = {
+                context.openExternalUrl(
+                    url = "https://max.ru/channel_letsgoslavgorod",
+                    failureLogMessage = context.getString(R.string.about_open_max_channel_failed)
+                )
+            }
+        )
     }
 }

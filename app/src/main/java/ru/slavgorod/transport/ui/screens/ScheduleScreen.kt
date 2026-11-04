@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
@@ -29,18 +30,15 @@ import org.koin.androidx.compose.koinViewModel
 import ru.slavgorod.transport.R
 import ru.slavgorod.transport.core.Constants
 import ru.slavgorod.transport.data.repository.RoutesTableDataSource
-import ru.slavgorod.transport.data.model.ScheduleChange
 import ru.slavgorod.transport.logging.UserActionLogger
 import ru.slavgorod.transport.ui.components.schedule.ScheduleList
 import ru.slavgorod.transport.ui.model.DeparturePointSchedules
-import ru.slavgorod.transport.ui.model.ScheduleUiState
 import ru.slavgorod.transport.ui.model.ScheduleDaySelectionMode
+import ru.slavgorod.transport.ui.model.ScheduleUiState
 import ru.slavgorod.transport.ui.viewmodel.DisplaySettingsViewModel
 import ru.slavgorod.transport.ui.viewmodel.RoutesViewModel
 import timber.log.Timber
 import java.util.Calendar
-import java.time.Instant
-import java.time.ZoneId
 
 @Composable
 /**
@@ -53,7 +51,8 @@ fun ScheduleScreen(
     routeId: String,
     routeRepository: RoutesTableDataSource,
     routesViewModel: RoutesViewModel? = null,
-    onBackClick: (() -> Unit)? = null
+    onBackClick: (() -> Unit)? = null,
+    onStopsClick: (() -> Unit)? = null
 ) {
     LaunchedEffect(routeId) {
         UserActionLogger.screenOpened(R.string.schedule_screen_opened, routeId)
@@ -72,15 +71,6 @@ fun ScheduleScreen(
     val route = remember(routeId, uiState.routes) {
         uiState.routes.find { it.id == routeId }
     }
-    val activeScheduleChanges by produceState<List<ScheduleChange>>(
-        initialValue = emptyList(),
-        key1 = routeId,
-        key2 = dataUpdateEventId
-    ) {
-        val today = Instant.ofEpochMilli(System.currentTimeMillis()).atZone(ZoneId.systemDefault()).toLocalDate()
-        value = routeRepository.getScheduleChanges().filter { it.appliesTo(routeId) && it.isActiveOn(today) }
-    }
-
     val currentTimeTick by produceState(
         initialValue = Calendar.getInstance().timeInMillis,
         key1 = routeId
@@ -146,14 +136,16 @@ fun ScheduleScreen(
                 }
             )
 
-            ScheduleList(
+            Column(modifier = Modifier.fillMaxSize()) {
+                ScheduleSourceBanner(uiState.dataSourceStatus)
+                ScheduleList(
                 scheduleState = scheduleUiState,
                 swapScheduleColumns = swapScheduleColumns,
                 daySelectionMode = scheduleDaySelectionMode,
                 onBackClick = onBackClick,
+                    onStopsClick = onStopsClick,
                 contentPadding = PaddingValues(bottom = 48.dp),
                 currentTimeMillis = currentTimeTick,
-                scheduleChanges = activeScheduleChanges,
                 onShareClick = {
                     val link = "https://vsemirka200.github.io/lets-go-slavgorod/schedule.html?route=$routeId"
                     context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
@@ -170,8 +162,11 @@ fun ScheduleScreen(
                         dailyLabel = dailyLabel
                     )
                 },
-                modifier = Modifier.fillMaxSize()
-            )
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                )
+            }
         }
     }
 }

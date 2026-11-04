@@ -12,6 +12,7 @@ import org.koin.compose.koinInject
 import ru.slavgorod.transport.data.repository.RoutesTableDataSource
 import ru.slavgorod.transport.ui.navigation.Screen
 import ru.slavgorod.transport.ui.screens.HomeScreen
+import ru.slavgorod.transport.ui.screens.RouteStopsScreen
 import ru.slavgorod.transport.ui.screens.ScheduleScreen
 import ru.slavgorod.transport.ui.screens.settings.AboutScreen
 import ru.slavgorod.transport.ui.screens.settings.DisplaySettingsScreen
@@ -74,6 +75,23 @@ private fun NavGraphBuilder.scheduleGraph(
         ScheduleScreen(
             routeId = routeId,
             routeRepository = routeRepository,
+            routesViewModel = sharedRoutesViewModel,
+            onBackClick = { navController.popBackStack() },
+            onStopsClick = {
+                navController.navigate(Screen.RouteStops.createRoute(routeId))
+            }
+        )
+    }
+
+    composable(
+        route = Screen.RouteStops.route,
+        arguments = listOf(
+            navArgument(Screen.RouteStops.ARG_ROUTE_ID) { type = NavType.StringType }
+        )
+    ) { backStackEntry ->
+        val routeId = backStackEntry.arguments?.getString(Screen.RouteStops.ARG_ROUTE_ID) ?: ""
+        RouteStopsScreen(
+            routeId = routeId,
             routesViewModel = sharedRoutesViewModel,
             onBackClick = { navController.popBackStack() }
         )

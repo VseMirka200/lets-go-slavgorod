@@ -24,6 +24,7 @@ internal object RoutesJsonContract {
     const val ROUTE_PRICE_SECONDARY = "priceSecondary"
     const val ROUTE_PAYMENT_METHODS = "paymentMethods"
     const val ROUTE_REMARK = "remark"
+    const val ROUTE_STOPS = "stops"
     const val ROUTE_SCHEDULES = "schedules"
 
     const val SCHEDULE_ID = "id"

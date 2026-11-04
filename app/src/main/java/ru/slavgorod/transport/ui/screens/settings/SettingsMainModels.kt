@@ -2,6 +2,7 @@ package ru.slavgorod.transport.ui.screens.settings
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Payments
@@ -18,7 +19,8 @@ internal enum class SettingsModalSheet {
     ABOUT,
     SUPPORT,
     SCHEDULE_UPDATES,
-    SCHEDULE_NOTIFICATIONS
+    SCHEDULE_NOTIFICATIONS,
+    MAPS
 }
 
 internal data class SettingsEntry(
@@ -54,6 +56,12 @@ internal fun buildSettingsEntries(): List<SettingsEntry> {
             title = stringResource(R.string.settings_schedule_notifications_title),
             subtitle = stringResource(R.string.settings_schedule_notifications_subtitle),
             modalSheet = SettingsModalSheet.SCHEDULE_NOTIFICATIONS
+        ),
+        SettingsEntry(
+            icon = Icons.Default.Map,
+            title = stringResource(R.string.settings_maps_title),
+            subtitle = stringResource(R.string.settings_maps_subtitle),
+            modalSheet = SettingsModalSheet.MAPS
         ),
         SettingsEntry(
             icon = Icons.Default.Info,

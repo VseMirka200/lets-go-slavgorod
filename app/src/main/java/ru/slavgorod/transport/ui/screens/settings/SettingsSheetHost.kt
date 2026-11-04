@@ -38,7 +38,8 @@ internal fun SettingsSheetHost(
                     onBackClick = { onCloseSheet(themeSectionTitle) },
                     showThemeSection = true,
                     showDisplayModeSection = false,
-                    showTopBar = false
+                    showTopBar = false,
+                    scrollEnabled = true
                 )
             }
         }
@@ -50,7 +51,8 @@ internal fun SettingsSheetHost(
                     onBackClick = { onCloseSheet(columnsSectionTitle) },
                     showThemeSection = false,
                     showDisplayModeSection = true,
-                    showTopBar = false
+                    showTopBar = false,
+                    scrollEnabled = true
                 )
             }
         }
@@ -59,7 +61,8 @@ internal fun SettingsSheetHost(
             SettingsBottomSheet(onDismiss = { onCloseSheet(aboutSectionTitle) }) {
                 AboutScreen(
                     onBackClick = { onCloseSheet(aboutSectionTitle) },
-                    showTopBar = false
+                    showTopBar = false,
+                    scrollEnabled = true
                 )
             }
         }
@@ -73,6 +76,12 @@ internal fun SettingsSheetHost(
         SettingsModalSheet.SCHEDULE_NOTIFICATIONS -> {
             SettingsBottomSheet(onDismiss = { onCloseSheet(scheduleNotificationsSectionTitle) }) {
                 ScheduleNotificationsSection()
+            }
+        }
+
+        SettingsModalSheet.MAPS -> {
+            SettingsBottomSheet(onDismiss = { onCloseSheet("Приложение карт") }) {
+                MapSettingsSection()
             }
         }
 

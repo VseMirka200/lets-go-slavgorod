@@ -49,19 +49,20 @@ class JsonDataSource {
             ?: routeJson.optionalText(RoutesJsonContract.ROUTE_DESCRIPTION)
             ?: return null
         val color = routeJson.requiredText(RoutesJsonContract.ROUTE_COLOR) ?: return null
+        val declaredStops = routeJson.optionalTextList(RoutesJsonContract.ROUTE_STOPS).orEmpty()
+        val scheduleStops = routeJson.getAsJsonArray(RoutesJsonContract.ROUTE_SCHEDULES)
+            ?.mapNotNull { scheduleElement ->
+                scheduleElement.asJsonObjectOrNull()
+                    ?.requiredText(RoutesJsonContract.SCHEDULE_DEPARTURE_POINT)
+            }
+            .orEmpty()
 
         return BusRoute(
             id = id,
             routeNumber = routeNumber,
             name = name,
             description = description,
-            stopNames = routeJson.getAsJsonArray(RoutesJsonContract.ROUTE_SCHEDULES)
-                ?.mapNotNull { scheduleElement ->
-                    scheduleElement.asJsonObjectOrNull()
-                        ?.requiredText(RoutesJsonContract.SCHEDULE_DEPARTURE_POINT)
-                }
-                ?.distinct()
-                .orEmpty(),
+            stopNames = (declaredStops.ifEmpty { scheduleStops }).distinct(),
             color = color,
             remark = routeJson.optionalText(RoutesJsonContract.ROUTE_REMARK),
             notes = notes,
