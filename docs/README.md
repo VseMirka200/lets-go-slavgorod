@@ -27,4 +27,4 @@
 - [Валидатор расписания](../tools/validate-schedule-data.mjs)
 
 Публичный сайт: [главная](index.html), [расписание](schedule.html).
-Контакт: **vsemirka200@bk.ru**.
+Контакт: [**vsemirka200@bk.ru**](mailto:vsemirka200@bk.ru).
