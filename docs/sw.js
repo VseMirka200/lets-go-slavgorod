@@ -1,4 +1,4 @@
-const CACHE_NAME = "lets-go-slavgorod-web-v27";
+const CACHE_NAME = "lets-go-slavgorod-web-v28";
 const APP_SHELL = [
     "./",
     "./index.html",
