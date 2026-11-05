@@ -38,7 +38,7 @@ import java.time.ZoneId
 fun ScheduleList(
     scheduleState: ScheduleUiState,
     swapScheduleColumns: Boolean = false,
-    daySelectionMode: ScheduleDaySelectionMode = ScheduleDaySelectionMode.DAY_FIRST,
+    daySelectionMode: ScheduleDaySelectionMode = ScheduleDaySelectionMode.Default,
     onBackClick: (() -> Unit)? = null,
     onShareClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
@@ -77,23 +77,17 @@ fun ScheduleList(
     }
     val displayedDeparturePoints = remember(
         scheduleState.departurePoints,
+        upcomingDeparturePoints,
         selectedDate,
-        todayDate,
-        currentTimeMillis
+        todayDate
     ) {
         if (selectedDate == null) return@remember emptyList()
-        val selectedCalendar = java.util.Calendar.getInstance().apply {
-            timeInMillis = currentTimeMillis
-        }
+        if (selectedDate == todayDate) return@remember upcomingDeparturePoints
         scheduleState.departurePoints.map { point ->
             val schedules = point.schedules.filter { it.serviceCalendar.runsOn(selectedDate) }
             point.copy(
                 schedules = schedules,
-                nextUpcomingId = if (selectedDate == todayDate) {
-                    UpcomingScheduleResolver.findNextScheduleId(schedules, selectedCalendar)
-                } else {
-                    null
-                }
+                nextUpcomingId = null
             )
         }
     }
@@ -125,8 +119,7 @@ fun ScheduleList(
                 selectedDescriptionLabel = selectedDescriptionFilterLabel,
                 selectedDeparturePointId = selectedDeparturePointFilterId
             ),
-            scheduleExtraLabelProvider = scheduleExtraLabelProvider,
-            currentTimeMillis = currentTimeMillis
+            scheduleExtraLabelProvider = scheduleExtraLabelProvider
         )
         val todayDisplayState = buildScheduleListDisplayState(
             departurePoints = upcomingDeparturePoints,
@@ -134,8 +127,7 @@ fun ScheduleList(
                 selectedDescriptionLabel = null,
                 selectedDeparturePointId = null
             ),
-            scheduleExtraLabelProvider = null,
-            currentTimeMillis = currentTimeMillis
+            scheduleExtraLabelProvider = null
         )
         selectedDayDisplayState.copy(upcomingEntries = todayDisplayState.upcomingEntries)
     }

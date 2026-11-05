@@ -20,6 +20,7 @@ data class BusSchedule(
     val departurePoint: String
 ) {
 
+    /** Проверяет обязательные поля рейса и записывает ошибки в журнал. */
     fun isValid(): Boolean {
         return validateModel(
             ValidationCheck(ValidationUtils.hasMeaningfulText(id), "Некорректный идентификатор рейса: '$id'"),

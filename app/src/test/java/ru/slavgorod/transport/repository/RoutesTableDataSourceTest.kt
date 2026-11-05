@@ -14,6 +14,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import ru.slavgorod.transport.data.local.ScheduleCacheStore
+import ru.slavgorod.transport.data.local.dataStore
 import ru.slavgorod.transport.data.repository.RemoteScheduleFetcher
 import ru.slavgorod.transport.data.repository.RoutesLoadState
 import ru.slavgorod.transport.data.repository.RoutesTableDataSource
@@ -207,88 +208,6 @@ class RoutesTableDataSourceTest {
         assertEquals(RoutesLoadState.EMPTY_OR_INVALID_JSON, repository.refreshRoutesFromLocal())
         assertNotNull(repository.getRouteById("102"))
         assertEquals(originalJson.trim(), cacheStore.readSnapshot()?.json)
-    }
-
-    @Test
-    fun `backup is used only when primary fails and no cached timetable exists`() = runTest {
-        cacheStore.clear()
-        var backupCalls = 0
-        val backupJson = buildRoutesJson().replaceFirst("{", "{\"backupCreatedAt\":\"2026-11-01T12:00:00Z\",")
-        val fetcher = object : ScheduleFetcher {
-            override fun isOnline() = true
-            override suspend fun fetchWithRetry(): String? = null
-            override suspend fun fetchBackupWithRetry(): String {
-                backupCalls++
-                return backupJson
-            }
-        }
-        val repository = RoutesTableDataSource(context = context, remoteScheduleFetcher = fetcher, autoLoadOnInit = false)
-        assertEquals(RoutesLoadState.BACKUP_LOADED, repository.refreshRoutesFromLocal())
-        assertEquals(ScheduleDataSource.GITHUB_BACKUP, repository.dataSourceStatus.value.source)
-        assertEquals(java.time.Instant.parse("2026-11-01T12:00:00Z").toEpochMilli(), repository.dataSourceStatus.value.lastUpdatedAtMillis)
-        assertNotNull(repository.getRouteById("102"))
-        assertEquals(1, backupCalls)
-
-        assertEquals(RoutesLoadState.NETWORK_ERROR_WITH_SAVED_COPY, repository.refreshRoutesFromLocal())
-        assertEquals(1, backupCalls)
-        assertEquals(ScheduleDataSource.GITHUB_BACKUP, repository.dataSourceStatus.value.source)
-
-        val reopened = RoutesTableDataSource(context = context, remoteScheduleFetcher = fetcher, autoLoadOnInit = false)
-        assertEquals(RoutesLoadState.NETWORK_ERROR_WITH_SAVED_COPY, reopened.refreshRoutesFromLocal())
-        assertEquals(ScheduleDataSource.GITHUB_BACKUP, reopened.dataSourceStatus.value.source)
-        assertEquals(java.time.Instant.parse("2026-11-01T12:00:00Z").toEpochMilli(), reopened.dataSourceStatus.value.lastUpdatedAtMillis)
-        assertEquals(1, backupCalls)
-    }
-
-    @Test
-    fun `primary always wins and cached primary is never replaced by backup`() = runTest {
-        cacheStore.clear()
-        var primary: String? = buildRoutesJson()
-        var backupCalls = 0
-        val fetcher = object : ScheduleFetcher {
-            override fun isOnline() = true
-            override suspend fun fetchWithRetry() = primary
-            override suspend fun fetchBackupWithRetry(): String? { backupCalls++; return null }
-        }
-        val repository = RoutesTableDataSource(context = context, remoteScheduleFetcher = fetcher, autoLoadOnInit = false)
-        assertEquals(RoutesLoadState.SUCCESS, repository.refreshRoutesFromLocal())
-        primary = null
-        assertEquals(RoutesLoadState.NETWORK_ERROR_WITH_SAVED_COPY, repository.refreshRoutesFromLocal())
-        assertEquals(0, backupCalls)
-        assertEquals(buildRoutesJson(), cacheStore.readSnapshot()?.json)
-    }
-
-    @Test
-    fun `invalid primary tries backup without overwriting existing data`() = runTest {
-        cacheStore.clear()
-        var calls = 0
-        val backup = buildRoutesJson().replaceFirst("{", "{\"backupCreatedAt\":\"2026-11-01T12:00:00Z\",")
-        val fetcher = object : ScheduleFetcher {
-            override fun isOnline() = true
-            override suspend fun fetchWithRetry() = """{"error":"bad table"}"""
-            override suspend fun fetchBackupWithRetry(): String { calls++; return backup }
-        }
-        val repository = RoutesTableDataSource(context = context, remoteScheduleFetcher = fetcher, autoLoadOnInit = false)
-        assertEquals(RoutesLoadState.BACKUP_LOADED, repository.refreshRoutesFromLocal())
-        assertEquals(1, calls)
-    }
-
-    @Test
-    fun `primary replaces previously loaded backup when it recovers`() = runTest {
-        cacheStore.clear()
-        val backup = buildRoutesJson().replaceFirst("{", "{\"backupCreatedAt\":\"2026-11-01T12:00:00Z\",")
-        var primary: String? = null
-        val fetcher = object : ScheduleFetcher {
-            override fun isOnline() = true
-            override suspend fun fetchWithRetry() = primary
-            override suspend fun fetchBackupWithRetry() = backup
-        }
-        val repository = RoutesTableDataSource(context = context, remoteScheduleFetcher = fetcher, autoLoadOnInit = false)
-        assertEquals(RoutesLoadState.BACKUP_LOADED, repository.refreshRoutesFromLocal())
-        primary = buildRoutesJson()
-        assertEquals(RoutesLoadState.SUCCESS, repository.refreshRoutesFromLocal())
-        assertEquals(ScheduleDataSource.REMOTE_CACHE, repository.dataSourceStatus.value.source)
-        assertEquals(primary, cacheStore.readSnapshot()?.json)
     }
 
     @Test

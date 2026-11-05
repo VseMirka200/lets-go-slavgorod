@@ -19,7 +19,7 @@ import java.time.LocalDate
 /**
  * Разбирает производные данные расписания из исходного JSON.
  *
- * Подсказка разработчику: поддержка legacy-полей нужна для уже опубликованных файлов;
+ * Подсказка разработчику: поддержка старых полей нужна для уже опубликованных файлов;
  * не удаляйте её без миграции данных на стороне источника.
  */
 open class ScheduleJsonParser(
@@ -30,6 +30,7 @@ open class ScheduleJsonParser(
         return jsonDataSource.parseRoutesFromJson(jsonString)
     }
 
+    /** Строит индекс по идентификаторам маршрутов; при ошибке возвращает пустую карту. */
     open fun buildSchedulesIndex(jsonString: String): Map<String, List<BusSchedule>> {
         return try {
             val jsonObject = JsonParser.parseString(jsonString).asJsonObject
@@ -47,6 +48,7 @@ open class ScheduleJsonParser(
         }
     }
 
+    /** Пропускает объявления без обязательных полей или корректной начальной даты. */
     open fun parseScheduleChanges(jsonString: String): List<ScheduleChange> = runCatching {
         val root = JsonParser.parseString(jsonString).asJsonObject
         root.getAsJsonArray(RoutesJsonContract.ROOT_SCHEDULE_CHANGES)
@@ -124,6 +126,7 @@ private fun com.google.gson.JsonObject.parseServiceCalendar(
     dayType: String?,
     productionCalendar: ProductionCalendar
 ): ServiceCalendar {
+    // Старые файлы задают дни работы только через тип дня.
     val calendarJson = getAsJsonObject(RoutesJsonContract.SCHEDULE_SERVICE_CALENDAR)
         ?: return legacyServiceCalendar(dayType).withProductionCalendar(productionCalendar)
 
@@ -167,6 +170,7 @@ private fun ServiceCalendar.withProductionCalendar(
 ): ServiceCalendar {
     if (productionCalendar.nonWorkingDates.isEmpty()) return this
 
+    // Праздники меняют только стандартные группы будних и выходных дней.
     return when (operatingDays) {
         Weekdays -> copy(excludedDates = excludedDates + productionCalendar.nonWorkingDates)
         Weekends -> copy(includedDates = includedDates + productionCalendar.nonWorkingDates)

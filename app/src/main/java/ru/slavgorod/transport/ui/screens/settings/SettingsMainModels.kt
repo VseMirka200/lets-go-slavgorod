@@ -2,9 +2,7 @@ package ru.slavgorod.transport.ui.screens.settings
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Feedback
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.SystemUpdateAlt
@@ -19,6 +17,7 @@ internal enum class SettingsModalSheet {
     COLUMNS,
     ABOUT,
     SUPPORT,
+    SCHEDULE,
     SCHEDULE_UPDATES,
     SCHEDULE_NOTIFICATIONS,
     SCHEDULE_SOURCE,
@@ -49,21 +48,9 @@ internal fun buildSettingsEntries(): List<SettingsEntry> {
         ),
         SettingsEntry(
             icon = Icons.Default.SystemUpdateAlt,
-            title = stringResource(R.string.settings_schedule_updates_title),
-            subtitle = stringResource(R.string.settings_schedule_updates_subtitle),
-            modalSheet = SettingsModalSheet.SCHEDULE_UPDATES
-        ),
-        SettingsEntry(
-            icon = Icons.Default.Link,
-            title = stringResource(R.string.settings_source_title),
-            subtitle = stringResource(R.string.settings_source_subtitle),
-            modalSheet = SettingsModalSheet.SCHEDULE_SOURCE
-        ),
-        SettingsEntry(
-            icon = Icons.Default.Notifications,
-            title = stringResource(R.string.settings_schedule_notifications_title),
-            subtitle = stringResource(R.string.settings_schedule_notifications_subtitle),
-            modalSheet = SettingsModalSheet.SCHEDULE_NOTIFICATIONS
+            title = stringResource(R.string.settings_schedule_category),
+            subtitle = stringResource(R.string.settings_schedule_category_description),
+            modalSheet = SettingsModalSheet.SCHEDULE
         ),
         SettingsEntry(
             icon = Icons.Default.Feedback,

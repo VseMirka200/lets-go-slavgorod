@@ -10,6 +10,14 @@ import kotlin.test.assertNull
 class AppStatusMessageTest {
 
     @Test
+    fun `offline status takes precedence over source error`() {
+        val result = buildRoutesStatusMessage(null, false, RoutesUiState(
+            dataSourceStatus = ScheduleDataSourceStatus(loadState = RoutesLoadState.OFFLINE_NO_DATA)),
+            "Offline", "Saved", "Unknown", "Source failed")
+        assertEquals("Offline", result)
+    }
+
+    @Test
     fun `ui message has priority over connection status`() {
         val result = buildRoutesStatusMessage(
             routesUiMessageText = "Updated",

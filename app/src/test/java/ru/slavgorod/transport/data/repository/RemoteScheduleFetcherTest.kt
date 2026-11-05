@@ -73,19 +73,4 @@ class RemoteScheduleFetcherTest {
         assertEquals("/published", server.takeRequest().path)
     }
 
-    @Test
-    fun `backup requests configured url and disabled backup makes no request`() = runTest {
-        var backupUrl: String? = server.url("/backup.json").toString()
-        val fetcher = RemoteScheduleFetcher(
-            onlineChecker = { true },
-            backupJsonUrlProvider = { backupUrl },
-            retryDelaysMillis = emptyList()
-        )
-        server.enqueue(MockResponse().setResponseCode(200).setBody("""{"backupCreatedAt":"2026-11-01T12:00:00Z"}"""))
-        assertEquals("""{"backupCreatedAt":"2026-11-01T12:00:00Z"}""", fetcher.fetchBackupWithRetry())
-        assertEquals("/backup.json", server.takeRequest().path)
-        backupUrl = null
-        assertEquals(null, fetcher.fetchBackupWithRetry())
-        assertEquals(1, server.requestCount)
-    }
 }

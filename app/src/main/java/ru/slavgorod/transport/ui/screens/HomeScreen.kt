@@ -25,7 +25,6 @@ import org.koin.androidx.compose.koinViewModel
 import ru.slavgorod.transport.R
 import ru.slavgorod.transport.core.Constants
 import ru.slavgorod.transport.domain.util.DateTimeFormatterUtils
-import ru.slavgorod.transport.data.repository.ScheduleDataSource
 import ru.slavgorod.transport.logging.UserActionLogger
 import ru.slavgorod.transport.ui.components.SearchBar
 import ru.slavgorod.transport.ui.components.app.AppScreenScaffold
@@ -144,15 +143,6 @@ fun HomeScreen(
             }
 
             val lastUpdated = uiState.dataSourceStatus.lastUpdatedAtMillis
-            if (uiState.dataSourceStatus.source == ScheduleDataSource.GITHUB_BACKUP) {
-                Text(
-                    text = stringResource(R.string.schedule_source_backup),
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center
-                )
-            }
             Text(
                 text = if (lastUpdated != null) {
                     stringResource(

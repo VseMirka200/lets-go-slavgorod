@@ -18,7 +18,6 @@ import ru.slavgorod.transport.domain.util.DateTimeFormatterUtils
 internal fun ScheduleSourceBanner(status: ScheduleDataSourceStatus, modifier: Modifier = Modifier) {
     val source = when (status.source) {
         ScheduleDataSource.REMOTE_CACHE -> stringResource(R.string.schedule_source_remote)
-        ScheduleDataSource.GITHUB_BACKUP -> stringResource(R.string.schedule_source_backup)
         ScheduleDataSource.SAVED_COPY -> stringResource(R.string.schedule_source_saved)
         ScheduleDataSource.BUNDLED -> stringResource(R.string.schedule_source_bundled)
         ScheduleDataSource.NONE -> stringResource(R.string.schedule_source_unknown)

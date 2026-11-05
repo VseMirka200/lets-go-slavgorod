@@ -7,13 +7,10 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 import ru.slavgorod.transport.core.ApplicationCoroutineScope
-import ru.slavgorod.transport.core.Constants
-import ru.slavgorod.transport.core.ScheduleConfig
 import ru.slavgorod.transport.data.local.AppLogStore
 import ru.slavgorod.transport.data.local.JsonDataSource
 import ru.slavgorod.transport.data.local.ScheduleCacheStore
 import ru.slavgorod.transport.data.local.ScheduleNotificationSettings
-import ru.slavgorod.transport.data.local.ScheduleSourceSettings
 import ru.slavgorod.transport.data.local.dataStore
 import ru.slavgorod.transport.data.local.displayDataStore
 import ru.slavgorod.transport.data.local.themeDataStore
@@ -37,7 +34,6 @@ val appModule = module {
     single { AppLogStore(androidContext()) }
     single { JsonDataSource() }
     single { ScheduleCacheStore(androidContext()) }
-    single { ScheduleSourceSettings(androidContext().dataStore) }
     single {
         ScheduleNotificationSettings(
             androidContext().dataStore,
@@ -48,12 +44,7 @@ val appModule = module {
     single<ScheduleSnapshotStore> { ScheduleSnapshotRepository(get()) }
     single<ScheduleFetcher> {
         val context = androidContext()
-        val sourceSettings = get<ScheduleSourceSettings>()
         RemoteScheduleFetcher(
-            remoteJsonUrlProvider = { sourceSettings.currentUrl() },
-            backupJsonUrlProvider = {
-                if (sourceSettings.currentUrl() == Constants.REMOTE_JSON_URL) ScheduleConfig.backupJsonUrl else null
-            },
             onlineChecker = { NetworkMonitor.isConnected(context) }
         )
     }
@@ -65,7 +56,7 @@ val appModule = module {
             remoteScheduleFetcher = get(),
             scheduleSnapshotRepository = get(),
             scheduleJsonParser = get(),
-            externalScope = get<ApplicationCoroutineScope>().scope
+            externalScope = get<ApplicationCoroutineScope>().scope,
         )
     }
     single {

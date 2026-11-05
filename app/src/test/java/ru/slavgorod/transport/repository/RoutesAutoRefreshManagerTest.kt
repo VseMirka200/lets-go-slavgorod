@@ -3,6 +3,7 @@ package ru.slavgorod.transport.repository
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
@@ -112,6 +113,34 @@ class RoutesAutoRefreshManagerTest {
         runCurrent()
 
         assertEquals(0, refreshCalls.get())
+    }
+
+    @Test
+    fun `cancellation stops observing network restoration`() = runTest {
+        val connectionState = MutableStateFlow(false)
+        var refreshCalls = 0
+        val manager = RoutesAutoRefreshManager(
+            routeRepository = createRepository(),
+            connectionStateFlow = connectionState,
+            initialConnectionState = false,
+            dispatcher = StandardTestDispatcher(testScheduler),
+            refreshAction = {
+                refreshCalls++
+                throw CancellationException("Отмена обновления")
+            }
+        )
+
+        manager.start()
+        runCurrent()
+        connectionState.value = true
+        runCurrent()
+        connectionState.value = false
+        runCurrent()
+        connectionState.value = true
+        runCurrent()
+
+        assertEquals(1, refreshCalls)
+        manager.stop()
     }
 
     private fun createRepository(): RoutesTableDataSource {

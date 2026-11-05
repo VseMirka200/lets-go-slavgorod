@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.callbackFlow
 
 object NetworkMonitor {
 
+    /** Проверяет наличие у активной сети возможности выхода в интернет. */
     fun isConnected(context: Context): Boolean {
         val connectivityManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
@@ -20,6 +21,7 @@ object NetworkMonitor {
         return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
+    /** Передаёт текущее состояние и последующие изменения до отмены подписки. */
     fun observeConnectionState(context: Context): Flow<Boolean> = callbackFlow {
         val appContext = context.applicationContext
         val connectivityManager =
@@ -55,6 +57,7 @@ object NetworkMonitor {
             .build()
 
         connectivityManager.registerNetworkCallback(request, callback)
+        // Регистрация принадлежит подписке и освобождается при её завершении.
         awaitClose {
             runCatching {
                 connectivityManager.unregisterNetworkCallback(callback)

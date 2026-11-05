@@ -9,7 +9,8 @@ internal fun buildRoutesStatusMessage(
     routesUiState: RoutesUiState,
     offlineNoDataMessage: String,
     offlineCopyDateKnown: String?,
-    offlineCopyDateUnknown: String
+    offlineCopyDateUnknown: String,
+    sourceStatusMessage: String? = null
 ): String? {
     return when {
         routesUiMessageText != null -> routesUiMessageText
@@ -23,6 +24,7 @@ internal fun buildRoutesStatusMessage(
             dateUnknown = offlineCopyDateUnknown
         )
 
+        sourceStatusMessage != null -> sourceStatusMessage
         routesUiState.error != null -> routesUiState.error
         else -> null
     }

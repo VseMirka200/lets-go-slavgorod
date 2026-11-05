@@ -3,23 +3,14 @@ package ru.slavgorod.transport.ui.screens
 import ru.slavgorod.transport.data.model.BusRoute
 import ru.slavgorod.transport.data.model.BusSchedule
 import ru.slavgorod.transport.data.repository.RoutesTableDataSource
-import ru.slavgorod.transport.domain.util.UpcomingScheduleResolver
-import java.util.Calendar
 
 internal data class SchedulePointData(
     val name: String,
-    val schedules: List<BusSchedule>,
-    val nextUpcomingId: String?
-)
-
-internal data class NextUpcomingScheduleData(
-    val schedule: BusSchedule,
-    val departurePoint: String
+    val schedules: List<BusSchedule>
 )
 
 internal data class ScheduleScreenData(
-    val points: List<SchedulePointData>,
-    val nextUpcomingSchedule: NextUpcomingScheduleData? = null
+    val points: List<SchedulePointData>
 ) {
     val totalSchedules: Int
         get() = points.sumOf { it.schedules.size }
@@ -30,10 +21,7 @@ internal suspend fun loadRouteSchedules(
     routeRepository: RoutesTableDataSource
 ): List<BusSchedule> = routeRepository.getSchedulesForRoute(route.id)
 
-internal fun buildScheduleScreenData(
-    allSchedules: List<BusSchedule>,
-    currentTime: Calendar = Calendar.getInstance()
-): ScheduleScreenData {
+internal fun buildScheduleScreenData(allSchedules: List<BusSchedule>): ScheduleScreenData {
     val orderedDeparturePoints = allSchedules.mapNotNull { schedule ->
         schedule.departurePoint
             .trim()
@@ -43,37 +31,11 @@ internal fun buildScheduleScreenData(
     val points = orderedDeparturePoints.map { departurePoint ->
         buildSchedulePointData(
             departurePoint = departurePoint,
-            allSchedules = allSchedules,
-            currentTime = currentTime
+            allSchedules = allSchedules
         )
     }
 
-    return ScheduleScreenData(
-        points = points,
-        nextUpcomingSchedule = resolveNextUpcomingSchedule(allSchedules, currentTime)
-    )
-}
-
-internal fun ScheduleScreenData.withCurrentTime(currentTimeMillis: Long): ScheduleScreenData {
-    val currentTime = Calendar.getInstance().apply {
-        timeInMillis = currentTimeMillis
-    }
-    val livePoints = points.map { point ->
-        point.copy(
-            nextUpcomingId = UpcomingScheduleResolver.findNextScheduleId(
-                point.schedules,
-                currentTime
-            )
-        )
-    }
-
-    return copy(
-        points = livePoints,
-        nextUpcomingSchedule = resolveNextUpcomingSchedule(
-            allSchedules = livePoints.flatMap { point -> point.schedules },
-            currentTime = currentTime
-        )
-    )
+    return ScheduleScreenData(points = points)
 }
 
 internal fun buildScheduleExtraLabel(
@@ -107,8 +69,7 @@ internal fun buildScheduleExtraLabel(
 
 private fun buildSchedulePointData(
     departurePoint: String,
-    allSchedules: List<BusSchedule>,
-    currentTime: Calendar
+    allSchedules: List<BusSchedule>
 ): SchedulePointData {
     val schedules = allSchedules
         .filter { it.departurePoint.trim() == departurePoint }
@@ -116,22 +77,7 @@ private fun buildSchedulePointData(
 
     return SchedulePointData(
         name = departurePoint,
-        schedules = schedules,
-        nextUpcomingId = UpcomingScheduleResolver.findNextScheduleId(schedules, currentTime)
-    )
-}
-
-private fun resolveNextUpcomingSchedule(
-    allSchedules: List<BusSchedule>,
-    currentTime: Calendar
-): NextUpcomingScheduleData? {
-    val nextScheduleId =
-        UpcomingScheduleResolver.findNextScheduleId(allSchedules, currentTime) ?: return null
-    val nextSchedule = allSchedules.firstOrNull { it.id == nextScheduleId } ?: return null
-
-    return NextUpcomingScheduleData(
-        schedule = nextSchedule,
-        departurePoint = nextSchedule.departurePoint
+        schedules = schedules
     )
 }
 

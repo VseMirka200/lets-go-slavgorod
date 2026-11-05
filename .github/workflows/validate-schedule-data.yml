@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    paths: ["tools/sync-schedule-backup.mjs", ".github/workflows/validate-schedule-data.yml"]
+    paths: ["tools/validate-published-schedule.mjs", ".github/workflows/validate-schedule-data.yml"]
   workflow_dispatch:
 
 jobs:
@@ -17,6 +17,5 @@ jobs:
           node-version: 22
       - name: Validate published schedule
         run: >-
-          node tools/sync-schedule-backup.mjs
+          node tools/validate-published-schedule.mjs
           'https://script.google.com/macros/s/AKfycbzus49Rc3LBZPDNcwqGteLHFViRCV9nItnX5PgvSkqSiId3mVxg1tp--7o4Cre2Mv40GA/exec'
-          "$RUNNER_TEMP/schedule.json"

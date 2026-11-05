@@ -142,7 +142,7 @@ private fun lerpDp(start: Dp, stop: Dp, fraction: Float, fontScale: Float): Dp {
     )
 }
 
-// sp already follows Android's font scale (including nonlinear accessibility scaling).
+// Размер в sp уже учитывает масштаб шрифта Android, включая нелинейное увеличение.
 private fun lerpSp(start: TextUnit, stop: TextUnit, fraction: Float): TextUnit {
     val clampedFraction = fraction.coerceIn(0f, 1f)
     return (start.value + (stop.value - start.value) * clampedFraction).sp

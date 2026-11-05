@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.koinInject
 import ru.slavgorod.transport.R
@@ -28,7 +29,8 @@ import ru.slavgorod.transport.ui.components.settings.SettingsSurfaceCard
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ScheduleNotificationsSection(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    topPadding: Dp = Constants.SETTINGS_SCREEN_EDGE_PADDING.dp
 ) {
     val context = LocalContext.current
     val notificationSettings: ScheduleNotificationSettings = koinInject()
@@ -56,7 +58,7 @@ internal fun ScheduleNotificationsSection(
             .fillMaxWidth()
             .padding(
                 start = Constants.SETTINGS_SCREEN_EDGE_PADDING.dp,
-                top = Constants.SETTINGS_SCREEN_EDGE_PADDING.dp,
+                top = topPadding,
                 end = Constants.SETTINGS_SCREEN_EDGE_PADDING.dp,
                 bottom = 24.dp
             )

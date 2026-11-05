@@ -2,7 +2,7 @@
 
 import androidx.compose.ui.unit.Dp
 
-/** Keep the user's column preference as an upper bound; reserve space for enlarged text. */
+/** Ограничивает число столбцов настройкой пользователя и учитывает увеличение шрифта. */
 internal fun adaptiveColumnCount(
     availableWidth: Dp,
     fontScale: Float,

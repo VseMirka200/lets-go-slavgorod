@@ -43,4 +43,4 @@
 
 ## Публикация расписания и сайт
 
-Редакторы используют Google Таблицы и опубликованный Google Apps Script. GitHub Actions и Node.js выполняют проверку и синхронизацию резервной копии. Сайт в `docs/` использует HTML, CSS и JavaScript. Подробности — в [описании передачи расписания](SCHEDULE_DATA.md).
+Редакторы используют Google Таблицы и опубликованный Google Apps Script. GitHub Actions и Node.js проверяют опубликованное расписание. Сайт в `docs/` использует HTML, CSS и JavaScript. Подробности — в [описании передачи расписания](SCHEDULE_DATA.md).

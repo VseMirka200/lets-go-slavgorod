@@ -4,10 +4,10 @@ import ru.slavgorod.transport.data.model.BusRoute
 import ru.slavgorod.transport.data.model.BusSchedule
 
 /**
- * Согласованный снимок маршрутов, рейсов и исходного JSON в оперативной памяти.
+ * Хранит маршруты, индекс рейсов и исходный JSON в оперативной памяти.
  *
- * Подсказка разработчику: не возвращайте частичный индекс маршрутов — он должен
- * соответствовать полному StateFlow маршрутов, опубликованному репозиторием.
+ * Отдельные ссылки видимы между потоками, но их обновление не является общей
+ * атомарной операцией. Согласованность данных обеспечивает вызывающий репозиторий.
  */
 internal class RoutesMemoryCache {
 
@@ -29,6 +29,7 @@ internal class RoutesMemoryCache {
 
     fun routeById(routeId: String): BusRoute? = routesById[routeId]
 
+    /** Отсутствующий ключ отличается от маршрута с пустым списком рейсов. */
     fun schedulesForRoute(routeId: String): List<BusSchedule>? = schedulesByRoute[routeId]
 
     fun updateRoutes(routes: List<BusRoute>) {

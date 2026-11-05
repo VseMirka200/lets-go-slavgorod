@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Process
 import androidx.datastore.preferences.core.edit
+import kotlinx.coroutines.CancellationException
 import ru.slavgorod.transport.R
 import ru.slavgorod.transport.data.local.DisclaimerManager
 import ru.slavgorod.transport.data.local.ScheduleCacheStore
@@ -54,6 +55,9 @@ class ResetAppDataUseCase(
             )
         }
         runClearOperation(R.string.reset_data_store_schedule_cache) { ScheduleCacheStore(appContext).clear() }
+        runClearOperation(R.string.reset_data_store_schedule_cache) {
+            android.util.AtomicFile(File(appContext.filesDir, "manual_schedule.json")).delete()
+        }
     }
 
     private fun clearLegacyPreferenceStorage() {
@@ -87,6 +91,8 @@ class ResetAppDataUseCase(
     private suspend fun runClearOperation(nameResId: Int, action: suspend () -> Unit) {
         try {
             action()
+        } catch (exception: CancellationException) {
+            throw exception
         } catch (exception: Exception) {
             Timber.e(
                 exception,

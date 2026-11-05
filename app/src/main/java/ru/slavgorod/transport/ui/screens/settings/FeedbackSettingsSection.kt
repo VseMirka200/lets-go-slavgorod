@@ -58,7 +58,6 @@ internal fun FeedbackSettingsSection() {
             .padding(start = 16.dp, end = 16.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text(stringResource(R.string.settings_feedback_title), style = MaterialTheme.typography.titleLarge)
         Text(
             text = stringResource(R.string.feedback_intro),
             style = MaterialTheme.typography.bodyMedium,
@@ -88,13 +87,11 @@ internal fun FeedbackSettingsSection() {
             Column(
                 modifier = Modifier.fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
+                    .padding(bottom = 24.dp)
             ) {
-                Text(
-                    text = stringResource(R.string.feedback_type_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
+                SettingsBackButton(onClick = { showEmailTopics = false })
+                SettingsSectionTitle(stringResource(R.string.feedback_type_title))
+                Column(Modifier.padding(horizontal = 16.dp)) {
                 FeedbackType.entries.forEach { type ->
                     SettingsRadioRow(
                         selected = selectedType == type,
@@ -115,6 +112,7 @@ internal fun FeedbackSettingsSection() {
                     }) {
                         Text(stringResource(R.string.feedback_email_continue))
                     }
+                }
                 }
             }
         }

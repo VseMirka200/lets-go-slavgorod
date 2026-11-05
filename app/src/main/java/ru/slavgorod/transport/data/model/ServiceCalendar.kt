@@ -7,7 +7,8 @@ import java.time.LocalDate
  * Календарь, определяющий дни выполнения одного рейса.
  *
  * Отсутствующее [operatingDays] означает, что рейс выполняется ежедневно.
- * Пустой набор означает, что он выполняется только в явно включённые даты.
+ * Пустой набор означает рейсы только во включённые даты. Ограничения периода и
+ * исключённые даты имеют приоритет даже над явно включёнными датами.
  */
 data class ServiceCalendar(
     val operatingDays: Set<DayOfWeek>? = null,
@@ -17,6 +18,7 @@ data class ServiceCalendar(
     val excludedDates: Set<LocalDate> = emptySet()
 ) {
 
+    /** Проверяет дату с учётом границ периода, исключений и дней недели. */
     fun runsOn(date: LocalDate): Boolean {
         if (date in excludedDates) return false
         if (validFrom != null && date < validFrom) return false

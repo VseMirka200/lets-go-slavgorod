@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets
 import java.util.Date
 
 /**
- * Хранит экспортируемый журнал приложения в ограниченном по размеру текстовом файле.
+ * Хранит экспортируемый журнал приложения в файле с ограничением числа записей.
  *
  * Подсказка разработчику: шаблон начала записи синхронизирован с форматом времени;
  * меняйте их вместе, иначе очистка старых записей перестанет работать.
@@ -63,6 +63,7 @@ class AppLogStore(context: Context) {
 
         if (entryStartIndices.size <= MAX_LOG_ENTRIES_BEFORE_APPEND) return
 
+        // Сохраняем заголовок и целые записи вместе с многострочными трассировками ошибок.
         val headerEndIndex = entryStartIndices.first()
         val headerLines = lines.take(headerEndIndex)
         val retainedStartIndices = entryStartIndices.takeLast(MAX_LOG_ENTRIES_BEFORE_APPEND)

@@ -8,62 +8,41 @@ import java.util.Calendar
 class ScheduleTimeUtilsTest {
 
     @Test
-    fun `resolveDepartureDiffMinutes returns same-day departure`() {
+    fun `resolveDepartureMillis returns same-day departure`() {
         val currentTimeMillis = timeMillis(hour = 10, minute = 0)
 
-        val diffMinutes = resolveDepartureDiffMinutes("10:45", currentTimeMillis)
+        val departure = resolveDepartureMillis("10:45", currentTimeMillis)
 
-        assertEquals(45, diffMinutes)
+        assertEquals(timeMillis(hour = 10, minute = 45), departure)
     }
 
     @Test
-    fun `resolveDepartureDiffMinutes moves departed time to tomorrow`() {
+    fun `resolveDepartureMillis moves departed time to tomorrow`() {
         val currentTimeMillis = timeMillis(hour = 10, minute = 0)
 
-        val diffMinutes = resolveDepartureDiffMinutes("09:55", currentTimeMillis)
+        val departure = resolveDepartureMillis("09:55", currentTimeMillis)
 
-        assertEquals(23 * 60 + 55, diffMinutes)
+        assertEquals(currentTimeMillis + (23 * 60 + 55) * 60_000L, departure)
     }
 
     @Test
-    fun `resolveDepartureDiffMinutes returns null for invalid time`() {
+    fun `resolveDepartureMillis returns null for invalid time`() {
         val currentTimeMillis = timeMillis(hour = 10, minute = 0)
 
-        assertNull(resolveDepartureDiffMinutes("not-time", currentTimeMillis))
+        assertNull(resolveDepartureMillis("not-time", currentTimeMillis))
     }
 
     @Test
-    fun `resolveElapsedDepartureMinutes returns minutes since today's departure`() {
-        val elapsedMinutes = resolveElapsedDepartureMinutes("09:45", timeMillis(hour = 10, minute = 0))
+    fun `resolveElapsedDepartureMillis returns time since today's departure`() {
+        val elapsed = resolveElapsedDepartureMillis("09:45", timeMillis(hour = 10, minute = 0))
 
-        assertEquals(15, elapsedMinutes)
-    }
-
-    @Test
-    fun `parseTravelDurationMinutes reads route duration`() {
-        assertEquals(24, parseTravelDurationMinutes("~24 минуты"))
-        assertEquals(90, parseTravelDurationMinutes("1 ч 30 мин"))
+        assertEquals(15 * 60_000L, elapsed)
     }
 
     @Test
     fun `buildScheduleTimerLabel includes seconds`() {
         assertEquals("13м 12с", buildScheduleTimerLabel(13 * 60_000L + 12_000L))
         assertEquals("1ч 2м 03с", buildScheduleTimerLabel(3_723_000L))
-    }
-
-    @Test
-    fun `buildCountdownLabelArgs resolves minutes`() {
-        assertEquals(CountdownLabelArgs.Minutes(15), buildCountdownLabelArgs(15))
-    }
-
-    @Test
-    fun `buildCountdownLabelArgs resolves full hours`() {
-        assertEquals(CountdownLabelArgs.Hours(2), buildCountdownLabelArgs(120))
-    }
-
-    @Test
-    fun `buildCountdownLabelArgs resolves hours and minutes`() {
-        assertEquals(CountdownLabelArgs.HoursMinutes(2, "05"), buildCountdownLabelArgs(125))
     }
 
     private fun timeMillis(hour: Int, minute: Int): Long {

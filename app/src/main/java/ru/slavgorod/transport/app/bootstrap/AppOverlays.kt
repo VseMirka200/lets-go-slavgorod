@@ -3,6 +3,7 @@ package ru.slavgorod.transport.app.bootstrap
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import ru.slavgorod.transport.R
 import ru.slavgorod.transport.core.AppText
@@ -58,6 +59,8 @@ private fun HandlePendingNavigation(
                     navController.navigate(destination)
                 }
                 onHandled()
+            } catch (exception: CancellationException) {
+                throw exception
             } catch (e: Exception) {
                 Timber.e(e, AppText.get(R.string.navigation_error_route, routeId))
             }

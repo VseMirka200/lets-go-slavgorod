@@ -23,7 +23,7 @@
     <string name="disclaimer_warning_icon">Предупреждение</string>
     <string name="disclaimer_info_icon">Информация</string>
     <string name="disclaimer_main_text">«Поехали! Славгород» — независимое справочное приложение.</string>
-    <string name="disclaimer_description_text">Приложение не связано с администрацией, государственными учреждениями, такими перевозчиками, как ООО &quot;Славгородское АТП&quot;, МУП &quot;Торговый ряд г. Славгород&quot;, или иными муниципальными организациями и не является их официальным приложением.</string>
+    <string name="disclaimer_description_text">Приложение не является официальным и не связано с администрацией, государственными учреждениями, ООО «Славгородское АТП», МУП «Торговый ряд г. Славгород» и другими перевозчиками или муниципальными организациями.</string>
     <string name="disclaimer_purpose_text">Проект носит справочный характер.</string>
     <string name="disclaimer_accuracy_text">Данные в приложении могут отличаться.</string>
     <string name="disclaimer_accept">Я ознакомился(лась)</string>
@@ -64,19 +64,10 @@
     <string name="feedback_email_suggestion_body">Что можно улучшить:\n\n\nКак это поможет:\n\n\nВерсия приложения: %1$s\nВерсия Android: %2$s</string>
     <string name="feedback_email_other_body">Ваше сообщение:\n\n\nВерсия приложения: %1$s\nВерсия Android: %2$s</string>
     <string name="settings_schedule_updates_title">Обновление расписания</string>
+    <string name="settings_schedule_management_title">Обновление расписания</string>
     <string name="settings_source_title">Источник расписания</string>
     <string name="schedule_source_backup">Загружена резервная копия GitHub. Данные могут быть не самыми свежими.</string>
     <string name="settings_source_subtitle">Изменить ссылку для загрузки данных о маршрутах</string>
-    <string name="schedule_source_description">Укажите публичную HTTPS-ссылку на JSON расписания или на веб-приложение Google Apps Script с адресом /exec.</string>
-    <string name="schedule_source_url_label">Ссылка на расписание</string>
-    <string name="schedule_source_url_invalid">Введите корректную HTTPS-ссылку без логина и пароля.</string>
-    <string name="schedule_source_save">Сохранить и обновить</string>
-    <string name="schedule_source_reset">Вернуть стандартную ссылку</string>
-    <string name="schedule_source_checking">Проверяем источник…</string>
-    <string name="schedule_source_success">Ссылка сохранена, данные загружены.</string>
-    <string name="schedule_source_no_changes">Ссылка сохранена, расписание не изменилось.</string>
-    <string name="schedule_source_unavailable">Ссылка сохранена, но загрузить расписание не удалось. Проверьте адрес и подключение. Если есть сохранённая копия, она останется доступна.</string>
-    <string name="schedule_source_save_failed">Не удалось сохранить ссылку. Попробуйте ещё раз.</string>
     <string name="settings_schedule_notifications_title">Уведомления об изменениях расписания</string>
     <string name="settings_schedule_notifications_subtitle">Системные уведомления об изменениях в расписании</string>
     <string name="settings_menu_reset">Сброс до заводских настроек</string>
@@ -188,10 +179,10 @@
     <string name="settings_columns_subtitle">Настройка отображения списка и сетки</string>
     <string name="settings_appearance_title">Внешний вид</string>
     <string name="settings_appearance_subtitle">Тема приложения и количество колонок</string>
-    <string name="settings_schedule_updates_subtitle">Источник данных, время обновления и ручная загрузка</string>
+    <string name="settings_schedule_updates_subtitle">Состояние и проверка обновлений</string>
     <string name="schedule_notifications_section_title">Уведомления о расписании</string>
     <string name="schedule_notifications_section_subtitle">Исходящие системные уведомления будут приходить только когда приложение не открыто</string>
-    <string name="schedule_notifications_checkbox_title">Уведомления об изменениях расписания</string>
+    <string name="schedule_notifications_checkbox_title">Уведомлять об изменениях</string>
     <string name="schedule_notifications_checkbox_subtitle">При включении приложение попросит разрешение на системные уведомления об изменениях в расписании</string>
     <string name="notification_schedule_channel_name">Уведомления о расписании</string>
     <string name="notification_schedule_channel_description">Системные уведомления об изменениях в расписании автобусов</string>
@@ -235,10 +226,6 @@
     <string name="schedule_no_upcoming_departures">Нет предстоящих рейсов</string>
     <string name="schedule_time_soon">скоро</string>
     <string name="schedule_time_in_prefix">через %1$s</string>
-    <string name="schedule_time_already_departed">уже ушел</string>
-    <string name="schedule_time_minutes">%1$d мин</string>
-    <string name="schedule_time_hours">%1$d ч</string>
-    <string name="schedule_time_hours_minutes">%1$d ч %2$s мин</string>
     <string name="schedule_platform_prefix_label">Выход</string>
     <string name="schedule_day_weekday">Будни</string>
     <string name="schedule_day_weekend">Выходные</string>
@@ -338,8 +325,6 @@
     <string name="schedule_json_notes_key">примечания</string>
     <string name="route_header_city_suffix">город</string>
     <string name="route_header_intercity_suffix">межгород</string>
-    <string name="disclaimer_summary">Оно не является официальным приложением администрации города, перевозчиков или муниципальных организаций и не связано с ними.</string>
-    <string name="disclaimer_details">Подробнее об организациях</string>
     <string name="welcome_continue">Продолжить</string>
     <string name="welcome_finish">Начать пользоваться</string>
     <string name="welcome_community_title">Будьте в курсе новостей</string>
@@ -347,4 +332,12 @@
     <string name="welcome_thanks_title">Спасибо, что вы с нами!</string>
     <string name="welcome_thanks_text">Спасибо, что пользуетесь приложением «Поехали! Славгород». Поделитесь впечатлениями и оставьте отзыв в RuStore или Google Play — это поможет сделать приложение лучше.</string>
     <string name="welcome_link_failed">Не удалось открыть ссылку. Попробуйте ещё раз позже.</string>
+    <string name="settings_schedule_category">Расписание</string>
+    <string name="settings_schedule_category_description">Источники, обновления и уведомления</string>
+    <string name="schedule_backup_loading">Основной источник недоступен. Пробуем загрузить резервное расписание…</string>
+    <string name="schedule_backup_loaded_message">Основной источник недоступен. Загружено резервное расписание.</string>
+    <string name="schedule_backup_failed">Основной источник недоступен, резервный недоступен или не настроен. Расписание загрузить не удалось.</string>
+    <string name="schedule_primary_failed_saved">Основной источник недоступен. Используется сохранённая копия расписания.</string>
+    <string name="schedule_invalid_source_message">Источник вернул некорректное расписание. Проверьте источник и доступную копию.</string>
+    <string name="schedule_invalid_source_no_data">Основной источник вернул некорректное расписание. Резерв недоступен или не настроен; расписание загрузить не удалось.</string>
 </resources>

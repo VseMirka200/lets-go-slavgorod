@@ -21,15 +21,16 @@ data class BusRoute(
     val paymentMethods: String?
 ) {
 
+    /** Проверяет обязательные поля и записывает причины отказа в журнал. */
     fun isValid(): Boolean {
         return validateModel(
-            ValidationCheck(ValidationUtils.hasMeaningfulText(id), "Некорректный идентификатор маршрута: '$id'"),
+            ValidationCheck(ValidationUtils.isValidRouteId(id), "Некорректный идентификатор маршрута: '$id'"),
             ValidationCheck(
-                ValidationUtils.hasMeaningfulText(routeNumber),
+                ValidationUtils.isValidRouteNumber(routeNumber),
                 "Некорректный номер маршрута: '$routeNumber'"
             ),
             ValidationCheck(
-                ValidationUtils.hasTrimmedLengthAtLeast(name, 3),
+                ValidationUtils.isValidRouteName(name),
                 "Некорректное название маршрута: '$name'"
             ),
             ValidationCheck(

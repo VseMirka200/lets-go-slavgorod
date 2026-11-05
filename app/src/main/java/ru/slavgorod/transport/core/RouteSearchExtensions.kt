@@ -2,6 +2,7 @@ package ru.slavgorod.transport.core
 
 import ru.slavgorod.transport.data.model.BusRoute
 
+/** Ищет без учёта регистра по номеру, названию, описанию и остановкам маршрута. */
 fun List<BusRoute>.search(query: String): List<BusRoute> {
     if (query.isBlank()) return this
 

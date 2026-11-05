@@ -5,6 +5,7 @@ import java.util.Locale
 
 object TimeUtils {
 
+    /** Возвращает часы и минуты в формате с ведущими нулями. */
     fun formatTime(calendar: Calendar): String {
         return String.format(
             Locale.ROOT,
@@ -14,6 +15,7 @@ object TimeUtils {
         )
     }
 
+    /** Преобразует дни Calendar к нумерации от понедельника (1) до воскресенья (7). */
     fun getDayOfWeek(calendar: Calendar): Int {
         return when (val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)) {
             Calendar.MONDAY -> 1
@@ -27,6 +29,7 @@ object TimeUtils {
         }
     }
 
+    /** Считает выходными субботу и воскресенье без учёта праздничного календаря. */
     fun isWeekend(calendar: Calendar): Boolean {
         return when (calendar.get(Calendar.DAY_OF_WEEK)) {
             Calendar.SATURDAY, Calendar.SUNDAY -> true
@@ -34,6 +37,7 @@ object TimeUtils {
         }
     }
 
+    /** Вычитает время суток в минутах, не учитывая дату и переход через полночь. */
     fun getMinutesUntil(currentTime: Calendar, targetTime: Calendar): Int {
         return targetTime.minutesOfDay() - currentTime.minutesOfDay()
     }

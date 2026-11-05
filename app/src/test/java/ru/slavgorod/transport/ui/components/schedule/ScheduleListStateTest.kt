@@ -6,7 +6,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import ru.slavgorod.transport.data.model.BusSchedule
 import ru.slavgorod.transport.ui.model.DeparturePointSchedules
-import java.util.Calendar
 
 class ScheduleListStateTest {
 
@@ -69,8 +68,7 @@ class ScheduleListStateTest {
                 )
             ),
             filterState = ScheduleFilterState(null, null),
-            scheduleExtraLabelProvider = null,
-            currentTimeMillis = timeMillis(hour = 10, minute = 0)
+            scheduleExtraLabelProvider = null
         )
 
         assertEquals("09:30", displayState.upcomingEntries.single().inTransitSchedule?.departureTime)
@@ -142,8 +140,4 @@ class ScheduleListStateTest {
         )
     }
 
-    private fun timeMillis(hour: Int, minute: Int): Long = Calendar.getInstance().apply {
-        set(2026, Calendar.MAY, 15, hour, minute, 0)
-        set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
 }

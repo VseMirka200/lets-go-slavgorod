@@ -28,7 +28,6 @@ object PreferencesKeys {
     val scheduleDaySelectionMode = stringPreferencesKey("schedule_day_selection_mode")
     val scheduleNotificationsEnabled = booleanPreferencesKey("schedule_notifications_enabled")
     val appTheme = stringPreferencesKey("app_theme")
-    val remoteJsonUrl = stringPreferencesKey("remote_json_url")
 }
 
 fun <T> DataStore<Preferences>.stateInPreferences(

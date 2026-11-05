@@ -6,14 +6,15 @@
         </trust-anchors>
     </base-config>
 
-    <!-- Keep explicit GitHub domains, but avoid certificate pinning.
-         Hard pinning for third-party APIs can break release builds after cert rotation. -->
+    <!-- Домены GitHub указаны явно, но без привязки к сертификатам:
+         смена сертификата стороннего сервиса не должна нарушать работу приложения. -->
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">github.com</domain>
         <domain includeSubdomains="true">api.github.com</domain>
         <domain includeSubdomains="true">raw.githubusercontent.com</domain>
     </domain-config>
 
+    <!-- Пользовательские сертификаты доверяются только в отладочной сборке. -->
     <debug-overrides>
         <trust-anchors>
             <certificates src="system" />

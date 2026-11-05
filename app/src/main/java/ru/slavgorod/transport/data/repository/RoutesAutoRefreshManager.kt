@@ -1,5 +1,6 @@
 package ru.slavgorod.transport.data.repository
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -51,6 +52,7 @@ class RoutesAutoRefreshManager(
         if (refreshJob?.isActive == true) return
 
         refreshJob = scope.launch {
+            // Начальная загрузка выполняется репозиторием; таймер не повторяет её сразу.
             delay(Constants.SCHEDULE_AUTO_REFRESH_INTERVAL_MS)
 
             while (isActive) {
@@ -68,6 +70,7 @@ class RoutesAutoRefreshManager(
             connectionStateFlow
                 .distinctUntilChanged()
                 .collect { isOnline ->
+                    // Обновляем только при переходе из состояния без сети в состояние с сетью.
                     if (!wasOnline && isOnline) {
                         runRefreshSafely("Не удалось обновить расписание после восстановления сети")
                     }
@@ -77,9 +80,11 @@ class RoutesAutoRefreshManager(
     }
 
     private suspend fun runRefreshSafely(errorMessage: String) {
-        runCatching {
+        try {
             refreshAction()
-        }.onFailure { exception ->
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: Exception) {
             Timber.w(exception, errorMessage)
         }
     }

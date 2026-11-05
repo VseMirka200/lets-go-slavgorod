@@ -86,6 +86,6 @@ class DisplaySettingsViewModel(
         private const val MAX_GRID_COLUMNS = 4
         private const val DEFAULT_GRID_COLUMNS = 2
         private const val DEFAULT_SWAP_SCHEDULE_COLUMNS = false
-        private val DEFAULT_SCHEDULE_DAY_SELECTION_MODE = ScheduleDaySelectionMode.DAY_FIRST
+        private val DEFAULT_SCHEDULE_DAY_SELECTION_MODE = ScheduleDaySelectionMode.Default
     }
 }

@@ -12,7 +12,6 @@ internal data class ScheduleFilterState(
 
 internal data class ScheduleListDisplayState(
     val allSchedules: List<BusSchedule>,
-    val pointSections: List<ScheduleSectionDescriptor>,
     val upcomingEntries: List<UpcomingScheduleEntry>,
     val descriptionFilterLabels: List<String>,
     val departurePointFilterLabels: List<Pair<String, String>>,
@@ -21,11 +20,11 @@ internal data class ScheduleListDisplayState(
     val hasFilterControls: Boolean
 )
 
+/** Собирает фильтры, видимые секции и карточки ближайших рейсов для экрана. */
 internal fun buildScheduleListDisplayState(
     departurePoints: List<DeparturePointSchedules>,
     filterState: ScheduleFilterState,
-    scheduleExtraLabelProvider: ((BusSchedule) -> String?)?,
-    currentTimeMillis: Long = System.currentTimeMillis()
+    scheduleExtraLabelProvider: ((BusSchedule) -> String?)?
 ): ScheduleListDisplayState {
     val allSchedules = departurePoints.flatMap { it.schedules }
     val pointSections = departurePoints.mapIndexed { index, departurePoint ->
@@ -40,8 +39,7 @@ internal fun buildScheduleListDisplayState(
         buildUpcomingScheduleEntry(
             title = departurePoint.name,
             schedules = departurePoint.schedules,
-            nextUpcomingId = departurePoint.nextUpcomingId,
-            currentTimeMillis = currentTimeMillis
+            nextUpcomingId = departurePoint.nextUpcomingId
         )
     }
     val descriptionFilterLabels = buildDescriptionFilterLabels(
@@ -59,7 +57,6 @@ internal fun buildScheduleListDisplayState(
 
     return ScheduleListDisplayState(
         allSchedules = allSchedules,
-        pointSections = pointSections,
         upcomingEntries = upcomingEntries,
         descriptionFilterLabels = descriptionFilterLabels,
         departurePointFilterLabels = departurePointFilterLabels,
@@ -69,6 +66,7 @@ internal fun buildScheduleListDisplayState(
     )
 }
 
+/** Добавляет свободное место под коротким списком расписания. */
 internal fun resolveScheduleListBottomReserve(visibleSchedulesCount: Int): Dp {
     return when {
         visibleSchedulesCount <= 5 -> 120.dp
@@ -132,8 +130,7 @@ private fun matchesDescriptionFilter(
 private fun buildUpcomingScheduleEntry(
     title: String,
     schedules: List<BusSchedule>?,
-    nextUpcomingId: String?,
-    currentTimeMillis: Long
+    nextUpcomingId: String?
 ): UpcomingScheduleEntry? {
     if (schedules.isNullOrEmpty() || nextUpcomingId == null) return null
 
@@ -142,6 +139,7 @@ private fun buildUpcomingScheduleEntry(
     if (currentIndex < 0) return null
 
     val nextSchedule = sortedSchedules[currentIndex]
+    // Перед первым рейсом текущих суток предыдущим считается последний рейс списка.
     val inTransitSchedule = sortedSchedules.getOrNull(currentIndex - 1) ?: sortedSchedules.last()
 
     return UpcomingScheduleEntry(

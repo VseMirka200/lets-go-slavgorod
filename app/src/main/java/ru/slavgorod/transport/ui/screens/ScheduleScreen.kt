@@ -66,7 +66,7 @@ fun ScheduleScreen(
         initialValue = false
     )
     val scheduleDaySelectionMode by displaySettingsViewModel.scheduleDaySelectionMode
-        .collectAsStateWithLifecycle(initialValue = ScheduleDaySelectionMode.DAY_FIRST)
+        .collectAsStateWithLifecycle(initialValue = ScheduleDaySelectionMode.Default)
     val route = remember(routeId, uiState.routes) {
         uiState.routes.find { it.id == routeId }
     }
@@ -99,7 +99,8 @@ fun ScheduleScreen(
             value = ScheduleLoadState.Loaded(
                 buildScheduleScreenData(loadRouteSchedules(route, routeRepository))
             )
-        } catch (_: CancellationException) {
+        } catch (exception: CancellationException) {
+            throw exception
         } catch (exception: Exception) {
             Timber.tag("Schedule").e(exception, "Непредвиденная ошибка загрузки расписания")
             value = ScheduleLoadState.Loaded(ScheduleScreenData(emptyList()))
@@ -121,16 +122,12 @@ fun ScheduleScreen(
 
         else -> {
             val currentScheduleData = (loadState as ScheduleLoadState.Loaded).data
-            val liveScheduleData = remember(currentScheduleData, currentTimeTick) {
-                currentScheduleData.withCurrentTime(currentTimeTick)
-            }
             val scheduleUiState = ScheduleUiState(
                 route = route,
-                departurePoints = liveScheduleData.points.map { point ->
+                departurePoints = currentScheduleData.points.map { point ->
                     DeparturePointSchedules(
                         name = point.name,
-                        schedules = point.schedules,
-                        nextUpcomingId = point.nextUpcomingId
+                        schedules = point.schedules
                     )
                 }
             )

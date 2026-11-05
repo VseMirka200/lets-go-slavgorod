@@ -247,6 +247,35 @@ class RoutesTableDataSourceIntegrationTest {
         assertTrue(snapshot == null)
     }
 
+    @Test
+    fun `unchanged remote data is saved after an earlier write failure`() = runTest {
+        val json = """{"routes":[{"id":"1","routeNumber":"1","name":"Маршрут","description":"Маршрут","color":"#1976D2","schedules":[{"id":"1","departurePoint":"Центр","departureTime":"06:25"}]}]}"""
+        val fetcher = object : ScheduleFetcher {
+            override fun isOnline() = true
+            override suspend fun fetchWithRetry() = json
+        }
+        val delegate = ScheduleSnapshotRepository(cacheStore)
+        var writes = 0
+        val store = object : ScheduleSnapshotStore by delegate {
+            override suspend fun writeSnapshot(json: String) {
+                if (++writes == 1) throw IllegalStateException("Ошибка записи")
+                delegate.writeSnapshot(json)
+            }
+        }
+        val dataSource = RoutesTableDataSource(
+            context = context,
+            remoteScheduleFetcher = fetcher,
+            scheduleSnapshotRepository = store,
+            autoLoadOnInit = false
+        )
+
+        assertEquals(RoutesLoadState.SUCCESS, dataSource.refreshRoutesFromLocal())
+        assertEquals(null, cacheStore.readSnapshot())
+        assertEquals(RoutesLoadState.NO_CHANGES, dataSource.refreshRoutesFromLocal())
+        assertEquals(json, cacheStore.readSnapshot()?.json)
+        assertEquals(2, writes)
+    }
+
     private class TestFilesDirContext(
         baseContext: Context,
         private val filesDir: File

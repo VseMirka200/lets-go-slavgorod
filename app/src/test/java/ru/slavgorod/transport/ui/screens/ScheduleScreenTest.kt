@@ -3,7 +3,6 @@ package ru.slavgorod.transport.ui.screens
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import ru.slavgorod.transport.data.model.BusSchedule
-import java.util.Calendar
 
 class ScheduleScreenTest {
 
@@ -17,8 +16,7 @@ class ScheduleScreenTest {
         )
 
         val result = buildScheduleScreenData(
-            allSchedules = schedules,
-            currentTime = calendarAt0600()
+            allSchedules = schedules
         )
 
         assertEquals(4, result.points.size)
@@ -36,8 +34,7 @@ class ScheduleScreenTest {
         )
 
         val result = buildScheduleScreenData(
-            allSchedules = schedules,
-            currentTime = calendarAt0600()
+            allSchedules = schedules
         )
 
         assertEquals(listOf("Depot", "12"), result.points.map { it.name })
@@ -60,12 +57,4 @@ class ScheduleScreenTest {
         )
     }
 
-    private fun calendarAt0600(): Calendar {
-        return Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 6)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-    }
 }

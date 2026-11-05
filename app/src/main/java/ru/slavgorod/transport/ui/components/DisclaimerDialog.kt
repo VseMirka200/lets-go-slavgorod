@@ -5,7 +5,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,15 +19,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -121,16 +117,8 @@ private fun WelcomeTitle(step: WelcomeStep) {
 
 @Composable
 private fun NoticeContent(acknowledged: Boolean, onAcknowledgedChange: (Boolean) -> Unit) {
-    var expanded by rememberSaveable { mutableStateOf(false) }
     Text(stringResource(R.string.disclaimer_main_text), fontWeight = FontWeight.SemiBold)
-    Text(stringResource(R.string.disclaimer_summary), color = MaterialTheme.colorScheme.onSurfaceVariant)
-    TextButton(onClick = { expanded = !expanded }, contentPadding = PaddingValues(0.dp)) {
-        Text(stringResource(R.string.disclaimer_details), modifier = Modifier.weight(1f, fill = false))
-        Icon(if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null)
-    }
-    if (expanded) {
-        Text(stringResource(R.string.disclaimer_description_text), color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
+    Text(stringResource(R.string.disclaimer_description_text), color = MaterialTheme.colorScheme.onSurfaceVariant)
     Row(
         modifier = Modifier.fillMaxWidth().toggleable(
             value = acknowledged, role = Role.Checkbox, onValueChange = onAcknowledgedChange
