@@ -14,11 +14,13 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import ru.slavgorod.transport.data.local.ScheduleCacheStore
+import ru.slavgorod.transport.data.local.dataStore
 import ru.slavgorod.transport.data.repository.RemoteScheduleFetcher
 import ru.slavgorod.transport.data.repository.RoutesLoadState
 import ru.slavgorod.transport.data.repository.RoutesTableDataSource
 import ru.slavgorod.transport.data.repository.ScheduleDataSource
 import ru.slavgorod.transport.data.repository.ScheduleJsonParser
+import ru.slavgorod.transport.data.repository.ScheduleFetcher
 import ru.slavgorod.transport.domain.ResetAppDataUseCase
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.assertEquals
@@ -194,6 +196,21 @@ class RoutesTableDataSourceTest {
     }
 
     @Test
+    fun `google script error response preserves saved timetable`() = runTest {
+        cacheStore.clear()
+        val originalJson = buildRoutesJson()
+        cacheStore.writeSnapshot(originalJson)
+        server.enqueue(MockResponse().setResponseCode(200).setBody(
+            """{"error":"Таблица расписания содержит ошибки","details":"Рейсы, строка 2"}"""
+        ))
+        val repository = createRepository()
+
+        assertEquals(RoutesLoadState.EMPTY_OR_INVALID_JSON, repository.refreshRoutesFromLocal())
+        assertNotNull(repository.getRouteById("102"))
+        assertEquals(originalJson.trim(), cacheStore.readSnapshot()?.json)
+    }
+
+    @Test
     fun `checkRoutesForUpdates reports no changes when remote json is identical`() = runTest {
         cacheStore.clear()
         enqueueRoutesResponse()
@@ -336,9 +353,9 @@ class RoutesTableDataSourceTest {
         var scheduleIndexBuildCount = 0
             private set
 
-        override fun buildSchedulesIndex(jsonString: String): Map<String, List<ru.slavgorod.transport.data.model.BusSchedule>> {
+        override fun parseSnapshot(json: String): ru.slavgorod.transport.data.repository.ParsedScheduleSnapshot? {
             scheduleIndexBuildCount += 1
-            return super.buildSchedulesIndex(jsonString)
+            return super.parseSnapshot(json)
         }
     }
 }

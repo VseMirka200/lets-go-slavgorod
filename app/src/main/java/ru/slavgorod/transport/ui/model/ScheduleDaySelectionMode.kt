@@ -2,5 +2,9 @@ package ru.slavgorod.transport.ui.model
 
 enum class ScheduleDaySelectionMode {
     CLASSIC,
-    DAY_FIRST
+    DAY_FIRST;
+
+    companion object {
+        val Default = CLASSIC
+    }
 }

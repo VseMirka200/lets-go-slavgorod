@@ -3,6 +3,7 @@ package ru.slavgorod.transport.app.bootstrap
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import ru.slavgorod.transport.R
 import ru.slavgorod.transport.core.AppText
@@ -21,6 +22,12 @@ internal data class AppOverlaysConfig(
 )
 
 @Composable
+/**
+ * Показывает диалоги верхнего уровня и обрабатывает отложенную навигацию.
+ *
+ * Подсказка разработчику: задержка перед переходом даёт NavHost создать стартовый
+ * маршрут; не убирайте её без проверки ссылок, открывающих приложение извне.
+ */
 internal fun AppOverlays(config: AppOverlaysConfig) {
     if (config.showDisclaimerDialog) {
         DisclaimerDialog(
@@ -52,6 +59,8 @@ private fun HandlePendingNavigation(
                     navController.navigate(destination)
                 }
                 onHandled()
+            } catch (exception: CancellationException) {
+                throw exception
             } catch (e: Exception) {
                 Timber.e(e, AppText.get(R.string.navigation_error_route, routeId))
             }

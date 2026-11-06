@@ -2,7 +2,7 @@ package ru.slavgorod.transport.core
 
 object Constants {
 
-    const val APP_VERSION = "v3.0.2"
+    const val APP_VERSION = "v3.1.2"
     const val CARD_CORNER_RADIUS = 12
     const val SETTINGS_ITEM_SPACING = 12
     const val SETTINGS_HORIZONTAL_PADDING = 12
@@ -18,5 +18,4 @@ object Constants {
     const val SCHEDULE_AUTO_REFRESH_INTERVAL_MS = 30 * 60 * 1000L
     const val STATE_FLOW_TIMEOUT_MS = 5000L
     const val DATA_OPERATION_COMPLETION_DELAY_MS = 500L
-    const val ROUTES_MAX_CACHE_SIZE = 100
 }

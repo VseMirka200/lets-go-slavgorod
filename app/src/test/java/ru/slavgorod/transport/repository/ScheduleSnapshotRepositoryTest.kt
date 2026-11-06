@@ -11,6 +11,7 @@ import org.robolectric.RobolectricTestRunner
 import ru.slavgorod.transport.data.local.ScheduleCacheStore
 import ru.slavgorod.transport.data.repository.ScheduleSnapshotRepository
 import kotlin.test.assertFalse
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -57,5 +58,13 @@ class ScheduleSnapshotRepositoryTest {
         assertTrue(repository.hasSnapshot())
         assertNotNull(snapshot)
         assertTrue(snapshot.savedAtMillis > 0L)
+    }
+
+    @Test
+    fun `new snapshot replaces the old snapshot`() = runTest {
+        repository.writeSnapshot("""{"routes":[{"id":"old"}]}""")
+        repository.writeSnapshot("""{"routes":[{"id":"new"}]}""")
+
+        assertEquals("""{"routes":[{"id":"new"}]}""", repository.readSnapshot()?.json)
     }
 }

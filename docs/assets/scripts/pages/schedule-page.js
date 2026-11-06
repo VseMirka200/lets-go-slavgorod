@@ -1,8 +1,7 @@
 /**
- * Стандартная точка входа Google Apps Script, которая отдаёт JSON расписания.
- * Пользователь может переопределить её через query-параметр `source`.
+ * Адрес источника задаётся в data-schedule-source страницы расписания.
  */
-const DEFAULT_SCHEDULE_SOURCE = "https://raw.githubusercontent.com/VseMirka200/lets-go-slavgorod/main/schedule-data/schedule.json";
+const DEFAULT_SCHEDULE_SOURCE = document.body.dataset.scheduleSource;
 
 /**
  * Префикс для всех записей localStorage, связанных с кэшем расписания.
@@ -19,6 +18,7 @@ const SCHEDULE_DATE_FORMAT_OPTIONS = {
 
 let currentRouteQuery = "";
 let clearUpcomingStickyState = null;
+let productionNonWorkingDates = new Set();
 
 /**
  * Форматирует дату или timestamp в единый вид, принятый на странице расписания.
@@ -203,7 +203,8 @@ function readScheduleCache(sourceUrl) {
 
         return {
             routes: parsed.routes,
-            updatedAt: parsed.updatedAt || null
+            updatedAt: parsed.updatedAt || null,
+            productionCalendar: parsed.productionCalendar || null
         };
     } catch {
         return null;
@@ -213,7 +214,7 @@ function readScheduleCache(sourceUrl) {
 /**
  * Записывает нормализованный список маршрутов в localStorage для офлайн-доступа.
  */
-function writeScheduleCache(sourceUrl, routes, updatedAt) {
+function writeScheduleCache(sourceUrl, routes, updatedAt, productionCalendar = null) {
     if (!canUseStorage()) {
         return;
     }
@@ -221,7 +222,8 @@ function writeScheduleCache(sourceUrl, routes, updatedAt) {
     try {
         window.localStorage.setItem(getScheduleCacheKey(sourceUrl), JSON.stringify({
             routes,
-            updatedAt: updatedAt || new Date().toISOString()
+            updatedAt: updatedAt || new Date().toISOString(),
+            productionCalendar
         }));
     } catch {
         // Игнорируем переполнение хранилища и ограничения приватного режима.
@@ -323,6 +325,38 @@ function findNearestSchedule(schedules) {
         .sort((left, right) => left.minutes - right.minutes || left.index - right.index)[0].schedule;
 }
 
+function formatTimerDuration(durationMilliseconds) {
+    const totalSeconds = Math.max(0, Math.floor(durationMilliseconds / 1000));
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${hours ? `${hours}ч ` : ""}${minutes}м ${String(seconds).padStart(2, "0")}с`;
+}
+
+function getDepartureStatus(schedules) {
+    const now = new Date();
+    const parsed = schedules
+        .map((schedule, index) => ({ schedule, index, minutes: parseDepartureMinutes(schedule.departureTime) }))
+        .filter((item) => item.minutes !== null)
+        .sort((left, right) => left.minutes - right.minutes || left.index - right.index);
+    const departureDate = (item, dayOffset) => {
+        const departure = new Date(now);
+        departure.setHours(Math.floor(item.minutes / 60), item.minutes % 60, 0, 0);
+        departure.setDate(departure.getDate() + dayOffset);
+        return departure;
+    };
+    const next = parsed
+        .map((item) => ({ item, time: departureDate(item, departureDate(item, 0) > now ? 0 : 1) }))
+        .sort((left, right) => left.time - right.time)[0];
+    const inTransit = parsed
+        .map((item) => ({ item, time: departureDate(item, departureDate(item, 0) <= now ? 0 : -1) }))
+        .sort((left, right) => right.time - left.time)[0];
+    return {
+        inTransit: inTransit ? { schedule: inTransit.item.schedule, elapsedMilliseconds: now - inTransit.time } : null,
+        next: next ? { schedule: next.item.schedule, countdownMilliseconds: next.time - now } : null
+    };
+}
+
 const SCHEDULE_DAYS = [
     { key: "MONDAY", label: "Понедельник" },
     { key: "TUESDAY", label: "Вторник" },
@@ -338,9 +372,56 @@ function getTodayScheduleDay() {
     return SCHEDULE_DAYS[(dayIndex + 6) % SCHEDULE_DAYS.length].key;
 }
 
+/**
+ * Определяет, выполняется ли рейс в ближайшую дату выбранного дня недели.
+ * Учитывает период действия, включённые и исключённые даты, старое поле dayType
+ * и праздничные дни. Исключение имеет приоритет над включением.
+ * @param {object} schedule Рейс из источника расписания.
+ * @param {string} day Английский идентификатор дня недели, например MONDAY.
+ * @returns {boolean} Выполняется ли рейс в ближайшую выбранную дату.
+ */
 function scheduleRunsOnDay(schedule, day) {
-    const days = schedule.serviceCalendar?.daysOfWeek;
-    return !Array.isArray(days) || days.length === 0 || days.includes(day);
+    const today = new Date();
+    const dayIndex = SCHEDULE_DAYS.findIndex((item) => item.key === day);
+    if (dayIndex < 0) return false;
+    const currentIndex = (today.getDay() + 6) % 7;
+    today.setDate(today.getDate() + (dayIndex - currentIndex + 7) % 7);
+    const date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    const calendar = schedule.serviceCalendar;
+    const legacy = { weekday: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"], weekend: ["SATURDAY", "SUNDAY"], saturday: ["SATURDAY"], sunday: ["SUNDAY"] };
+    const aliases = { MON: "MONDAY", TUE: "TUESDAY", WED: "WEDNESDAY", THU: "THURSDAY", FRI: "FRIDAY", SAT: "SATURDAY", SUN: "SUNDAY" };
+    const days = calendar ? (Array.isArray(calendar.daysOfWeek) ? [...new Set(calendar.daysOfWeek.map((value) => aliases[String(value).trim().toUpperCase()] || String(value).trim().toUpperCase()).filter((value) => SCHEDULE_DAYS.some((item) => item.key === value)))] : null)
+        : (legacy[String(schedule.dayType || "").trim().toLowerCase()] || null);
+    const weekday = days?.length === 5 && ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"].every((value) => days.includes(value));
+    const weekend = days?.length === 2 && ["SATURDAY", "SUNDAY"].every((value) => days.includes(value));
+    const excluded = Array.isArray(calendar?.excludedDates) && calendar.excludedDates.includes(date);
+    const included = Array.isArray(calendar?.includedDates) && calendar.includedDates.includes(date);
+    const validFrom = parseCalendarDate(calendar?.validFrom);
+    const validUntil = parseCalendarDate(calendar?.validUntil);
+    if (excluded || (weekday && productionNonWorkingDates.has(date))) return false;
+    if ((validFrom && date < validFrom) || (validUntil && date > validUntil)) return false;
+    if (included || (weekend && productionNonWorkingDates.has(date))) return true;
+    return days === null || days.includes(day);
+}
+
+/**
+ * Проверяет дату календаря и сохраняет её в формате ГГГГ-ММ-ДД.
+ * @param {unknown} value Значение из внешнего источника.
+ * @returns {string|null} Проверенная дата или null при неверном формате и дне.
+ */
+function parseCalendarDate(value) {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+    const date = new Date(`${value}T00:00:00Z`);
+    return Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value ? null : value;
+}
+
+/**
+ * Заменяет набор праздничных дат, используемый при фильтрации рейсов.
+ * Отсутствующий календарь означает пустой набор, а не сохранение старых дат.
+ * @param {object|null|undefined} calendar Календарь из ответа источника или кэша.
+ */
+function setProductionCalendar(calendar) {
+    productionNonWorkingDates = new Set(Object.values(calendar?.years || {}).flatMap((year) => Array.isArray(year?.nonWorkingDates) ? year.nonWorkingDates : []));
 }
 
 function getDayLabel(day) {
@@ -364,19 +445,31 @@ function buildDayPicker(selectedDay) {
     `;
 }
 
+/**
+ * Формирует карточку ближайших отправлений по сегодняшним рейсам.
+ * Данные, вставляемые в разметку, экранируются до передачи в innerHTML.
+ * @param {object[]} schedules Все рейсы выбранного маршрута.
+ * @returns {string} Разметка карточки или пустая строка, если рейсов нет.
+ */
 function buildUpcomingCard(schedules) {
     const todaySchedules = schedules.filter((schedule) => scheduleRunsOnDay(schedule, getTodayScheduleDay()));
     const groups = groupSchedulesByDeparturePoint(todaySchedules);
     const entries = groups.map((group) => {
-        const next = findNearestSchedule(group.schedules);
-        if (!next) return "";
-        return `<li><strong>${escapeHtml(next.departureTime || "—")}</strong><span>${escapeHtml(group.label)}</span></li>`;
+        const { inTransit, next } = getDepartureStatus(group.schedules);
+        if (!inTransit && !next) return "";
+        const transitColumn = inTransit
+            ? `<div class="schedule-upcoming-time"><strong>${escapeHtml(inTransit.schedule.departureTime || "—")}</strong><span>${formatTimerDuration(inTransit.elapsedMilliseconds)}</span></div>`
+            : `<div class="schedule-upcoming-time schedule-upcoming-time--empty"><span>Нет автобуса в пути</span></div>`;
+        const nextColumn = next
+            ? `<div class="schedule-upcoming-time"><strong>${escapeHtml(next.schedule.departureTime || "—")}</strong><span>${formatTimerDuration(next.countdownMilliseconds)}</span></div>`
+            : `<div class="schedule-upcoming-time schedule-upcoming-time--empty"><span>Сегодня отправлений нет</span></div>`;
+        return `<li><span class="schedule-upcoming-point">${escapeHtml(group.label)}</span><div class="schedule-upcoming-times">${transitColumn}${nextColumn}</div></li>`;
     }).filter(Boolean).join("");
 
     if (!entries) return "";
     return `
-        <section class="schedule-upcoming-card" aria-label="Ближайшие отправления">
-            <div><span>Ближайшие отправления</span><small>${getDayLabel(getTodayScheduleDay())}</small></div>
+        <section class="schedule-upcoming-card" aria-label="Ближайшее отправление">
+            <div><span>Ближайшее отправление</span><small>${getDayLabel(getTodayScheduleDay())}</small></div>
             <ul>${entries}</ul>
         </section>
     `;
@@ -536,7 +629,7 @@ function buildRouteDetailCard(route, selectedDay = getTodayScheduleDay()) {
                     <span>Время в пути: ${travelTime}</span>
                     <span>Стоимость: ${pricePrimary}${route.priceSecondary ? ` / ${priceSecondary}` : ""}</span>
                     <span>Способ оплаты: ${paymentMethods}</span>
-                    <span>Маршрут: ${route.name || `Автобус №${routeNumber}`}</span>
+                    <span>Маршрут: ${route.name ? title : `Автобус №${routeNumber}`}</span>
                 </div>
                 ${description ? `<p class="schedule-route-description">${description}</p>` : ""}
             </header>
@@ -568,15 +661,51 @@ function renderRoutes(routes, container, detailMode = false, selectedDay = getTo
 }
 
 /**
- * Загружает опубликованный JSON-файл расписания из GitHub.
+ * Загружает JSON или публичный Google Apps Script. JSONP используется только
+ * для явно настроенного доверенного адреса script.google.com, не из URL страницы.
  */
 async function loadScheduleData() {
+    const url = new URL(DEFAULT_SCHEDULE_SOURCE);
+    if (url.protocol !== "https:") {
+        throw new Error("Источник расписания должен использовать HTTPS");
+    }
+    if (url.hostname === "script.google.com" && /^\/macros\/s\/[^/]+\/exec$/.test(url.pathname)) {
+        return loadGoogleSchedule(url);
+    }
     const response = await fetch(DEFAULT_SCHEDULE_SOURCE, { cache: "no-store" });
     if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
     }
 
     return response.json();
+}
+
+function loadGoogleSchedule(url) {
+    return new Promise((resolve, reject) => {
+        const callbackName = `scheduleJsonp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const script = document.createElement("script");
+        let timeout;
+        const cleanup = () => {
+            window.clearTimeout(timeout);
+            delete window[callbackName];
+            script.remove();
+        };
+        window[callbackName] = (payload) => {
+            cleanup();
+            resolve(payload);
+        };
+        script.onerror = () => {
+            cleanup();
+            reject(new Error("Не удалось загрузить источник расписания"));
+        };
+        url.searchParams.set("callback", callbackName);
+        script.src = url.toString();
+        timeout = window.setTimeout(() => {
+            cleanup();
+            reject(new Error("Время ожидания источника расписания истекло"));
+        }, 15_000);
+        document.head.appendChild(script);
+    });
 }
 
 /**
@@ -588,10 +717,12 @@ function setupSchedulePage() {
     const searchInput = document.getElementById("schedule-search");
     const loadStateLabel = document.getElementById("schedule-load-state");
     const updatedAtLabel = document.getElementById("schedule-updated-at");
+    const sourceLink = document.querySelector("[data-schedule-source-link]");
 
     if (!results || !statusMessage || !searchInput || !loadStateLabel || !updatedAtLabel) {
         return;
     }
+    if (sourceLink && DEFAULT_SCHEDULE_SOURCE) sourceLink.href = DEFAULT_SCHEDULE_SOURCE;
 
     // Параметр route открывает конкретный маршрут из единого файла расписания.
     const params = new URLSearchParams(window.location.search);
@@ -644,6 +775,7 @@ function setupSchedulePage() {
         const cached = readScheduleCache(DEFAULT_SCHEDULE_SOURCE);
 
         if (cached) {
+            setProductionCalendar(cached.productionCalendar);
             allRoutes = sortRoutes(cached.routes.map((route) => ({
                 ...route,
                 schedules: Array.isArray(route.schedules) ? route.schedules : []
@@ -656,7 +788,7 @@ function setupSchedulePage() {
             applyFilter();
         } else {
             loadStateLabel.textContent = "Загрузка...";
-            statusMessage.textContent = "Загружаем расписание из GitHub...";
+            statusMessage.textContent = "Загружаем расписание...";
             results.innerHTML = "";
         }
 
@@ -666,29 +798,36 @@ function setupSchedulePage() {
                 return;
             }
             const routes = sortRoutes(parseRoutesPayload(payload).filter(Boolean));
+            if (!routes.length) {
+                throw new Error("Источник не вернул корректное расписание");
+            }
 
+            setProductionCalendar(payload?.productionCalendar);
             allRoutes = routes.map((route) => ({
                 ...route,
                 schedules: Array.isArray(route.schedules) ? route.schedules : []
             }));
 
             const nowIso = new Date().toISOString();
-            writeScheduleCache(DEFAULT_SCHEDULE_SOURCE, allRoutes, nowIso);
+            writeScheduleCache(DEFAULT_SCHEDULE_SOURCE, allRoutes, nowIso, payload?.productionCalendar || null);
             updateTimestamp();
             loadStateLabel.textContent = `Загружено: ${allRoutes.length}`;
             applyFilter();
         } catch (error) {
+            if (loadToken !== activeLoadToken) {
+                return;
+            }
             if (cached) {
                 loadStateLabel.textContent = `Загружено: ${allRoutes.length}`;
                 return;
             }
             loadStateLabel.textContent = "Ошибка загрузки";
-            statusMessage.textContent = "Не удалось получить расписание из GitHub.";
+            statusMessage.textContent = "Не удалось получить расписание.";
             results.innerHTML = `
                 <div class="schedule-empty-state schedule-empty-state-error">
                     <strong>Источник недоступен</strong>
                     <p>Попробуйте обновить страницу позже.</p>
-                    <p class="schedule-error-detail">${escapeHtml(error.message || "unknown error")}</p>
+                    <p class="schedule-error-detail">${escapeHtml(error.message || "неизвестная ошибка")}</p>
                 </div>
             `;
         }
@@ -714,6 +853,24 @@ function setupSchedulePage() {
         selectedScheduleDay = dayButton.dataset.scheduleDay || getTodayScheduleDay();
         applyFilter();
     });
+    let lastRefreshMinute = Math.floor(Date.now() / 60_000);
+    window.setInterval(() => {
+        const minute = Math.floor(Date.now() / 60_000);
+        if (!currentRouteQuery || !allRoutes.length) return;
+        if (minute !== lastRefreshMinute) {
+            lastRefreshMinute = minute;
+            applyFilter();
+            return;
+        }
+        const route = allRoutes.find((item) => routeMatchesQuery(item, currentRouteQuery));
+        const list = results.querySelector(".schedule-upcoming-card ul");
+        if (route && list) {
+            const template = document.createElement("template");
+            template.innerHTML = buildUpcomingCard(route.schedules || []);
+            const updatedList = template.content.querySelector("ul");
+            if (updatedList) list.replaceChildren(...updatedList.childNodes);
+        }
+    }, 1_000);
     load();
 }
 

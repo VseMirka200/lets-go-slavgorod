@@ -10,6 +10,7 @@ import ru.slavgorod.transport.data.repository.ScheduleDataSource
 import ru.slavgorod.transport.data.repository.ScheduleDataSourceStatus
 import ru.slavgorod.transport.domain.util.DateTimeFormatterUtils
 
+/** Сортирует номера по числовой части, затем по буквенному окончанию. */
 internal fun arrangeRoutesForDisplay(routes: List<BusRoute>): List<BusRoute> {
     if (routes.isEmpty()) return routes
 
@@ -96,6 +97,7 @@ internal fun buildRefreshUiMessage(
     }
 }
 
+/** Завершает ожидание только если маршруты к моменту тайм-аута ещё не загружены. */
 internal fun resolveInitialLoadTimeoutState(
     currentState: RoutesUiState,
     timeoutErrorMessage: String
@@ -152,6 +154,7 @@ internal fun buildRoutesUiState(
 }
 
 private fun String.routeNumberSortKey(): RouteNumberSortKey {
+    // Номера без начальной числовой части располагаются после числовых.
     val trimmed = trim()
     val match = ROUTE_NUMBER_REGEX.find(trimmed) ?: return RouteNumberSortKey(
         numberPart = Int.MAX_VALUE,

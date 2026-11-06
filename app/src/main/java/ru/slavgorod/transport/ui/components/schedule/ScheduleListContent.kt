@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import ru.slavgorod.transport.R
 import ru.slavgorod.transport.data.model.BusRoute
 import ru.slavgorod.transport.data.model.BusSchedule
-import ru.slavgorod.transport.data.model.ScheduleChange
 import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Locale
@@ -69,7 +68,6 @@ internal data class ScheduleListFilterCallbacks(
 internal fun ScheduleListScaffold(
     route: BusRoute,
     routeRemarkText: String?,
-    scheduleChanges: List<ScheduleChange>,
     selectedDay: DayOfWeek?,
     isDaySelected: Boolean,
     isDaySelectionScreen: Boolean,
@@ -102,7 +100,11 @@ internal fun ScheduleListScaffold(
         ScheduleTitleBar(route = route, onBackClick = onBackClick, actions = {
             onShareClick?.let { share ->
                 AppIconButton(onClick = share) {
-                    Icon(Icons.Default.Share, contentDescription = "Поделиться маршрутом")
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Поделиться маршрутом",
+                        tint = Color.White
+                    )
                 }
             }
         })
@@ -146,7 +148,6 @@ internal fun ScheduleListScaffold(
                     scheduleStickyHeader(
                         route = route,
                         routeRemarkText = routeRemarkText,
-                        scheduleChanges = scheduleChanges,
                         displayState = displayState,
                         layout = layout,
                         currentTimeMillis = currentTimeMillis,
@@ -196,7 +197,6 @@ private fun scheduleListContentPadding(
 private fun LazyListScope.scheduleStickyHeader(
     route: BusRoute,
     routeRemarkText: String?,
-    scheduleChanges: List<ScheduleChange>,
     displayState: ScheduleListDisplayState,
     layout: ScheduleResponsiveLayoutSpec,
     currentTimeMillis: Long,
@@ -212,18 +212,6 @@ private fun LazyListScope.scheduleStickyHeader(
             routeRemarkText = routeRemarkText,
             layout = layout
         )
-    }
-
-    if (scheduleChanges.isNotEmpty()) {
-        item(key = "schedule_changes") {
-            ScheduleChangesCard(
-                changes = scheduleChanges,
-                modifier = Modifier.padding(
-                    horizontal = layout.section.sectionHorizontalPadding,
-                    vertical = layout.section.sectionVerticalSpacing
-                )
-            )
-        }
     }
 
     if (isDaySelected && displayState.upcomingEntries.isNotEmpty()) {

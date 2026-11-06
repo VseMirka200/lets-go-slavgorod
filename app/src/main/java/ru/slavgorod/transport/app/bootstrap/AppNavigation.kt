@@ -21,6 +21,12 @@ import ru.slavgorod.transport.ui.viewmodel.RoutesViewModel
 import ru.slavgorod.transport.ui.viewmodel.ThemeViewModel
 
 @Composable
+/**
+ * Описывает единый граф экранов приложения.
+ *
+ * Подсказка разработчику: RoutesViewModel передаётся как общий экземпляр, чтобы
+ * возвращение со страницы расписания не запускало загрузку маршрутов заново.
+ */
 fun AppNavHost(
     navController: NavHostController,
     routesStatusMessage: String?,

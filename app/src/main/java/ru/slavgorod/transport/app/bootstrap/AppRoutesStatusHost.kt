@@ -9,6 +9,7 @@ import ru.slavgorod.transport.R
 import ru.slavgorod.transport.domain.util.DateTimeFormatterUtils
 import ru.slavgorod.transport.ui.model.UiMessage
 import ru.slavgorod.transport.ui.viewmodel.RoutesUiState
+import ru.slavgorod.transport.data.repository.RoutesLoadState
 
 private const val HEADER_STATUS_MESSAGE_DURATION_MS = 5_000L
 
@@ -38,6 +39,16 @@ internal fun rememberRoutesStatusMessage(
             stringResourceForArgs(textResId, message.textArgs)
         }
     }
+    val sourceStatusMessage = when (routesUiState.dataSourceStatus.loadState) {
+        RoutesLoadState.NETWORK_ERROR_WITH_SAVED_COPY -> stringResource(R.string.schedule_primary_failed_saved)
+        RoutesLoadState.NETWORK_ERROR -> stringResource(R.string.schedule_refresh_failed)
+        RoutesLoadState.EMPTY_OR_INVALID_JSON -> if (routesUiState.routes.isEmpty()) {
+            stringResource(R.string.schedule_invalid_source_no_data)
+        } else {
+            stringResource(R.string.schedule_invalid_source_message)
+        }
+        else -> null
+    }
 
     LaunchedEffect(routesUiMessage?.id) {
         if (routesUiMessage != null) {
@@ -49,6 +60,7 @@ internal fun rememberRoutesStatusMessage(
     return remember(
         routesUiMessage?.id,
         routesUiMessageText,
+        sourceStatusMessage,
         isConnected,
         routesUiState.dataSourceStatus.lastUpdatedAtMillis,
         routesUiState.dataSourceStatus.loadState,
@@ -60,7 +72,8 @@ internal fun rememberRoutesStatusMessage(
             routesUiState = routesUiState,
             offlineNoDataMessage = offlineNoDataMessage,
             offlineCopyDateKnown = offlineCopyDateKnown,
-            offlineCopyDateUnknown = offlineCopyDateUnknown
+            offlineCopyDateUnknown = offlineCopyDateUnknown,
+            sourceStatusMessage = sourceStatusMessage
         )
     }
 }

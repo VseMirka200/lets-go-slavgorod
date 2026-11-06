@@ -8,7 +8,7 @@
 
 [`gradle-daemon-jvm.properties`](../gradle/gradle-daemon-jvm.properties)
 задаёт JDK 21 для Gradle daemon; Wrapper может загрузить её автоматически.
-JDK 17, настраиваемая workflow, не отменяет это требование daemon.
+Workflow GitHub Actions также настраивает JDK 21.
 Для проверки расписания используется Node.js 22.
 
 Путь к Android SDK задавайте через локальное окружение или `local.properties`.
@@ -20,10 +20,11 @@ JDK 17, настраиваемая workflow, не отменяет это тре
 
 ```bash
 ./gradlew --no-daemon testDebugUnitTest lintDebug detekt assembleDebug
-node tools/validate-schedule-data.mjs schedule-data/schedule.json
+node --test tools/*.test.mjs
+python tools/check-links.py
 ```
 
-В Windows используйте `gradlew.bat`.
+В Windows используйте `./gradlew` через Git Bash или WSL.
 Debug APK создаётся в `app/build/outputs/apk/debug/`; его applicationId
 имеет суффикс `.debug`. Это отдельная сборка для разработки.
 
@@ -34,8 +35,8 @@ Debug APK создаётся в `app/build/outputs/apk/debug/`; его applicati
 | `app/src/main/java/ru/slavgorod/transport/` | Kotlin-код приложения |
 | `app/src/test/` | Unit-тесты |
 | `app/src/androidTest/` | Инструментальные и UI-тесты |
-| `schedule-data/` | JSON расписания |
-| `tools/` | Проверка расписания |
+| `docs/guides/SCHEDULE_DATA.md` | Источник и процесс публикации расписания |
+| `tools/` | Тесты сайта и проверка опубликованного расписания |
 | `.github/workflows/` | CI и анализ безопасности |
 | `docs/` | Сайт и документация |
 

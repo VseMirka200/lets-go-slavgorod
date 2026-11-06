@@ -101,7 +101,7 @@ class BusRouteCardTest {
     }
 
     @Test
-    fun busRouteCard_listMode_displaysSeparator() {
+    fun busRouteCard_listMode_displaysRouteNumberAndName() {
         composeTestRule.setContent {
             LetsGoSlavgorodTheme {
                 BusRouteCard(
@@ -113,7 +113,7 @@ class BusRouteCardTest {
         }
 
         composeTestRule
-            .onNodeWithText("•")
+            .onNodeWithText(sampleRoute.routeNumber)
             .assertIsDisplayed()
 
         composeTestRule

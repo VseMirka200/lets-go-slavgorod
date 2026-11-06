@@ -12,7 +12,6 @@ internal data class ScheduleFilterState(
 
 internal data class ScheduleListDisplayState(
     val allSchedules: List<BusSchedule>,
-    val pointSections: List<ScheduleSectionDescriptor>,
     val upcomingEntries: List<UpcomingScheduleEntry>,
     val descriptionFilterLabels: List<String>,
     val departurePointFilterLabels: List<Pair<String, String>>,
@@ -21,6 +20,7 @@ internal data class ScheduleListDisplayState(
     val hasFilterControls: Boolean
 )
 
+/** Собирает фильтры, видимые секции и карточки ближайших рейсов для экрана. */
 internal fun buildScheduleListDisplayState(
     departurePoints: List<DeparturePointSchedules>,
     filterState: ScheduleFilterState,
@@ -57,7 +57,6 @@ internal fun buildScheduleListDisplayState(
 
     return ScheduleListDisplayState(
         allSchedules = allSchedules,
-        pointSections = pointSections,
         upcomingEntries = upcomingEntries,
         descriptionFilterLabels = descriptionFilterLabels,
         departurePointFilterLabels = departurePointFilterLabels,
@@ -67,6 +66,7 @@ internal fun buildScheduleListDisplayState(
     )
 }
 
+/** Добавляет свободное место под коротким списком расписания. */
 internal fun resolveScheduleListBottomReserve(visibleSchedulesCount: Int): Dp {
     return when {
         visibleSchedulesCount <= 5 -> 120.dp
@@ -138,16 +138,13 @@ private fun buildUpcomingScheduleEntry(
     val currentIndex = sortedSchedules.indexOfFirst { it.id == nextUpcomingId }
     if (currentIndex < 0) return null
 
-    val currentSchedule = sortedSchedules[currentIndex]
-    val nextDepartureTime = when {
-        sortedSchedules.size <= 1 -> null
-        currentIndex < sortedSchedules.lastIndex -> sortedSchedules[currentIndex + 1].departureTime
-        else -> sortedSchedules.firstOrNull()?.departureTime
-    }
+    val nextSchedule = sortedSchedules[currentIndex]
+    // Перед первым рейсом текущих суток предыдущим считается последний рейс списка.
+    val inTransitSchedule = sortedSchedules.getOrNull(currentIndex - 1) ?: sortedSchedules.last()
 
     return UpcomingScheduleEntry(
         title = title,
-        schedule = currentSchedule,
-        nextDepartureTime = nextDepartureTime
+        inTransitSchedule = inTransitSchedule,
+        nextSchedule = nextSchedule
     )
 }

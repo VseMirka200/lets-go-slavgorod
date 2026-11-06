@@ -56,7 +56,7 @@ val appModule = module {
             remoteScheduleFetcher = get(),
             scheduleSnapshotRepository = get(),
             scheduleJsonParser = get(),
-            externalScope = get<ApplicationCoroutineScope>().scope
+            externalScope = get<ApplicationCoroutineScope>().scope,
         )
     }
     single {

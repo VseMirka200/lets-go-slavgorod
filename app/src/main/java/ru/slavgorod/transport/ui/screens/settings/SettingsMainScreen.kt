@@ -1,8 +1,10 @@
 package ru.slavgorod.transport.ui.screens.settings
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -27,9 +29,6 @@ import ru.slavgorod.transport.logging.UserActionLogger
 import ru.slavgorod.transport.ui.components.settings.SettingsMenuRow
 import ru.slavgorod.transport.ui.components.settings.SettingsScreenScaffold
 import ru.slavgorod.transport.ui.viewmodel.ThemeViewModel
-
-private const val DONATION_URL = "https://pay.cloudtips.ru/p/1fa22ea5"
-private const val OPEN_DONATION_FAILED = "Failed to open donation page"
 
 @Composable
 fun SettingsMainScreen(
@@ -94,18 +93,24 @@ fun SettingsMainScreen(
             entries = settingsEntries,
             onEntryClick = { entry ->
                 UserActionLogger.settingsEntryOpened(entry.title)
-                when (entry.modalSheet) {
-                    SettingsModalSheet.SUPPORT -> {
-                        context.openExternalUrl(
-                            url = DONATION_URL,
-                            failureLogMessage = OPEN_DONATION_FAILED
-                        )
+                when (val destination = entry.destination) {
+                    is SettingsDestination.Website -> {
+                        if (!context.openExternalUrl(
+                                destination.url,
+                                "Не удалось открыть страницу сайта"
+                            )
+                        ) {
+                            Toast.makeText(
+                                context,
+                                R.string.welcome_link_failed,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
 
-                    null -> Unit
-                    else -> {
+                    is SettingsDestination.Sheet -> {
                         UserActionLogger.action(R.string.settings_open_section_format, entry.title)
-                        activeSheet = entry.modalSheet
+                        activeSheet = destination.sheet
                     }
                 }
             },
@@ -149,19 +154,23 @@ internal fun SettingsContent(
     onEntryClick: (SettingsEntry) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .padding(all = Constants.SETTINGS_SCREEN_EDGE_PADDING.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        entries.forEach { entry ->
-            SettingsMenuRow(
-                title = entry.title,
-                subtitle = entry.subtitle,
-                icon = entry.icon,
-                onClick = { onEntryClick(entry) }
-            )
+    Column(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(all = Constants.SETTINGS_SCREEN_EDGE_PADDING.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            entries.forEach { entry ->
+                SettingsMenuRow(
+                    title = entry.title,
+                    subtitle = entry.subtitle,
+                    icon = entry.icon,
+                    onClick = { onEntryClick(entry) }
+                )
+            }
         }
     }
 }

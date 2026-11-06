@@ -8,6 +8,15 @@ plugins {
     alias(libs.plugins.detekt)
 }
 
+val scheduleSourceUrl = providers.gradleProperty("scheduleSourceUrl")
+    .orElse(providers.environmentVariable("SCHEDULE_SOURCE_URL"))
+    .orElse("https://script.google.com/macros/s/AKfycbzus49Rc3LBZPDNcwqGteLHFViRCV9nItnX5PgvSkqSiId3mVxg1tp--7o4Cre2Mv40GA/exec")
+    .get()
+require(scheduleSourceUrl.startsWith("https://") && !scheduleSourceUrl.contains('"') &&
+    !scheduleSourceUrl.contains('\\') && !scheduleSourceUrl.contains('\n') && !scheduleSourceUrl.contains('\r')) {
+    "scheduleSourceUrl должен быть HTTPS-адресом без кавычек и переносов строк"
+}
+
 android {
     namespace = "ru.slavgorod.transport"
     compileSdk = 36
@@ -16,11 +25,12 @@ android {
         applicationId = "ru.slavgorod.transport"
         minSdk = 24
         targetSdk = 36
-        versionCode = 30002
-        versionName = "3.0.2"
+        versionCode = 30102
+        versionName = "3.1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
+        buildConfigField("String", "SCHEDULE_SOURCE_URL", "\"$scheduleSourceUrl\"")
 
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
@@ -42,9 +52,9 @@ android {
                 keyPassword = releaseSigningCredentials.keyPassword
             } else if (project.isReleaseSigningRequested()) {
                 throw GradleException(
-                    "Release signing configuration is missing. " +
-                        "Set KEYSTORE_PATH/KEYSTORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD " +
-                        "or android.injected.signing.* before assembling a release build."
+                    "Отсутствует конфигурация подписи релизной сборки. " +
+                        "Задайте KEYSTORE_PATH/KEYSTORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD " +
+                        "или android.injected.signing.* перед сборкой релиза."
                 )
             } else {
                 storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
@@ -97,6 +107,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     lint {
@@ -123,6 +134,7 @@ kotlin {
         )
     }
 }
+
 
 dependencies {
     implementation(libs.androidx.core.ktx)

@@ -24,6 +24,7 @@ internal object RoutesJsonContract {
     const val ROUTE_PRICE_SECONDARY = "priceSecondary"
     const val ROUTE_PAYMENT_METHODS = "paymentMethods"
     const val ROUTE_REMARK = "remark"
+    const val ROUTE_STOPS = "stops"
     const val ROUTE_SCHEDULES = "schedules"
 
     const val SCHEDULE_ID = "id"
@@ -40,5 +41,9 @@ internal object RoutesJsonContract {
     const val SCHEDULE_PLATFORM = "platform"
     const val SCHEDULE_NOTES = "notes"
     const val SCHEDULE_REMARK = "remark"
+    const val SCHEDULE_LEGACY_NOTE = "note"
+    const val SCHEDULE_LEGACY_REMARKS = "remarks"
+    const val SCHEDULE_RUSSIAN_NOTE = "примечание"
+    const val SCHEDULE_RUSSIAN_NOTES = "примечания"
 
 }

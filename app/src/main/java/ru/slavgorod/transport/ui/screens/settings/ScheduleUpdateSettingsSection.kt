@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -43,7 +44,9 @@ import ru.slavgorod.transport.ui.viewmodel.resolveScheduleStatusLabel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ScheduleUpdateSettingsSection(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    topPadding: Dp = Constants.SETTINGS_SCREEN_EDGE_PADDING.dp,
+    embedded: Boolean = false
 ) {
     val repository: RoutesTableDataSource = koinInject()
 
@@ -83,10 +86,10 @@ internal fun ScheduleUpdateSettingsSection(
         modifier = modifier
             .fillMaxWidth()
             .padding(
-                start = Constants.SETTINGS_SCREEN_EDGE_PADDING.dp,
-                top = Constants.SETTINGS_SCREEN_EDGE_PADDING.dp,
-                end = Constants.SETTINGS_SCREEN_EDGE_PADDING.dp,
-                bottom = 24.dp
+                start = if (embedded) 0.dp else Constants.SETTINGS_SCREEN_EDGE_PADDING.dp,
+                top = topPadding,
+                end = if (embedded) 0.dp else Constants.SETTINGS_SCREEN_EDGE_PADDING.dp,
+                bottom = if (embedded) 0.dp else 24.dp
             ),
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {

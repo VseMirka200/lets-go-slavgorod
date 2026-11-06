@@ -24,7 +24,10 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
-      - name: Test schedule validator
-        run: node --test tools/validate-schedule-data.test.mjs
-      - name: Validate bundled schedule JSON
-        run: node tools/validate-schedule-data.mjs schedule-data/schedule.json
+      - name: Test published schedule validator
+        run: node --test tools/validate-published-schedule.test.mjs
+      - name: Validate published source on demand
+        if: github.event_name == 'workflow_dispatch'
+        run: >-
+          node tools/validate-published-schedule.mjs
+          'https://script.google.com/macros/s/AKfycbzus49Rc3LBZPDNcwqGteLHFViRCV9nItnX5PgvSkqSiId3mVxg1tp--7o4Cre2Mv40GA/exec'

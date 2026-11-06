@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import ru.slavgorod.transport.data.model.BusSchedule
-import ru.slavgorod.transport.data.model.ScheduleChange
 import ru.slavgorod.transport.domain.util.UpcomingScheduleResolver
 import ru.slavgorod.transport.logging.UserActionLogger
 import ru.slavgorod.transport.ui.model.ScheduleUiState
@@ -30,16 +29,21 @@ import java.time.ZoneId
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
+/**
+ * Отрисовывает расписание по пунктам отправления и выбранному дню.
+ *
+ * Подсказка разработчику: remember должен зависеть от времени и даты, иначе статус
+ * ближайшего рейса не обновится после смены минуты или полуночи.
+ */
 fun ScheduleList(
     scheduleState: ScheduleUiState,
     swapScheduleColumns: Boolean = false,
-    daySelectionMode: ScheduleDaySelectionMode = ScheduleDaySelectionMode.DAY_FIRST,
+    daySelectionMode: ScheduleDaySelectionMode = ScheduleDaySelectionMode.Default,
     onBackClick: (() -> Unit)? = null,
     onShareClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(bottom = 24.dp),
     currentTimeMillis: Long = System.currentTimeMillis(),
-    scheduleChanges: List<ScheduleChange> = emptyList(),
     scheduleExtraLabelProvider: ((BusSchedule) -> String?)? = null
 ) {
     val sectionCollapseStates = remember { mutableStateMapOf<String, Boolean>() }
@@ -73,23 +77,17 @@ fun ScheduleList(
     }
     val displayedDeparturePoints = remember(
         scheduleState.departurePoints,
+        upcomingDeparturePoints,
         selectedDate,
-        todayDate,
-        currentTimeMillis
+        todayDate
     ) {
         if (selectedDate == null) return@remember emptyList()
-        val selectedCalendar = java.util.Calendar.getInstance().apply {
-            timeInMillis = currentTimeMillis
-        }
+        if (selectedDate == todayDate) return@remember upcomingDeparturePoints
         scheduleState.departurePoints.map { point ->
             val schedules = point.schedules.filter { it.serviceCalendar.runsOn(selectedDate) }
             point.copy(
                 schedules = schedules,
-                nextUpcomingId = if (selectedDate == todayDate) {
-                    UpcomingScheduleResolver.findNextScheduleId(schedules, selectedCalendar)
-                } else {
-                    null
-                }
+                nextUpcomingId = null
             )
         }
     }
@@ -111,7 +109,9 @@ fun ScheduleList(
         upcomingDeparturePoints,
         selectedDescriptionFilterLabel,
         selectedDeparturePointFilterId,
-        scheduleExtraLabelProvider
+        scheduleExtraLabelProvider,
+        currentTimeMillis,
+        route.travelTime
     ) {
         val selectedDayDisplayState = buildScheduleListDisplayState(
             departurePoints = displayedDeparturePoints,
@@ -139,7 +139,6 @@ fun ScheduleList(
         ScheduleListScaffold(
             route = route,
             routeRemarkText = routeRemarkText,
-            scheduleChanges = scheduleChanges,
             selectedDay = selectedDay,
             isDaySelected = selectedDay != null,
             isDaySelectionScreen = isDaySelectionScreen,

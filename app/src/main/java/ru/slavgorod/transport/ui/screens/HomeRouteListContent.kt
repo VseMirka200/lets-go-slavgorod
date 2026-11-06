@@ -1,5 +1,8 @@
 package ru.slavgorod.transport.ui.screens
 
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.ui.platform.LocalDensity
+import ru.slavgorod.transport.ui.theme.adaptiveColumnCount
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -62,41 +65,50 @@ private fun RoutesListStateContent(
     modifier: Modifier = Modifier,
     gridColumns: Int
 ) {
-    if (gridColumns == 1) {
-        val listState = rememberLazyListState()
-        LazyColumn(
-            modifier = modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                top = RouteCardsSpacing,
-                bottom = RouteCardsSpacing
-            ),
-            verticalArrangement = Arrangement.spacedBy(RouteCardsSpacing),
-            state = listState
-        ) {
-            addRoutes(
-                routes = routes,
-                gridColumns = gridColumns,
-                isGridMode = false,
-                navController = navController
-            )
-        }
-    } else {
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(gridColumns),
-            modifier = modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                top = RouteCardsSpacing,
-                bottom = RouteCardsSpacing
-            ),
-            horizontalArrangement = Arrangement.spacedBy(RouteCardsSpacing),
-            verticalArrangement = Arrangement.spacedBy(RouteCardsSpacing)
-        ) {
-            addRoutes(
-                routes = routes,
-                gridColumns = gridColumns,
-                isGridMode = true,
-                navController = navController
-            )
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val resolvedColumns = adaptiveColumnCount(
+            availableWidth = maxWidth,
+            fontScale = LocalDensity.current.fontScale,
+            preferredColumns = gridColumns,
+            minColumnWidth = 100.dp,
+            spacing = RouteCardsSpacing
+        )
+        if (resolvedColumns == 1) {
+            val listState = rememberLazyListState()
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    top = RouteCardsSpacing,
+                    bottom = RouteCardsSpacing
+                ),
+                verticalArrangement = Arrangement.spacedBy(RouteCardsSpacing),
+                state = listState
+            ) {
+                addRoutes(
+                    routes = routes,
+                    gridColumns = resolvedColumns,
+                    isGridMode = false,
+                    navController = navController
+                )
+            }
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(resolvedColumns),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    top = RouteCardsSpacing,
+                    bottom = RouteCardsSpacing
+                ),
+                horizontalArrangement = Arrangement.spacedBy(RouteCardsSpacing),
+                verticalArrangement = Arrangement.spacedBy(RouteCardsSpacing)
+            ) {
+                addRoutes(
+                    routes = routes,
+                    gridColumns = resolvedColumns,
+                    isGridMode = true,
+                    navController = navController
+                )
+            }
         }
     }
 }

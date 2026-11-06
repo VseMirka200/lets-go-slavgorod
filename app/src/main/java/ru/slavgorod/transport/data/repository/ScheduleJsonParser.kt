@@ -1,9 +1,8 @@
 package ru.slavgorod.transport.data.repository
 
 import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import ru.slavgorod.transport.R
-import ru.slavgorod.transport.core.AppText
 import ru.slavgorod.transport.data.local.JsonDataSource
 import ru.slavgorod.transport.data.local.RoutesJsonContract
 import ru.slavgorod.transport.data.local.asJsonObjectOrNull
@@ -14,35 +13,109 @@ import ru.slavgorod.transport.data.model.BusRoute
 import ru.slavgorod.transport.data.model.BusSchedule
 import ru.slavgorod.transport.data.model.ServiceCalendar
 import ru.slavgorod.transport.data.model.ScheduleChange
+import ru.slavgorod.transport.domain.util.ValidationUtils
 import timber.log.Timber
 import java.time.DayOfWeek
 import java.time.LocalDate
 
+/** Проверенные маршруты и построенный по их идентификаторам индекс отправлений. */
+data class ParsedScheduleSnapshot(
+    val routes: List<BusRoute>,
+    val schedules: Map<String, List<BusSchedule>>
+)
+
+/**
+ * Разбирает производные данные расписания из исходного JSON.
+ *
+ * Подсказка разработчику: поддержка старых полей нужна для уже опубликованных файлов;
+ * не удаляйте её без миграции данных на стороне источника.
+ */
 open class ScheduleJsonParser(
     private val jsonDataSource: JsonDataSource = JsonDataSource()
 ) {
+
+    /**
+     * Разбирает JSON один раз и возвращает согласованный снимок либо `null` при ошибке.
+     * Ни маршруты, ни рейсы из неполного снимка не должны заменять сохранённую копию.
+     * Вызывающему коду следует выполнять разбор вне главного потока.
+     *
+     * @param json Полный ответ источника или ранее сохранённая копия.
+     * @return Проверенный снимок либо `null`, если структура или обязательные данные неверны.
+     */
+    open fun parseSnapshot(json: String): ParsedScheduleSnapshot? = try {
+        val root = JsonParser.parseString(json).asJsonObject
+        val routes = jsonDataSource.parseRoutesFromObject(root)
+        val schedules = buildSchedulesIndex(root)
+        if (isCompleteSnapshot(root, routes, schedules)) ParsedScheduleSnapshot(routes, schedules) else null
+    } catch (exception: Exception) {
+        Timber.w(exception, "Не удалось разобрать снимок расписания")
+        null
+    }
+
+    /**
+     * Проверяет соответствие разобранных данных исходному документу.
+     * Требуются непустой список маршрутов, уникальные идентификаторы и корректное
+     * время каждого рейса. Маршрут с пустым списком рейсов допустим.
+     *
+     * @param json Исходный документ, из которого получены [routes] и [schedules].
+     * @return `true`, если ни один маршрут или рейс не потерян при разборе.
+     */
+    fun isCompleteSnapshot(
+        json: String,
+        routes: List<BusRoute>,
+        schedules: Map<String, List<BusSchedule>>
+    ): Boolean = try {
+        isCompleteSnapshot(JsonParser.parseString(json).asJsonObject, routes, schedules)
+    } catch (_: Exception) {
+        false
+    }
+
+    private fun isCompleteSnapshot(
+        root: JsonObject,
+        routes: List<BusRoute>,
+        schedules: Map<String, List<BusSchedule>>
+    ): Boolean = try {
+        val rawRoutes = root.getAsJsonArray(RoutesJsonContract.ROOT_ROUTES)
+        val ids = routes.map { it.id }
+        rawRoutes != null && routes.isNotEmpty() && rawRoutes.size() == routes.size &&
+            ids.toSet().size == ids.size && schedules.keys == ids.toSet() &&
+            rawRoutes.all { element ->
+                val raw = element.asJsonObject
+                val id = raw.requiredText(RoutesJsonContract.ROUTE_ID) ?: return@all false
+                val entries = raw.get(RoutesJsonContract.ROUTE_SCHEDULES)
+                if (entries == null || entries.isJsonNull) return@all schedules[id].isNullOrEmpty()
+                if (!entries.isJsonArray) return@all false
+                val parsed = schedules[id] ?: return@all false
+                entries.asJsonArray.size() == parsed.size &&
+                    parsed.map { it.id }.toSet().size == parsed.size &&
+                    parsed.all { ValidationUtils.isValidTime(it.departureTime) }
+            }
+    } catch (_: Exception) {
+        false
+    }
 
     open suspend fun parseRoutes(jsonString: String): List<BusRoute> {
         return jsonDataSource.parseRoutesFromJson(jsonString)
     }
 
+    /** Строит индекс по идентификаторам маршрутов; при ошибке возвращает пустую карту. */
     open fun buildSchedulesIndex(jsonString: String): Map<String, List<BusSchedule>> {
         return try {
-            val jsonObject = JsonParser.parseString(jsonString).asJsonObject
-            val productionCalendar = jsonObject.parseProductionCalendar()
-            jsonObject
-                .getAsJsonArray(RoutesJsonContract.ROOT_ROUTES)
-                ?.mapNotNull { routeElement ->
-                    parseRouteSchedules(routeElement, productionCalendar)
-                }
-                ?.toMap()
-                .orEmpty()
+            buildSchedulesIndex(JsonParser.parseString(jsonString).asJsonObject)
         } catch (exception: Exception) {
-            Timber.w(exception, "Failed to build schedules index")
+            Timber.w(exception, "Не удалось построить индекс рейсов")
             emptyMap()
         }
     }
 
+    private fun buildSchedulesIndex(jsonObject: JsonObject): Map<String, List<BusSchedule>> {
+        val productionCalendar = jsonObject.parseProductionCalendar()
+        return jsonObject.getAsJsonArray(RoutesJsonContract.ROOT_ROUTES)
+            ?.mapNotNull { parseRouteSchedules(it, productionCalendar) }
+            ?.toMap().orEmpty()
+    }
+
+    /** Пропускает объявления без обязательных полей или корректной начальной даты. */
     open fun parseScheduleChanges(jsonString: String): List<ScheduleChange> = runCatching {
         val root = JsonParser.parseString(jsonString).asJsonObject
         root.getAsJsonArray(RoutesJsonContract.ROOT_SCHEDULE_CHANGES)
@@ -106,11 +179,11 @@ private fun buildBusSchedule(
         notes = scheduleJson.optionalText(RoutesJsonContract.SCHEDULE_NOTES),
         remark = scheduleJson.optionalText(
             RoutesJsonContract.SCHEDULE_REMARK,
-            "note",
-            "remarks",
+            RoutesJsonContract.SCHEDULE_LEGACY_NOTE,
+            RoutesJsonContract.SCHEDULE_LEGACY_REMARKS,
             "comment",
-            AppText.get(R.string.schedule_json_note_key),
-            AppText.get(R.string.schedule_json_notes_key)
+            RoutesJsonContract.SCHEDULE_RUSSIAN_NOTE,
+            RoutesJsonContract.SCHEDULE_RUSSIAN_NOTES
         ),
         departurePoint = departurePoint,
     )
@@ -120,6 +193,7 @@ private fun com.google.gson.JsonObject.parseServiceCalendar(
     dayType: String?,
     productionCalendar: ProductionCalendar
 ): ServiceCalendar {
+    // Старые файлы задают дни работы только через тип дня.
     val calendarJson = getAsJsonObject(RoutesJsonContract.SCHEDULE_SERVICE_CALENDAR)
         ?: return legacyServiceCalendar(dayType).withProductionCalendar(productionCalendar)
 
@@ -163,6 +237,7 @@ private fun ServiceCalendar.withProductionCalendar(
 ): ServiceCalendar {
     if (productionCalendar.nonWorkingDates.isEmpty()) return this
 
+    // Праздники меняют только стандартные группы будних и выходных дней.
     return when (operatingDays) {
         Weekdays -> copy(excludedDates = excludedDates + productionCalendar.nonWorkingDates)
         Weekends -> copy(includedDates = includedDates + productionCalendar.nonWorkingDates)

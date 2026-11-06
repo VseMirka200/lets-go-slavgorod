@@ -78,8 +78,16 @@ class ScheduleResponsiveLayoutTest {
         val scaled = resolveScheduleResponsiveLayout(600.dp, fontScale = 1.4f)
 
         assertTrue(scaled.card.cardHorizontalPadding.value > regular.card.cardHorizontalPadding.value)
-        assertTrue(scaled.card.departureTimeFontSize.value > regular.card.departureTimeFontSize.value)
-        assertTrue(scaled.header.headerTitleFontSize.value > regular.header.headerTitleFontSize.value)
+        assertEquals(regular.card.departureTimeFontSize, scaled.card.departureTimeFontSize)
+        assertEquals(regular.header.headerTitleFontSize, scaled.header.headerTitleFontSize)
         assertTrue(scaled.upcoming.upcomingMinRowHeight > regular.upcoming.upcomingMinRowHeight)
+    }
+    @Test
+    fun `large text uses a single schedule column and stacks narrow cards`() {
+        for (scale in listOf(1.25f, 1.5f)) {
+            val spec = resolveScheduleResponsiveLayout(600.dp, scale)
+            assertTrue(spec.section.twoColumnLayoutMinWidth > 600.dp)
+            assertTrue(resolveScheduleResponsiveLayout(240.dp, scale).card.stackCardContent)
+        }
     }
 }

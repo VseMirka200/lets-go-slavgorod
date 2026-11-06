@@ -141,7 +141,7 @@ img {
 .nav-featured:hover {
     color: #b6cdfc;
 }
-/* Hero-блок главной страницы */
+/* Главный визуальный блок страницы */
 .hero-layout {
     display: grid;
     grid-template-columns: 1.1fr 0.9fr;
@@ -452,6 +452,7 @@ img {
 .legal-list li {
     margin-top: 8px;
 }
+
 .documents-grid {
     width: 100%;
     display: grid;
@@ -459,6 +460,7 @@ img {
     gap: 16px;
     align-items: stretch;
 }
+
 .document-card {
     width: 100%;
     min-height: 88px;

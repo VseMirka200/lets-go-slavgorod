@@ -1,10 +1,16 @@
 package ru.slavgorod.transport.data.model
 
 import androidx.compose.runtime.Immutable
-import ru.slavgorod.transport.R
-import ru.slavgorod.transport.core.AppText
 import ru.slavgorod.transport.domain.util.ValidationUtils
 
+/**
+ * Отдельное отправление маршрута с точкой, временем и календарём работы.
+ *
+ * [departureTime] хранит местное время в текстовом виде, а [serviceCalendar]
+ * определяет даты, на которые этот рейс действительно назначен. Поля [dayOfWeek]
+ * и [isWeekend] сохранены для совместимости; при проверке конкретной даты следует
+ * использовать календарь, поскольку он также учитывает исключения и праздники.
+ */
 @Immutable
 data class BusSchedule(
     val id: String,
@@ -22,29 +28,29 @@ data class BusSchedule(
     val departurePoint: String
 ) {
 
+    /** Проверяет обязательные поля рейса и записывает ошибки в журнал. */
     fun isValid(): Boolean {
         return validateModel(
-            exceptionMessage = AppText.get(R.string.validation_bus_schedule_failed),
-            ValidationCheck(ValidationUtils.hasMeaningfulText(id), "Invalid schedule ID: '$id'"),
+            ValidationCheck(ValidationUtils.hasMeaningfulText(id), "Некорректный идентификатор рейса: '$id'"),
             ValidationCheck(
                 ValidationUtils.hasMeaningfulText(routeId),
-                "Invalid route ID: '$routeId'"
+                "Некорректный идентификатор маршрута: '$routeId'"
             ),
             ValidationCheck(
                 ValidationUtils.hasTrimmedLengthAtLeast(stopName, 2),
-                "Invalid stop name: '$stopName'"
+                "Некорректное название остановки: '$stopName'"
             ),
             ValidationCheck(
                 ValidationUtils.isValidTime(departureTime),
-                "Invalid departure time: '$departureTime'"
+                "Некорректное время отправления: '$departureTime'"
             ),
             ValidationCheck(
                 ValidationUtils.isValidDayOfWeek(dayOfWeek),
-                "Invalid day of week: $dayOfWeek"
+                "Некорректный день недели: $dayOfWeek"
             ),
             ValidationCheck(
                 ValidationUtils.hasTrimmedLengthAtLeast(departurePoint, 2),
-                "Invalid departure point: '$departurePoint'"
+                "Некорректный пункт отправления: '$departurePoint'"
             )
         )
     }

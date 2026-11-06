@@ -88,6 +88,34 @@ class JsonDataSourceTest {
     }
 
     @Test
+    fun `parseRoutesFromJson uses declared intermediate stops`() = runTest {
+        val json = """
+            {
+              "routes": [
+                {
+                  "id": "102",
+                  "routeNumber": "102",
+                  "name": "Slavgorod - Yarovoye",
+                  "description": "Market - Medical unit",
+                  "color": "#1976D2",
+                  "stops": ["Market", "Furniture factory", "Medical unit"],
+                  "schedules": [
+                    { "departurePoint": "Market", "departureTime": "06:25" }
+                  ]
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val routes = dataSource.parseRoutesFromJson(json)
+
+        assertEquals(
+            listOf("Market", "Furniture factory", "Medical unit"),
+            routes.single().stopNames
+        )
+    }
+
+    @Test
     fun `parseRoutesFromJson skips routes without notes`() = runTest {
         val json = """
             {

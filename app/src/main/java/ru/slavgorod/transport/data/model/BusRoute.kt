@@ -1,10 +1,16 @@
 package ru.slavgorod.transport.data.model
 
 import androidx.compose.runtime.Immutable
-import ru.slavgorod.transport.R
-import ru.slavgorod.transport.core.AppText
 import ru.slavgorod.transport.domain.util.ValidationUtils
 
+/**
+ * Сведения о маршруте, отображаемые в списке и на экране расписания.
+ *
+ * [id] связывает маршрут с рейсами и должен быть устойчивым между обновлениями;
+ * [routeNumber] предназначен для отображения и может отличаться от идентификатора.
+ * Цены, время в пути и способы оплаты являются необязательным текстом источника,
+ * поэтому их нельзя использовать как числовые значения без дополнительного разбора.
+ */
 @Immutable
 data class BusRoute(
     val id: String,
@@ -23,21 +29,21 @@ data class BusRoute(
     val paymentMethods: String?
 ) {
 
+    /** Проверяет обязательные поля и записывает причины отказа в журнал. */
     fun isValid(): Boolean {
         return validateModel(
-            exceptionMessage = AppText.get(R.string.validation_bus_route_failed),
-            ValidationCheck(ValidationUtils.hasMeaningfulText(id), "Invalid route ID: '$id'"),
+            ValidationCheck(ValidationUtils.isValidRouteId(id), "Некорректный идентификатор маршрута: '$id'"),
             ValidationCheck(
-                ValidationUtils.hasMeaningfulText(routeNumber),
-                "Invalid route number: '$routeNumber'"
+                ValidationUtils.isValidRouteNumber(routeNumber),
+                "Некорректный номер маршрута: '$routeNumber'"
             ),
             ValidationCheck(
-                ValidationUtils.hasTrimmedLengthAtLeast(name, 3),
-                "Invalid route name: '$name'"
+                ValidationUtils.isValidRouteName(name),
+                "Некорректное название маршрута: '$name'"
             ),
             ValidationCheck(
                 ValidationUtils.hasTrimmedLengthAtLeast(description, 2),
-                "Invalid description: '$description'"
+                "Некорректное описание: '$description'"
             )
         )
     }

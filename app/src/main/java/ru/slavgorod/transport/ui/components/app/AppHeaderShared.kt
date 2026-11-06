@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -36,7 +37,7 @@ internal fun ScheduleHeaderDetailsContent(
     noteText: String? = null
 ) {
     val hasNoteText = !noteText.isNullOrBlank()
-    val headerItemSpacing = layout.header.headerItemSpacing
+    val headerItemSpacing = maxOf(layout.header.headerItemSpacing, 8.dp)
     val bottomPadding = if (hasNoteText) 0.dp else 8.dp
     val headerScale = 1.12f
     val headerLabelStyle = MaterialTheme.typography.labelSmall.copy(
@@ -45,11 +46,8 @@ internal fun ScheduleHeaderDetailsContent(
     )
     val headerValueStyle = MaterialTheme.typography.bodyMedium.copy(
         fontSize = layout.header.headerSubtitleFontSize * headerScale,
-        lineHeight = layout.header.headerSubtitleFontSize * headerScale * 1.12f
-    )
-    val routeValueStyle = headerValueStyle.copy(
-        fontSize = layout.header.headerSubtitleFontSize * headerScale,
-        lineHeight = layout.header.headerSubtitleFontSize * headerScale * 1.12f
+        lineHeight = layout.header.headerSubtitleFontSize * headerScale * 1.2f,
+        fontWeight = FontWeight.SemiBold
     )
     val compactInfoColumnSpacing = 4.dp
     val travelTimeColumnWeight = 0.82f
@@ -64,7 +62,6 @@ internal fun ScheduleHeaderDetailsContent(
     val travelTimeLabel = stringResource(R.string.schedule_header_travel_time)
     val priceLabel = stringResource(R.string.schedule_header_price)
     val paymentLabel = stringResource(R.string.schedule_header_payment_methods)
-    val routeLabel = stringResource(R.string.schedule_header_route)
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -106,21 +103,14 @@ internal fun ScheduleHeaderDetailsContent(
             }
 
             route.paymentMethods?.let { paymentMethods ->
-                ScheduleHeaderInfoItem(
-                    label = paymentLabel,
-                    value = paymentMethods,
-                    labelStyle = headerLabelStyle,
-                    valueStyle = headerValueStyle
-                )
+                    ScheduleHeaderInfoItem(
+                        label = paymentLabel,
+                        value = paymentMethods,
+                        labelStyle = headerLabelStyle,
+                        valueStyle = headerValueStyle,
+                        modifier = Modifier.fillMaxWidth()
+                    )
             }
-
-            ScheduleHeaderInfoItem(
-                label = routeLabel,
-                value = route.description,
-                labelStyle = headerLabelStyle,
-                valueStyle = routeValueStyle,
-                allowWrapping = true
-            )
         }
 
         if (hasNoteText) {
@@ -128,7 +118,7 @@ internal fun ScheduleHeaderDetailsContent(
 
             Text(
                 text = noteText,
-                style = headerValueStyle,
+                style = headerValueStyle.copy(fontWeight = FontWeight.Normal),
                 color = AppHeaderSupportingTextColor,
                 textAlign = TextAlign.Start,
                 modifier = Modifier
@@ -146,7 +136,7 @@ internal fun ScheduleHeaderInfoItem(
     labelStyle: TextStyle,
     valueStyle: TextStyle,
     modifier: Modifier = Modifier,
-    allowWrapping: Boolean = false
+    allowWrapping: Boolean = true
 ) {
     Column(
         modifier = modifier,
@@ -156,7 +146,7 @@ internal fun ScheduleHeaderInfoItem(
             text = label,
             style = labelStyle,
             color = HeaderLabelColor,
-            maxLines = 1,
+            maxLines = Int.MAX_VALUE,
             overflow = TextOverflow.Ellipsis
         )
         Text(

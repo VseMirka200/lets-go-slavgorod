@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -29,7 +30,6 @@ import org.koin.androidx.compose.koinViewModel
 import ru.slavgorod.transport.R
 import ru.slavgorod.transport.core.Constants
 import ru.slavgorod.transport.data.repository.RoutesTableDataSource
-import ru.slavgorod.transport.data.model.ScheduleChange
 import ru.slavgorod.transport.logging.UserActionLogger
 import ru.slavgorod.transport.ui.components.schedule.ScheduleList
 import ru.slavgorod.transport.ui.model.DeparturePointSchedules
@@ -39,10 +39,14 @@ import ru.slavgorod.transport.ui.viewmodel.DisplaySettingsViewModel
 import ru.slavgorod.transport.ui.viewmodel.RoutesViewModel
 import timber.log.Timber
 import java.util.Calendar
-import java.time.Instant
-import java.time.ZoneId
 
 @Composable
+/**
+ * Показывает расписание одного маршрута и пересчитывает ближайшие рейсы по таймеру.
+ *
+ * Подсказка разработчику: ключи produceState должны включать идентификатор обновления,
+ * иначе экран продолжит показывать рейсы из предыдущей версии расписания.
+ */
 fun ScheduleScreen(
     routeId: String,
     routeRepository: RoutesTableDataSource,
@@ -62,19 +66,10 @@ fun ScheduleScreen(
         initialValue = false
     )
     val scheduleDaySelectionMode by displaySettingsViewModel.scheduleDaySelectionMode
-        .collectAsStateWithLifecycle(initialValue = ScheduleDaySelectionMode.DAY_FIRST)
+        .collectAsStateWithLifecycle(initialValue = ScheduleDaySelectionMode.Default)
     val route = remember(routeId, uiState.routes) {
         uiState.routes.find { it.id == routeId }
     }
-    val activeScheduleChanges by produceState<List<ScheduleChange>>(
-        initialValue = emptyList(),
-        key1 = routeId,
-        key2 = dataUpdateEventId
-    ) {
-        val today = Instant.ofEpochMilli(System.currentTimeMillis()).atZone(ZoneId.systemDefault()).toLocalDate()
-        value = routeRepository.getScheduleChanges().filter { it.appliesTo(routeId) && it.isActiveOn(today) }
-    }
-
     val currentTimeTick by produceState(
         initialValue = Calendar.getInstance().timeInMillis,
         key1 = routeId
@@ -104,9 +99,10 @@ fun ScheduleScreen(
             value = ScheduleLoadState.Loaded(
                 buildScheduleScreenData(loadRouteSchedules(route, routeRepository))
             )
-        } catch (_: CancellationException) {
+        } catch (exception: CancellationException) {
+            throw exception
         } catch (exception: Exception) {
-            Timber.tag("Schedule").e(exception, "Unexpected error loading schedule")
+            Timber.tag("Schedule").e(exception, "Непредвиденная ошибка загрузки расписания")
             value = ScheduleLoadState.Loaded(ScheduleScreenData(emptyList()))
         }
     }
@@ -126,28 +122,24 @@ fun ScheduleScreen(
 
         else -> {
             val currentScheduleData = (loadState as ScheduleLoadState.Loaded).data
-            val liveScheduleData = remember(currentScheduleData, currentTimeTick) {
-                currentScheduleData.withCurrentTime(currentTimeTick)
-            }
             val scheduleUiState = ScheduleUiState(
                 route = route,
-                departurePoints = liveScheduleData.points.map { point ->
+                departurePoints = currentScheduleData.points.map { point ->
                     DeparturePointSchedules(
                         name = point.name,
-                        schedules = point.schedules,
-                        nextUpcomingId = point.nextUpcomingId
+                        schedules = point.schedules
                     )
                 }
             )
 
-            ScheduleList(
+            Column(modifier = Modifier.fillMaxSize()) {
+                ScheduleList(
                 scheduleState = scheduleUiState,
                 swapScheduleColumns = swapScheduleColumns,
                 daySelectionMode = scheduleDaySelectionMode,
                 onBackClick = onBackClick,
                 contentPadding = PaddingValues(bottom = 48.dp),
                 currentTimeMillis = currentTimeTick,
-                scheduleChanges = activeScheduleChanges,
                 onShareClick = {
                     val link = "https://vsemirka200.github.io/lets-go-slavgorod/schedule.html?route=$routeId"
                     context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
@@ -164,8 +156,9 @@ fun ScheduleScreen(
                         dailyLabel = dailyLabel
                     )
                 },
-                modifier = Modifier.fillMaxSize()
-            )
+                modifier = Modifier.weight(1f).fillMaxWidth()
+                )
+            }
         }
     }
 }
@@ -210,7 +203,7 @@ private fun EmptyScheduleMessage(routeId: String) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center
             )
-            Timber.w("ScheduleScreen: no schedule entries configured for route %s", routeId)
+            Timber.w("ScheduleScreen: для маршрута %s не настроены рейсы", routeId)
         }
     }
 }

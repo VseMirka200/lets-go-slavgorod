@@ -13,11 +13,11 @@ GitHub Actions для этого Kotlin/Android-проекта формирую�
 | `Tests, lint and Detekt` | `quality.yml` | Kotlin-тесты, lint, Detekt, сборка debug APK |
 | `Dependency review` | `security.yml` | Новые уязвимости зависимостей в PR |
 | `CodeQL` | `security.yml` | Статический анализ **Java/Kotlin**, а не Python |
-| `Validate schedule data` | `validate-schedule-data.yml` | Формат и целостность данных расписания |
+| `Validate schedule data` | `validate-schedule-data.yml` | Тесты валидатора опубликованного расписания (удалённый URL — при ручном запуске) |
 
 ## Порядок включения защиты main
 
-При повторной проверке 3 ноября 2026 года [Ruleset main](https://github.com/VseMirka200/lets-go-slavgorod/rules/26460598)
+По состоянию на проверку 3 ноября 2026 года [Ruleset main](https://github.com/VseMirka200/lets-go-slavgorod/rules/26460598)
 уже активен: PR обязателен, удаление и force push запрещены, strict status checks
 включены, bypass отсутствует, разрешён squash.
 

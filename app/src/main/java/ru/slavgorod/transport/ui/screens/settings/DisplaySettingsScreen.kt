@@ -42,7 +42,7 @@ fun DisplaySettingsScreen(
         initialValue = 2
     )
     val scheduleDaySelectionMode by displaySettingsViewModel.scheduleDaySelectionMode
-        .collectAsStateWithLifecycle(initialValue = ScheduleDaySelectionMode.DAY_FIRST)
+        .collectAsStateWithLifecycle(initialValue = ScheduleDaySelectionMode.Default)
     val currentTheme by themeViewModel.currentTheme.collectAsStateWithLifecycle(initialValue = AppTheme.SYSTEM)
     val isInlineEmbedded = !showTopBar && !scrollEnabled
     val contentSpacing = if (showTopBar) Constants.SETTINGS_ITEM_SPACING.dp else 8.dp

@@ -38,7 +38,7 @@ button,input {
     outline:3px solid var(--mint);
     outline-offset:3px;
 }
-/* Desktop: persistent navigation and a generous editorial canvas. */
+/* Десктоп: постоянная навигация и просторная область содержимого. */
 .portal-shell {
     display:grid;
     grid-template-columns:var(--sidebar-width) minmax(0,1fr);

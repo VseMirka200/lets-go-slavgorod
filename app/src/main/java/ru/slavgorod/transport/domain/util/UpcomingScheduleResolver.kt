@@ -16,6 +16,7 @@ object UpcomingScheduleResolver {
     private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm", Locale.ROOT)
     private const val MINIMUM_VISIBLE_COUNTDOWN_MILLIS = 60_000L
 
+    /** Возвращает идентификатор ближайшего доступного рейса или null, если рейсов нет. */
     fun findNextScheduleId(
         schedules: List<BusSchedule>,
         currentTime: Calendar = Calendar.getInstance()
@@ -56,6 +57,7 @@ object UpcomingScheduleResolver {
             currentTime.get(Calendar.MONTH) + 1,
             currentTime.get(Calendar.DAY_OF_MONTH)
         )
+        // Учитываем исключения и сроки действия рейса, но ограничиваем поиск двумя годами.
         repeat(MAX_SERVICE_LOOK_AHEAD_DAYS) { offset ->
             val date = startDate.plusDays(offset.toLong())
             if (!serviceCalendar.runsOn(date)) return@repeat
@@ -96,6 +98,7 @@ object UpcomingScheduleResolver {
     )
 
     private fun isVisibleDeparture(departureTimeMillis: Long, currentTimeMillis: Long): Boolean {
+        // Рейс с минутой или меньше до отправления уже не показывается как ближайший.
         return departureTimeMillis - currentTimeMillis > MINIMUM_VISIBLE_COUNTDOWN_MILLIS
     }
 

@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -42,6 +43,12 @@ data class RoutesUiState(
 )
 
 @OptIn(FlowPreview::class)
+/**
+ * Связывает данные расписания с состоянием главного экрана.
+ *
+ * Подсказка разработчику: поиск намеренно обрабатывается с задержкой после ввода, поэтому не
+ * обновляйте список маршрутов напрямую из обработчика ввода.
+ */
 class RoutesViewModel(
     private val routeRepository: RoutesTableDataSource,
     private val appForegroundTracker: AppForegroundTracker,
@@ -133,8 +140,10 @@ class RoutesViewModel(
 
             try {
                 routeRepository.refreshRoutesFromLocal(notifyUser = false)
+            } catch (exception: CancellationException) {
+                throw exception
             } catch (exception: Exception) {
-                Timber.e(exception, "Failed to load routes")
+                Timber.e(exception, "Не удалось загрузить маршруты")
             }
         }
     }

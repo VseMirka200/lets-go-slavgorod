@@ -52,14 +52,14 @@
                     <a href="https://www.rustore.ru/catalog/app/ru.slavgorod.transport" target="_blank" rel="noreferrer">
                         Скачать из RuStore
                     </a>
-                    <a href="https://vk.cc/cZnpy3" target="_blank" rel="noreferrer">
+                    <a href="https://play.google.com/store/apps/details?id=ru.slavgorod.transport" target="_blank" rel="noreferrer">
                         Скачать из Google Play
                     </a>
                     <a href="https://github.com/VseMirka200/lets-go-slavgorod/releases" target="_blank" rel="noreferrer">
                         Скачать APK (GitHub)
                     </a>
-                    <a href="https://max.ru/channel_letsgoslavgorod" target="_blank" rel="noreferrer">
-                        Канал в МАКС
+                    <a href="feedback.html">
+                        Обратная связь
                     </a>
                     <p>
                         Проект
@@ -93,7 +93,7 @@
                         Маршруты — без лишних поисков.
                     </h1>
                     <p>
-                        «Поехали! Славгород» помогает быстро найти автобус, остановку и ближайшее отправление. Данные расписания обновляются из репозитория проекта.
+                        «Поехали! Славгород» помогает быстро найти автобус и ближайшее отправление. Актуальное расписание доступно на сайте и в приложении.
                     </p>
                     <div class="portal-actions portal-actions--downloads">
                         <a class="portal-button primary" href="schedule.html">
@@ -107,7 +107,7 @@
                             <img class="store-icon" src="assets/media/icons/rustore-logo.svg" alt="">
                             RuStore
                         </a>
-                        <a class="portal-button" href="https://vk.cc/cZnpy3" target="_blank" rel="noreferrer">
+                        <a class="portal-button" href="https://play.google.com/store/apps/details?id=ru.slavgorod.transport" target="_blank" rel="noreferrer">
                             <img class="store-icon" src="assets/media/icons/play-market-logo.svg" alt="">
                             Google Play
                         </a>
@@ -153,6 +153,17 @@
                             Загрузите актуальную версию из релизов GitHub.
                         </p>
                     </a>
+                    <a class="portal-card" href="feedback.html">
+                        <span>
+                            💬
+                        </span>
+                        <h2>
+                            Обратная связь
+                        </h2>
+                        <p>
+                            Сообщите об ошибке, неточности данных или новой идее.
+                        </p>
+                    </a>
                 </section>
                 <section id="how" class="portal-section">
                     <span class="portal-eyebrow">
@@ -188,6 +199,15 @@
                         </article>
                     </div>
                 </section>
+                <section id="schedule-data" class="portal-section">
+                    <span class="portal-eyebrow">Расписание</span>
+                    <h2>Откуда берутся данные</h2>
+                    <p>Сайт и приложение получают расписание из общего источника. Если он недоступен, сайт показывает ранее сохранённые в браузере данные при их наличии.</p>
+                    <p>В приложении сохраняется локальная копия расписания. Время загрузки не означает, что перевозчик подтвердил расписание: перед поездкой уточняйте важные отправления.</p>
+                    <div class="portal-actions">
+                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/guides/SCHEDULE_DATA.md" target="_blank" rel="noreferrer">Как обновляется расписание</a>
+                    </div>
+                </section>
                 <section id="project" class="portal-section">
                     <span class="portal-eyebrow">
                         Проект
@@ -199,8 +219,12 @@
                         Открытая документация, правила проекта и способы помочь.
                     </p>
                     <div class="portal-actions portal-document-actions">
+                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/guides/SCHEDULE_DATA.md" target="_blank" rel="noreferrer">Расписание и источники</a>
                         <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/CONTRIBUTING.md" target="_blank" rel="noreferrer">
                             Участие
+                        </a>
+                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/guides/FEEDBACK_LESSONS_RU.md" target="_blank" rel="noreferrer">
+                            Обратная связь
                         </a>
                         <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/LIBRARIES.md" target="_blank" rel="noreferrer">
                             Библиотеки
@@ -222,7 +246,7 @@
                         </a>
                     </div>
                 </section>
-                <section class="portal-support">
+                <section id="support" class="portal-support">
                     <div>
                         <h2>
                             Поддержите проект
@@ -237,7 +261,7 @@
                 </section>
                 <section id="contact" class="portal-section" aria-labelledby="contact-heading">
                     <h2 id="contact-heading">Связаться с проектом</h2>
-                    <p>Вопросы, предложения и замечания по расписанию можно отправить на <a href="mailto:vsemirka200@bk.ru">vsemirka200@bk.ru</a>. Для потенциальных уязвимостей используйте приватное обращение, не публикуя чувствительные сведения.</p>
+                    <p>Вопросы, предложения и замечания по расписанию можно отправить на <a href="mailto:vsemirka200@bk.ru">vsemirka200@bk.ru</a>. Для сообщений об уязвимостях используйте приватное обращение.</p>
                     <div class="portal-actions"><a class="portal-button" href="mailto:vsemirka200@bk.ru">Написать на почту</a></div>
                 </section>
                 <footer>
@@ -248,53 +272,7 @@
                 </footer>
             </main>
         </div>
-        <dialog id="search-dialog">
-            <div class="dialog-head">
-                <strong>
-                    Поиск по сайту
-                </strong>
-                <button data-close-search>
-                    ×
-                </button>
-            </div>
-            <input id="search-input" type="search" placeholder="Расписание, APK, обратная связь">
-            <div id="results">
-            </div>
-        </dialog>
-        <script>
-            const pages = [
-            ["Расписание", "schedule.html"],
-            ["Скачать APK (GitHub)", "https://github.com/VseMirka200/lets-go-slavgorod/releases"],
-            ["Документация", "#project"]
-            ];
-            const searchDialog = document.querySelector("#search-dialog");
-            const searchInput = document.querySelector("#search-input");
-            const results = document.querySelector("#results");
-            const renderResults = (query) => {
-            results.innerHTML = pages
-            .filter(([title]) => title.toLowerCase().includes(query.toLowerCase()))
-            .map(([title, href]) => `
-            <a href="${href}">
-                ${title}
-            </a>
-            `)
-            .join("") || `<span>Ничего не найдено.</span>`;
-            };
-            const openSearch = () => {
-            renderResults("");
-            searchDialog.showModal();
-            searchInput.focus();
-            };
-            document.querySelector("[data-open-search]").onclick = openSearch;
-            document.querySelector("[data-close-search]").onclick = () => searchDialog.close();
-            searchInput.oninput = (event) => renderResults(event.target.value);
-            document.onkeydown = (event) => {
-            if ((event.ctrlKey || event.metaKey) && event.key === "k") {
-            event.preventDefault();
-            openSearch();
-            }
-            };
-        </script>
+        <script src="assets/scripts/features/site-search.js"></script>
         <script src="assets/scripts/features/pwa-install.js">
             </script>
         </body>

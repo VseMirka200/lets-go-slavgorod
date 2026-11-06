@@ -5,7 +5,23 @@
 - `Tests, lint and Detekt`: unit-тесты, Android Lint, Detekt и сборка debug APK;
 - `Dependency review`: блокирует добавление зависимостей с уязвимостями уровня `moderate` и выше в runtime-области;
 - `CodeQL`: ищет потенциальные уязвимости в Kotlin/Java-коде;
-- `Validate schedule data`: проверяет структуру и данные расписания на каждом PR, без фильтра по путям.
+- `Validate schedule data`: запускает тесты валидатора опубликованного расписания на каждом PR; реальный источник проверяется отдельно при ручном запуске workflow.
+
+## Локальные проверки
+
+Из корня репозитория:
+
+```bash
+./gradlew --no-daemon --dependency-verification=strict testDebugUnitTest lintDebug detekt assembleDebug
+node --test tools/*.test.mjs
+python tools/check-links.py
+```
+
+Для ручной проверки источника можно выполнить
+`node tools/validate-published-schedule.mjs URL`, где URL — действующий HTTPS-адрес.
+Скрипт проверяет структуру, а не достоверность расписания перевозчика.
+Инструментальные Android-тесты запускаются командой `./gradlew connectedDebugAndroidTest`
+при наличии устройства или эмулятора.
 
 ## Обязательные настройки GitHub
 

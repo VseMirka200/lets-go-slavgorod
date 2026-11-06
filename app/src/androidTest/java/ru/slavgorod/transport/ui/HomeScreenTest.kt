@@ -10,6 +10,10 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.runBlocking
@@ -21,6 +25,8 @@ import ru.slavgorod.transport.R
 import ru.slavgorod.transport.data.model.BusRoute
 import ru.slavgorod.transport.data.repository.RoutesTableDataSource
 import ru.slavgorod.transport.data.repository.ScheduleFetcher
+import ru.slavgorod.transport.data.repository.ScheduleSnapshotStore
+import ru.slavgorod.transport.data.local.CachedScheduleSnapshot
 import ru.slavgorod.transport.notifications.AppForegroundTracker
 import ru.slavgorod.transport.ui.screens.EmptyState
 import ru.slavgorod.transport.ui.screens.ErrorState
@@ -46,6 +52,12 @@ class HomeScreenTest {
             context = context,
             onlineChecker = { true },
             remoteScheduleFetcher = FakeScheduleFetcher { routesJson() },
+            scheduleSnapshotRepository = object : ScheduleSnapshotStore {
+                override suspend fun readSnapshot(): CachedScheduleSnapshot? = null
+                override suspend fun writeSnapshot(json: String) = Unit
+                override suspend fun hasSnapshot() = false
+                override fun formatSavedAt(timestampMillis: Long) = ""
+            },
             autoLoadOnInit = false
         )
         runBlocking {
@@ -94,7 +106,7 @@ class HomeScreenTest {
 
     @Test
     fun errorState_displaysErrorMessage() {
-        val errorMessage = "Test error"
+        val errorMessage = "Тестовая ошибка"
         composeTestRule.setContent {
             ErrorState(errorMessage = errorMessage)
         }
@@ -141,7 +153,7 @@ class HomeScreenTest {
     fun routesListState_displaysRoutes() {
         val routes = listOf(
             route(id = "102", routeNumber = "102", name = "Yarovoye"),
-            route(id = "105", routeNumber = "105", name = "Rail Depot")
+            route(id = "105", routeNumber = "105", name = "Железнодорожное депо")
         )
 
         composeTestRule.setContent {
@@ -195,13 +207,14 @@ class HomeScreenTest {
         val menuDescription = context.getString(R.string.home_menu_more)
         val refreshScheduleText = context.getString(R.string.home_refresh_schedule)
         val searchQuery = "Yarovoye"
-        val filteredOutRouteText = "Rail Depot"
+        val filteredOutRouteText = "Железнодорожное депо"
 
+        var revision by mutableIntStateOf(0)
         composeTestRule.setContent {
-            HomeScreen(
-                navController = rememberNavController(),
-                routesViewModel = routesViewModel
-            )
+            val navController = rememberNavController()
+            key(revision) {
+                HomeScreen(navController = navController, routesViewModel = routesViewModel)
+            }
         }
         composeTestRule.waitForIdle()
 
@@ -223,12 +236,7 @@ class HomeScreenTest {
             .onNodeWithText(refreshScheduleText)
             .assertIsDisplayed()
 
-        composeTestRule.setContent {
-            HomeScreen(
-                navController = rememberNavController(),
-                routesViewModel = routesViewModel
-            )
-        }
+        composeTestRule.runOnIdle { revision++ }
         composeTestRule.waitUntilNodeMissing(filteredOutRouteText)
 
         composeTestRule
@@ -282,8 +290,8 @@ class HomeScreenTest {
                 {
                   "id": "105",
                   "routeNumber": "105",
-                  "name": "Rail Depot",
-                  "description": "Rail Depot",
+                  "name": "Железнодорожное депо",
+                  "description": "Железнодорожное депо",
                   "color": "#F2B705",
                   "travelTime": "15 min",
                   "pricePrimary": "20",

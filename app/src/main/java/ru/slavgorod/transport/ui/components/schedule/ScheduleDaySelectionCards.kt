@@ -5,7 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.ui.platform.LocalDensity
+import ru.slavgorod.transport.ui.theme.adaptiveColumnCount
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -43,20 +46,25 @@ internal fun ScheduleDaySelectionCards(
             modifier = Modifier.fillMaxWidth()
         )
 
-        DayOfWeek.entries.chunked(2).forEach { rowDays ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                rowDays.forEach { day ->
-                    DaySelectionCard(
-                        day = day,
-                        isToday = day == currentDay,
-                        onClick = { onDaySelected(day) },
-                        modifier = Modifier.weight(1f)
-                    )
+        BoxWithConstraints {
+            val columns = adaptiveColumnCount(maxWidth, LocalDensity.current.fontScale, 2, 150.dp, 12.dp)
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                DayOfWeek.entries.chunked(columns).forEach { rowDays ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        rowDays.forEach { day ->
+                            DaySelectionCard(
+                                day = day,
+                                isToday = day == currentDay,
+                                onClick = { onDaySelected(day) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        if (rowDays.size < columns) Spacer(modifier = Modifier.weight(1f))
+                    }
                 }
-                if (rowDays.size == 1) Spacer(modifier = Modifier.weight(1f))
             }
         }
     }
@@ -71,7 +79,7 @@ private fun DaySelectionCard(
 ) {
     Card(
         onClick = onClick,
-        modifier = modifier.height(88.dp),
+        modifier = modifier.heightIn(min = 88.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isToday) TODAY_HIGHLIGHT else MaterialTheme.colorScheme.surfaceVariant,
             contentColor = if (isToday) TODAY_HIGHLIGHT_CONTENT else MaterialTheme.colorScheme.onSurfaceVariant
@@ -79,9 +87,9 @@ private fun DaySelectionCard(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxWidth().heightIn(min = 88.dp)
                 .padding(12.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
+            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -89,17 +97,19 @@ private fun DaySelectionCard(
                     .replaceFirstChar(Char::titlecase),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                maxLines = 1,
+
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
-            Text(
-                text = if (isToday) stringResource(R.string.schedule_day_today) else "",
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
+            if (isToday) {
+                Text(
+                    text = stringResource(R.string.schedule_day_today),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }

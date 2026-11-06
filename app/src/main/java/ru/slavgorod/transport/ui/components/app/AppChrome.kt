@@ -39,6 +39,22 @@ import ru.slavgorod.transport.data.model.BusRoute
 import ru.slavgorod.transport.ui.components.schedule.ScheduleResponsiveLayoutSpec
 
 @Composable
+fun AppBackButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    contentColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    icon: ImageVector = Icons.AutoMirrored.Filled.ArrowBack,
+    contentDescription: String? = null
+) {
+    AppIconButton(onClick = onClick, modifier = modifier, contentColor = contentColor) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription ?: stringResource(R.string.accessibility_back_button)
+        )
+    }
+}
+
+@Composable
 fun AppScreenScaffold(
     modifier: Modifier = Modifier,
     title: String? = null,
@@ -97,16 +113,12 @@ fun AppTopBar(
                 verticalAlignment = Alignment.CenterVertically
             ) {
             if (onBackClick != null) {
-                AppIconButton(
+                AppBackButton(
                     onClick = onBackClick,
-                    contentColor = AppHeaderContentColor
-                ) {
-                    Icon(
-                        imageVector = navigationIcon,
-                        contentDescription = navigationContentDescription
-                            ?: stringResource(R.string.accessibility_back_button)
-                    )
-                }
+                    contentColor = AppHeaderContentColor,
+                    icon = navigationIcon,
+                    contentDescription = navigationContentDescription
+                )
             }
 
             Box(modifier = Modifier.weight(1f)) {
@@ -153,15 +165,10 @@ fun ScheduleTitleBar(
                 horizontalArrangement = Arrangement.Start
             ) {
             if (onBackClick != null) {
-                AppIconButton(
+                AppBackButton(
                     onClick = onBackClick,
                     contentColor = AppHeaderContentColor
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.accessibility_back_button)
-                    )
-                }
+                )
             }
 
             Row(

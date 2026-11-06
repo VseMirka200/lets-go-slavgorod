@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -25,8 +24,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
@@ -37,6 +36,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import ru.slavgorod.transport.R
 
 @Composable
@@ -93,6 +93,8 @@ internal fun UpcomingSchedulesContent(
         val cardWidth = this.maxWidth
         val isTightLayout = cardWidth < 320.dp || compactMode
         val isCompactLayout = cardWidth < 380.dp || compactMode
+        val stackedRows = (cardWidth - layout.upcoming.upcomingCardContentPadding * 2) /
+            LocalDensity.current.fontScale < 300.dp
         val cardContentPadding = layout.upcoming.upcomingCardContentPadding
         val contentSpacing = layout.section.sectionVerticalSpacing
 
@@ -131,7 +133,7 @@ internal fun UpcomingSchedulesContent(
                     ),
                     fontWeight = FontWeight.ExtraBold,
                     color = colors.content,
-                    maxLines = 1,
+                    maxLines = Int.MAX_VALUE,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .weight(1f)
@@ -139,19 +141,36 @@ internal fun UpcomingSchedulesContent(
                 )
             }
             Column(verticalArrangement = Arrangement.spacedBy(contentSpacing)) {
+                if (!stackedRows) UpcomingScheduleColumnHeaders(
+                    colors = colors,
+                    textSpec = UpcomingScheduleTextSpec(
+                        primaryTextSize = layout.upcoming.upcomingPrimaryTextSize,
+                        supportingTextSize = layout.upcoming.upcomingSupportingTextSize
+                    ),
+                    fullWidthMode = squareCorners,
+                    compactMode = compactMode
+                )
                 entries.forEachIndexed { index, entry ->
-                    val diffMinutes = resolveDepartureDiffMinutes(
-                        departureTime = entry.schedule.departureTime,
+                    val nextCountdownLabel = resolveDepartureMillis(
+                        departureTime = entry.nextSchedule.departureTime,
                         currentTimeMillis = currentTimeMillis
-                    )
-                    val minutesLabel = diffMinutes?.let { buildCountdownLabel(it) }
+                    )?.let { departureMillis ->
+                        buildScheduleTimerLabel(departureMillis - currentTimeMillis)
+                    }
                         ?: stringResource(R.string.schedule_time_soon)
+                    val inTransitLabel = resolveElapsedDepartureMillis(
+                        departureTime = entry.inTransitSchedule.departureTime,
+                        currentTimeMillis = currentTimeMillis
+                    )?.let { elapsedMillis ->
+                        buildScheduleTimerLabel(elapsedMillis)
+                    }
 
                     UpcomingScheduleBoardRow(
                         title = entry.title,
-                        countdownLabel = minutesLabel,
-                        departureTime = entry.schedule.departureTime,
-                        nextDepartureTime = entry.nextDepartureTime,
+                        inTransitTime = entry.inTransitSchedule.departureTime,
+                        inTransitLabel = inTransitLabel,
+                        nextDepartureTime = entry.nextSchedule.departureTime,
+                        nextCountdownLabel = nextCountdownLabel,
                         colors = colors,
                         textSpec = UpcomingScheduleTextSpec(
                             primaryTextSize = layout.upcoming.upcomingPrimaryTextSize,
@@ -163,7 +182,7 @@ internal fun UpcomingSchedulesContent(
 
                     if (index != entries.lastIndex) {
                         HorizontalDivider(
-                            thickness = 1.5.dp,
+                            thickness = 1.dp,
                             color = colors.divider,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -186,15 +205,13 @@ private fun upcomingSchedulesCardShape(
 private data class UpcomingScheduleBoardColors(
     val board: Color,
     val content: Color,
-    val divider: Color,
-    val bubble: Color
+    val divider: Color
 ) {
     companion object {
         fun default() = UpcomingScheduleBoardColors(
-            board = Color(0xFF0D47A1),
+            board = Color(0xFF103B80),
             content = Color.White,
-            divider = Color(0xFF5F91E6).copy(alpha = 0.46f),
-            bubble = Color(0xFF1D63CB)
+            divider = Color(0xFF5F91E6).copy(alpha = 0.46f)
         )
     }
 }
@@ -241,8 +258,8 @@ private fun resolveUpcomingScheduleRowSpec(
             else -> textSpec.primaryTextSize * 1.18f
         },
         timeLabelTextSize = when {
-            isTight -> textSpec.supportingTextSize * 0.85f
-            isCompact -> textSpec.supportingTextSize * 0.92f
+            isTight -> textSpec.supportingTextSize.value.coerceAtLeast(11f).sp
+            isCompact -> textSpec.supportingTextSize.value.coerceAtLeast(11f).sp
             else -> textSpec.supportingTextSize
         },
         timeColumnsWeight = when {
@@ -254,11 +271,7 @@ private fun resolveUpcomingScheduleRowSpec(
 }
 
 @Composable
-private fun UpcomingScheduleBoardRow(
-    title: String,
-    countdownLabel: String,
-    departureTime: String,
-    nextDepartureTime: String?,
+private fun UpcomingScheduleColumnHeaders(
     colors: UpcomingScheduleBoardColors,
     textSpec: UpcomingScheduleTextSpec,
     fullWidthMode: Boolean,
@@ -266,14 +279,105 @@ private fun UpcomingScheduleBoardRow(
 ) {
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         val availableWidth = this.maxWidth
+        val fontScale = LocalDensity.current.fontScale
+        val labels: @Composable () -> Unit = {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                UpcomingScheduleColumnHeader(
+                    text = stringResource(R.string.schedule_in_transit_column),
+                    color = colors.content,
+                    textSize = textSpec.supportingTextSize,
+                    modifier = Modifier.weight(1f)
+                )
+                UpcomingScheduleColumnHeader(
+                    text = stringResource(R.string.schedule_next_departure_column),
+                    color = colors.content,
+                    textSize = textSpec.supportingTextSize,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        if (availableWidth / fontScale < 300.dp) {
+            labels()
+        } else {
+            val rowSpec = resolveUpcomingScheduleRowSpec(
+                availableWidth = availableWidth,
+                compactMode = compactMode,
+                fullWidthMode = fullWidthMode,
+                textSpec = textSpec
+            )
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Spacer(modifier = Modifier.weight(1f))
+                Box(modifier = Modifier.weight(rowSpec.timeColumnsWeight)) {
+                    labels()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UpcomingScheduleColumnHeader(
+    text: String,
+    color: Color,
+    textSize: TextUnit,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelMedium.copy(
+            platformStyle = PlatformTextStyle(includeFontPadding = false),
+            fontSize = textSize,
+            lineHeight = textSize * 1.1f,
+            fontWeight = FontWeight.Bold
+        ),
+        color = color.copy(alpha = 0.78f),
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        textAlign = TextAlign.Center,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun UpcomingScheduleBoardRow(
+    title: String,
+    inTransitTime: String,
+    inTransitLabel: String?,
+    nextDepartureTime: String,
+    nextCountdownLabel: String,
+    colors: UpcomingScheduleBoardColors,
+    textSpec: UpcomingScheduleTextSpec,
+    fullWidthMode: Boolean,
+    compactMode: Boolean
+) {
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val availableWidth = this.maxWidth
+        val fontScale = LocalDensity.current.fontScale
+        if (availableWidth / fontScale < 300.dp) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                UpcomingPointSummary(title, colors, textSpec.primaryTextSize)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    UpcomingTimeColumn(
+                        inTransitTime, inTransitLabel.orEmpty(), colors.content,
+                        textSpec.primaryTextSize, textSpec.supportingTextSize.value.coerceAtLeast(11f).sp, Modifier.weight(1f),
+                        heading = stringResource(R.string.schedule_in_transit_column)
+                    )
+                    UpcomingTimeColumn(
+                        nextDepartureTime, nextCountdownLabel, colors.content,
+                        textSpec.primaryTextSize, textSpec.supportingTextSize.value.coerceAtLeast(11f).sp, Modifier.weight(1f),
+                        heading = stringResource(R.string.schedule_next_departure_column)
+                    )
+                }
+            }
+            return@BoxWithConstraints
+        }
         val rowSpec = resolveUpcomingScheduleRowSpec(
             availableWidth = availableWidth,
             compactMode = compactMode,
             fullWidthMode = fullWidthMode,
             textSpec = textSpec
         )
-        val resolvedNextDepartureTime = nextDepartureTime?.takeIf(String::isNotBlank)
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -282,11 +386,8 @@ private fun UpcomingScheduleBoardRow(
         ) {
             UpcomingPointSummary(
                 title = title,
-                countdownLabel = countdownLabel,
                 colors = colors,
                 titleTextSize = rowSpec.titleTextSize,
-                countdownTextSize = textSpec.supportingTextSize,
-                compactMode = rowSpec.isCompact,
                 modifier = Modifier
                     .weight(1f)
                     .padding(end = if (rowSpec.isTight) 6.dp else 8.dp)
@@ -295,46 +396,39 @@ private fun UpcomingScheduleBoardRow(
             Box(
                 modifier = Modifier
                     .weight(rowSpec.timeColumnsWeight)
-                    .fillMaxHeight()
                     .align(Alignment.CenterVertically),
                 contentAlignment = Alignment.Center
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight()
                         .align(Alignment.Center),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     UpcomingTimeColumn(
-                        time = departureTime,
-                        label = stringResource(R.string.schedule_departure_label),
+                        time = inTransitTime,
+                        label = inTransitLabel.orEmpty(),
                         bodyColor = colors.content,
                         timeTextSize = rowSpec.timeTextSize,
                         labelTextSize = rowSpec.timeLabelTextSize,
                         modifier = Modifier.weight(1f)
                     )
-                    resolvedNextDepartureTime?.let { nextTime ->
-                        UpcomingTimeColumn(
-                            time = nextTime,
-                            label = stringResource(R.string.schedule_next_departure_label),
-                            bodyColor = colors.content,
-                            timeTextSize = rowSpec.timeTextSize,
-                            labelTextSize = rowSpec.timeLabelTextSize,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-
-                if (resolvedNextDepartureTime != null) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .width(1.dp)
-                            .fillMaxHeight()
-                            .background(colors.divider)
+                    UpcomingTimeColumn(
+                        time = nextDepartureTime,
+                        label = nextCountdownLabel,
+                        bodyColor = colors.content,
+                        timeTextSize = rowSpec.timeTextSize,
+                        labelTextSize = rowSpec.timeLabelTextSize,
+                        modifier = Modifier.weight(1f)
                     )
                 }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .width(1.dp).height(40.dp)
+                        .background(colors.divider)
+                )
             }
         }
     }
@@ -343,23 +437,17 @@ private fun UpcomingScheduleBoardRow(
 @Composable
 private fun UpcomingPointSummary(
     title: String,
-    countdownLabel: String,
     colors: UpcomingScheduleBoardColors,
     titleTextSize: TextUnit,
-    countdownTextSize: TextUnit,
-    compactMode: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val countdownBadgeHorizontalPadding = if (compactMode) 5.dp else 7.dp
-
     Row(
-        modifier = modifier.fillMaxHeight(),
+        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(),
+                .fillMaxWidth(),
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Center
         ) {
@@ -376,36 +464,6 @@ private fun UpcomingPointSummary(
                 overflow = TextOverflow.Clip,
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(modifier = Modifier.height(if (compactMode) 3.dp else 5.dp))
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(colors.bubble)
-                    .padding(
-                        horizontal = countdownBadgeHorizontalPadding,
-                        vertical = if (compactMode) 1.dp else 2.dp
-                    ),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Schedule,
-                    contentDescription = null,
-                    tint = colors.content,
-                    modifier = Modifier.size(if (compactMode) 12.dp else 14.dp)
-                )
-                Text(
-                    text = countdownLabel,
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontSize = countdownTextSize,
-                        lineHeight = countdownTextSize * 1.08f,
-                        fontWeight = FontWeight.SemiBold
-                    ),
-                    color = colors.content,
-                    softWrap = true,
-                    overflow = TextOverflow.Clip,
-                    modifier = Modifier.padding(start = if (compactMode) 2.dp else 4.dp)
-                )
-            }
         }
     }
 }
@@ -417,15 +475,23 @@ private fun UpcomingTimeColumn(
     bodyColor: Color,
     timeTextSize: TextUnit,
     labelTextSize: TextUnit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    heading: String? = null
 ) {
     Column(
         modifier = modifier
-            .fillMaxWidth()
-            .fillMaxHeight(),
+            .fillMaxWidth(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        if (heading != null) {
+            UpcomingScheduleColumnHeader(
+                text = heading,
+                color = bodyColor,
+                textSize = labelTextSize.value.coerceAtLeast(11f).sp,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
+            )
+        }
         Text(
             text = time,
             style = MaterialTheme.typography.displaySmall.copy(
@@ -439,8 +505,8 @@ private fun UpcomingTimeColumn(
                 fontWeight = FontWeight.ExtraBold
             ),
             color = bodyColor,
-            maxLines = 1,
-            softWrap = false,
+            maxLines = Int.MAX_VALUE,
+            softWrap = true,
             overflow = TextOverflow.Clip,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
@@ -459,8 +525,8 @@ private fun UpcomingTimeColumn(
                 fontWeight = FontWeight.SemiBold
             ),
             color = bodyColor.copy(alpha = 0.78f),
-            maxLines = 1,
-            softWrap = false,
+            maxLines = Int.MAX_VALUE,
+            softWrap = true,
             overflow = TextOverflow.Clip,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()

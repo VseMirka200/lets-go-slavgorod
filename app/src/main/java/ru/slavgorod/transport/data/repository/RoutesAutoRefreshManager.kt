@@ -1,5 +1,6 @@
 package ru.slavgorod.transport.data.repository
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,6 +14,12 @@ import kotlinx.coroutines.launch
 import ru.slavgorod.transport.core.Constants
 import timber.log.Timber
 
+/**
+ * Запускает фоновую проверку обновлений по таймеру и после восстановления сети.
+ *
+ * Подсказка разработчику: start и stop должны оставаться идемпотентными, поскольку
+ * жизненный цикл приложения может вызывать их повторно.
+ */
 class RoutesAutoRefreshManager(
     routeRepository: RoutesTableDataSource,
     private val connectionStateFlow: Flow<Boolean>,
@@ -45,10 +52,11 @@ class RoutesAutoRefreshManager(
         if (refreshJob?.isActive == true) return
 
         refreshJob = scope.launch {
+            // Начальная загрузка выполняется репозиторием; таймер не повторяет её сразу.
             delay(Constants.SCHEDULE_AUTO_REFRESH_INTERVAL_MS)
 
             while (isActive) {
-                runRefreshSafely("Periodic schedule refresh failed")
+                runRefreshSafely("Не удалось выполнить периодическое обновление расписания")
 
                 delay(Constants.SCHEDULE_AUTO_REFRESH_INTERVAL_MS)
             }
@@ -62,8 +70,9 @@ class RoutesAutoRefreshManager(
             connectionStateFlow
                 .distinctUntilChanged()
                 .collect { isOnline ->
+                    // Обновляем только при переходе из состояния без сети в состояние с сетью.
                     if (!wasOnline && isOnline) {
-                        runRefreshSafely("Schedule refresh after reconnect failed")
+                        runRefreshSafely("Не удалось обновить расписание после восстановления сети")
                     }
                     wasOnline = isOnline
                 }
@@ -71,9 +80,11 @@ class RoutesAutoRefreshManager(
     }
 
     private suspend fun runRefreshSafely(errorMessage: String) {
-        runCatching {
+        try {
             refreshAction()
-        }.onFailure { exception ->
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: Exception) {
             Timber.w(exception, errorMessage)
         }
     }

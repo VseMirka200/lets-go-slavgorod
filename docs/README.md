@@ -23,8 +23,9 @@
 ## Релизы и данные
 
 - [История изменений](release/CHANGELOG.md)
-- [Данные расписания](../schedule-data/schedule.json)
-- [Валидатор расписания](../tools/validate-schedule-data.mjs)
+- [Как устроен источник расписания](guides/SCHEDULE_DATA.md)
+- [Валидатор опубликованного расписания](../tools/validate-published-schedule.mjs)
+- [Уроки обратной связи](guides/FEEDBACK_LESSONS_RU.md)
 
 Публичный сайт: [главная](index.html), [расписание](schedule.html).
 Контакт: [**vsemirka200@bk.ru**](mailto:vsemirka200@bk.ru).

@@ -16,9 +16,11 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -109,41 +111,50 @@ internal fun ScheduleFiltersSheetContent(
     onDeparturePointClear: () -> Unit
 ) {
     var expandedSection by remember { mutableStateOf<String?>(null) }
+    val filterColorScheme = MaterialTheme.colorScheme.copy(
+        primary = Color.White,
+        onSurface = Color.White,
+        onSurfaceVariant = Color.White.copy(alpha = 0.72f)
+    )
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = layout.filters.filterSheetHorizontalPadding, vertical = 0.dp),
-        verticalArrangement = Arrangement.spacedBy(layout.filters.filterSheetVerticalSpacing)
-    ) {
-        ScheduleDeparturePointFilterSheetContent(
-            selectedFilterId = selectedDeparturePointFilterId,
-            labels = departurePointLabels,
-            onSelect = onDeparturePointSelect,
-            onClear = onDeparturePointClear,
-            expanded = expandedSection == DEPARTURE_POINT_SECTION,
-            onExpandedChange = { expanded ->
-                expandedSection = expandedSection.toggleSection(
-                    sectionKey = DEPARTURE_POINT_SECTION,
-                    expanded = expanded
+    MaterialTheme(colorScheme = filterColorScheme) {
+        CompositionLocalProvider(LocalContentColor provides Color.White) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = layout.filters.filterSheetHorizontalPadding, vertical = 0.dp),
+                verticalArrangement = Arrangement.spacedBy(layout.filters.filterSheetVerticalSpacing)
+            ) {
+                ScheduleDeparturePointFilterSheetContent(
+                    selectedFilterId = selectedDeparturePointFilterId,
+                    labels = departurePointLabels,
+                    onSelect = onDeparturePointSelect,
+                    onClear = onDeparturePointClear,
+                    expanded = expandedSection == DEPARTURE_POINT_SECTION,
+                    onExpandedChange = { expanded ->
+                        expandedSection = expandedSection.toggleSection(
+                            sectionKey = DEPARTURE_POINT_SECTION,
+                            expanded = expanded
+                        )
+                    }
                 )
-            }
-        )
 
-        if (descriptionLabels.isNotEmpty()) {
-            ScheduleDescriptionFilterSheetContent(
-                selectedLabel = selectedDescriptionLabel,
-                labels = descriptionLabels,
-                onSelect = onDescriptionSelect,
-                onClear = onDescriptionClear,
-                expanded = expandedSection == DESCRIPTION_SECTION,
-                onExpandedChange = { expanded ->
-                    expandedSection = expandedSection.toggleSection(
-                        sectionKey = DESCRIPTION_SECTION,
-                        expanded = expanded
+                if (descriptionLabels.isNotEmpty()) {
+                    ScheduleDescriptionFilterSheetContent(
+                        selectedLabel = selectedDescriptionLabel,
+                        labels = descriptionLabels,
+                        onSelect = onDescriptionSelect,
+                        onClear = onDescriptionClear,
+                        expanded = expandedSection == DESCRIPTION_SECTION,
+                        onExpandedChange = { expanded ->
+                            expandedSection = expandedSection.toggleSection(
+                                sectionKey = DESCRIPTION_SECTION,
+                                expanded = expanded
+                            )
+                        }
                     )
                 }
-            )
+            }
         }
     }
 }
