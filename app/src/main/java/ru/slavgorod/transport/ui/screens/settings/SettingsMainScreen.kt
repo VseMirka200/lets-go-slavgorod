@@ -1,5 +1,6 @@
 package ru.slavgorod.transport.ui.screens.settings
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,9 +29,6 @@ import ru.slavgorod.transport.logging.UserActionLogger
 import ru.slavgorod.transport.ui.components.settings.SettingsMenuRow
 import ru.slavgorod.transport.ui.components.settings.SettingsScreenScaffold
 import ru.slavgorod.transport.ui.viewmodel.ThemeViewModel
-
-private const val PROJECT_SUPPORT_URL = "https://vsemirka200.github.io/lets-go-slavgorod/#support"
-private const val OPEN_PROJECT_SUPPORT_FAILED = "Failed to open project support page"
 
 @Composable
 fun SettingsMainScreen(
@@ -95,18 +93,24 @@ fun SettingsMainScreen(
             entries = settingsEntries,
             onEntryClick = { entry ->
                 UserActionLogger.settingsEntryOpened(entry.title)
-                when (entry.modalSheet) {
-                    SettingsModalSheet.SUPPORT -> {
-                        context.openExternalUrl(
-                            url = PROJECT_SUPPORT_URL,
-                            failureLogMessage = OPEN_PROJECT_SUPPORT_FAILED
-                        )
+                when (val destination = entry.destination) {
+                    is SettingsDestination.Website -> {
+                        if (!context.openExternalUrl(
+                                destination.url,
+                                "Не удалось открыть страницу сайта"
+                            )
+                        ) {
+                            Toast.makeText(
+                                context,
+                                R.string.welcome_link_failed,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
 
-                    null -> Unit
-                    else -> {
+                    is SettingsDestination.Sheet -> {
                         UserActionLogger.action(R.string.settings_open_section_format, entry.title)
-                        activeSheet = entry.modalSheet
+                        activeSheet = destination.sheet
                     }
                 }
             },
@@ -150,7 +154,6 @@ internal fun SettingsContent(
     onEntryClick: (SettingsEntry) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     Column(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -169,6 +172,5 @@ internal fun SettingsContent(
                 )
             }
         }
-
     }
 }

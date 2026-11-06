@@ -1,40 +1,40 @@
 package ru.slavgorod.transport.ui.screens.settings
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.SystemUpdateAlt
-import androidx.compose.material3.Text
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ru.slavgorod.transport.R
 import ru.slavgorod.transport.logging.UserActionLogger
-import ru.slavgorod.transport.ui.viewmodel.ThemeViewModel
-import ru.slavgorod.transport.ui.components.settings.SettingsMenuRow
 import ru.slavgorod.transport.ui.components.app.AppBackButton
+import ru.slavgorod.transport.ui.components.settings.SettingsMenuRow
+import ru.slavgorod.transport.ui.viewmodel.ThemeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,7 +49,6 @@ internal fun SettingsSheetHost(
     val scheduleUpdatesSectionTitle = stringResource(R.string.settings_schedule_management_title)
     val scheduleNotificationsSectionTitle =
         stringResource(R.string.settings_schedule_notifications_title)
-    val feedbackSectionTitle = stringResource(R.string.settings_feedback_title)
     val sourceSectionTitle = stringResource(R.string.settings_source_title)
 
     var schedulePage by rememberSaveable(activeSheet) { mutableStateOf<SettingsModalSheet?>(null) }
@@ -81,7 +80,9 @@ internal fun SettingsSheetHost(
                     SettingsModalSheet.SCHEDULE_UPDATES -> ScheduleSourceSettingsSection()
                     SettingsModalSheet.SCHEDULE_SOURCE -> ScheduleSourceSettingsSection()
                     SettingsModalSheet.SCHEDULE_NOTIFICATIONS -> ScheduleNotificationsSection(topPadding = 0.dp)
-                    else -> Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 0.dp)) {
+                    else -> Column(Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 0.dp)) {
                         SettingsMenuRow(title = scheduleUpdatesSectionTitle, subtitle = stringResource(R.string.settings_schedule_updates_subtitle), icon = Icons.Default.SystemUpdateAlt, onClick = { schedulePage = SettingsModalSheet.SCHEDULE_UPDATES })
                         SettingsMenuRow(title = scheduleNotificationsSectionTitle, subtitle = stringResource(R.string.settings_schedule_notifications_subtitle), icon = Icons.Default.Notifications, onClick = { schedulePage = SettingsModalSheet.SCHEDULE_NOTIFICATIONS })
                     }
@@ -153,13 +154,6 @@ internal fun SettingsSheetHost(
             }
         }
 
-        SettingsModalSheet.FEEDBACK -> {
-            SettingsBottomSheet(onDismiss = { onCloseSheet(feedbackSectionTitle) }) {
-                SettingsTitledContent(feedbackSectionTitle) { FeedbackSettingsSection() }
-            }
-        }
-
-        SettingsModalSheet.SUPPORT -> Unit
         null -> Unit
     }
 }
@@ -168,7 +162,9 @@ internal fun SettingsSheetHost(
 internal fun SettingsSectionTitle(title: String) {
     Text(
         text = title,
-        modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 8.dp),
         style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.SemiBold
     )
