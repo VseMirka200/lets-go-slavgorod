@@ -119,16 +119,11 @@
     .portal-topline {
         display:flex;
         justify-content:flex-start;
-        gap:16px;
+        flex-wrap:wrap;
+        gap:8px 16px;
         padding-top:14px;
-        overflow-x:auto;
         color:var(--muted);
         font-size:12px;
-        white-space:nowrap;
-        scrollbar-width:none;
-    }
-    .portal-topline::-webkit-scrollbar {
-        display:none;
     }
     .portal-hero,.schedule-portal-hero {
         padding:42px 0 26px;

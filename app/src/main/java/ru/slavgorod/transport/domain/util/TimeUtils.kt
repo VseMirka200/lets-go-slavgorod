@@ -3,6 +3,7 @@ package ru.slavgorod.transport.domain.util
 import java.util.Calendar
 import java.util.Locale
 
+/** Операции с локальными значениями [Calendar], используемые в интерфейсе. */
 object TimeUtils {
 
     /** Возвращает часы и минуты в формате с ведущими нулями. */
@@ -37,7 +38,15 @@ object TimeUtils {
         }
     }
 
-    /** Вычитает время суток в минутах, не учитывая дату и переход через полночь. */
+    /**
+     * Вычитает время суток в минутах, не учитывая дату и переход через полночь.
+     * Например, для 23:55 и 00:10 результат отрицателен; для поиска следующего
+     * отправления через границу суток нужна логика с полноценной датой.
+     *
+     * @param currentTime Исходное время в часовом поясе переданного календаря.
+     * @param targetTime Целевое время; используются только часы и минуты.
+     * @return Разница минут без корректировки на следующий день.
+     */
     fun getMinutesUntil(currentTime: Calendar, targetTime: Calendar): Int {
         return targetTime.minutesOfDay() - currentTime.minutesOfDay()
     }

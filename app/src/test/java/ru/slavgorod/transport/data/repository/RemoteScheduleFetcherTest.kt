@@ -2,14 +2,20 @@ package ru.slavgorod.transport.data.repository
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancelAndJoin
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
+import okhttp3.mockwebserver.SocketPolicy
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.assertNotNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class RemoteScheduleFetcherTest {
@@ -71,6 +77,57 @@ class RemoteScheduleFetcherTest {
         assertEquals("""{"routes":[{"id":"1"}]}""", fetcher.fetchWithRetry())
         assertEquals("/exec", server.takeRequest().path)
         assertEquals("/published", server.takeRequest().path)
+    }
+
+    @Test
+    fun `oversized response is rejected even without content length`() = runTest {
+        server.enqueue(MockResponse().setChunkedBody("x".repeat(5 * 1024 * 1024 + 1), 4096))
+        val fetcher = RemoteScheduleFetcher(
+            remoteJsonUrlProvider = { server.url("/large").toString() },
+            onlineChecker = { true },
+            retryDelaysMillis = emptyList()
+        )
+        assertNull(fetcher.fetchWithRetry())
+    }
+
+    @Test
+    fun `permanent client error is not retried`() = runTest {
+        server.enqueue(MockResponse().setResponseCode(404))
+        val fetcher = RemoteScheduleFetcher(
+            remoteJsonUrlProvider = { server.url("/missing").toString() },
+            onlineChecker = { true },
+            delayProvider = {}
+        )
+        assertNull(fetcher.fetchWithRetry())
+        assertEquals(1, server.requestCount)
+    }
+
+    @Test
+    fun `temporary server error is retried`() = runTest {
+        server.enqueue(MockResponse().setResponseCode(503))
+        server.enqueue(MockResponse().setBody("{}"))
+        val fetcher = RemoteScheduleFetcher(
+            remoteJsonUrlProvider = { server.url("/routes").toString() },
+            onlineChecker = { true },
+            delayProvider = {}
+        )
+        assertEquals("{}", fetcher.fetchWithRetry())
+        assertEquals(2, server.requestCount)
+    }
+
+    @Test
+    fun `cancellation stops a pending request`() = runTest {
+        server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
+        val fetcher = RemoteScheduleFetcher(
+            remoteJsonUrlProvider = { server.url("/pending").toString() },
+            onlineChecker = { true },
+            retryDelaysMillis = emptyList()
+        )
+        val job = launch { fetcher.fetchWithRetry() }
+        runCurrent()
+        assertNotNull(server.takeRequest(5, java.util.concurrent.TimeUnit.SECONDS))
+        job.cancelAndJoin()
+        assertEquals(true, job.isCancelled)
     }
 
 }

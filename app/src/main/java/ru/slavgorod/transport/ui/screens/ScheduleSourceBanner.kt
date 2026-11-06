@@ -29,5 +29,9 @@ internal fun ScheduleSourceBanner(status: ScheduleDataSourceStatus, modifier: Mo
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text("Последняя загрузка: $updatedAt", style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
+        status.lastCheckedAtMillis?.let {
+            Text("Последняя проверка: ${DateTimeFormatterUtils.formatFullDateTime(it)}",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }

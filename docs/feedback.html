@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Обратная связь с проектом «Поехали! Славгород».">
+    <meta name="theme-color" content="#0d47a1">
+    <title>Обратная связь — Поехали! Славгород</title>
+    <link rel="icon" href="assets/media/branding/app-logo.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="assets/styles/core/portal.css">
+    <link rel="stylesheet" href="assets/styles/core/branding.css">
+    <link rel="stylesheet" href="assets/styles/features/mobile.css">
+    <link rel="stylesheet" href="assets/styles/pages/feedback.css">
+</head>
+<body>
+    <div class="portal-shell">
+        <aside class="portal-sidebar">
+            <a class="portal-brand" href="index.html"><img src="assets/media/branding/app-logo.png" alt=""><span>Поехали! Славгород</span></a>
+            <a class="portal-back" href="index.html">← На главную</a>
+            <button class="portal-search" type="button" data-open-search aria-label="Поиск по сайту">Поиск <kbd>Ctrl K</kbd></button>
+            <details class="portal-menu" open>
+                <summary>Меню</summary>
+                <nav class="portal-nav" aria-label="Навигация">
+                    <a href="index.html">Начало</a>
+                    <a href="schedule.html">Расписание</a>
+                    <p>Пользователям</p>
+                    <a href="index.html#how">Как пользоваться</a>
+                    <a href="https://www.rustore.ru/catalog/app/ru.slavgorod.transport" target="_blank" rel="noreferrer">Скачать из RuStore</a>
+                    <a href="https://play.google.com/store/apps/details?id=ru.slavgorod.transport" target="_blank" rel="noreferrer">Скачать из Google Play</a>
+                    <a href="https://github.com/VseMirka200/lets-go-slavgorod/releases" target="_blank" rel="noreferrer">Скачать APK (GitHub)</a>
+                    <a class="active" href="feedback.html" aria-current="page">Обратная связь</a>
+                    <p>Проект</p>
+                    <a href="index.html#project">Документация</a>
+                    <a href="https://github.com/VseMirka200/lets-go-slavgorod" target="_blank" rel="noreferrer">GitHub</a>
+                </nav>
+            </details>
+        </aside>
+        <main id="top" class="portal-main feedback-main">
+            <div class="portal-topline">
+                <a href="https://vk.com/letsgoslavgorod" target="_blank" rel="noreferrer">Группа ВКонтакте</a>
+                <a href="https://max.ru/channel_letsgoslavgorod" target="_blank" rel="noreferrer">Канал в МАКС</a>
+                <a href="https://github.com/VseMirka200/lets-go-slavgorod/releases" target="_blank" rel="noreferrer">Релизы GitHub</a>
+            </div>
+            <header class="feedback-header">
+                <span class="portal-eyebrow">Мы на связи</span>
+                <h1>Обратная связь</h1>
+                <p>Нашли ошибку или хотите предложить улучшение? Выберите удобный способ связи.</p>
+            </header>
+
+            <section class="feedback-section" aria-labelledby="feedback-method-title">
+                <div class="feedback-section-heading"><span>01</span><div><h2 id="feedback-method-title">Как с нами связаться</h2><p>Выберите удобный способ.</p></div></div>
+                <div class="feedback-methods">
+                    <a class="feedback-method" href="https://vk.ru/letsgoslavgorod" target="_blank" rel="noreferrer">
+                        <span class="feedback-icon" aria-hidden="true">↗</span>
+                        <span><strong>Написать ВКонтакте</strong><small>Открыть сообщество проекта</small></span>
+                        <span class="feedback-arrow" aria-hidden="true">↗</span>
+                    </a>
+                    <a class="feedback-method" id="feedback-start" href="#feedback-email" aria-controls="feedback-email" aria-expanded="false">
+                        <span class="feedback-icon" aria-hidden="true">@</span>
+                        <span><strong>Написать на почту</strong><small>Выбрать почту и тему обращения</small></span>
+                        <span class="feedback-arrow" aria-hidden="true">↓</span>
+                    </a>
+                </div>
+            </section>
+
+            <section id="feedback-email" class="feedback-section feedback-email" aria-labelledby="feedback-client-title" hidden>
+                <div class="feedback-section-heading"><span>02</span><div><h2 id="feedback-client-title">Выберите почту</h2><p>Где вы хотите написать письмо?</p></div></div>
+                <fieldset class="feedback-topics feedback-clients">
+                    <legend class="feedback-visually-hidden">Почтовый клиент</legend>
+                    <label><input type="radio" name="feedback-client" value="mailru"><span>Почта Mail</span></label>
+                    <label><input type="radio" name="feedback-client" value="gmail"><span>Gmail</span></label>
+                    <label><input type="radio" name="feedback-client" value="yandex"><span>Яндекс Почта</span></label>
+                    <label><input type="radio" name="feedback-client" value="app"><span>Почтовое приложение</span></label>
+                </fieldset>
+            </section>
+            <section id="feedback-topic" class="feedback-section feedback-email" aria-labelledby="feedback-topic-title" hidden>
+                <div class="feedback-section-heading"><span>03</span><div><h2 id="feedback-topic-title">Тема обращения</h2><p>Подготовим письмо с подходящим шаблоном.</p></div></div>
+                <fieldset class="feedback-topics">
+                    <legend class="feedback-visually-hidden">Тема обращения</legend>
+                    <label><input type="radio" name="feedback-topic" value="bug" checked><span>Ошибка в приложении</span></label>
+                    <label><input type="radio" name="feedback-topic" value="schedule"><span>Неточность в расписании</span></label>
+                    <label><input type="radio" name="feedback-topic" value="suggestion"><span>Предложение по улучшению</span></label>
+                    <label><input type="radio" name="feedback-topic" value="other"><span>Другой вопрос</span></label>
+                </fieldset>
+                <div class="feedback-actions">
+                    <a class="portal-button primary" id="feedback-email-link" href="mailto:vsemirka200@bk.ru">Открыть письмо ↗</a>
+                    <p>Проверьте и дополните письмо в выбранной почте перед отправкой.</p>
+                </div>
+            </section>
+            <noscript><p>Для выбора темы включите JavaScript или напишите на <a href="mailto:vsemirka200@bk.ru">vsemirka200@bk.ru</a>.</p></noscript>
+            <footer class="portal-footer">
+                © Поехали! Славгород ·
+                <a href="https://github.com/VseMirka200/lets-go-slavgorod" target="_blank" rel="noreferrer">Исходный код</a>
+            </footer>
+        </main>
+    </div>
+    <script src="assets/scripts/features/site-search.js"></script>
+    <script src="assets/scripts/pages/feedback-page.js"></script>
+    <script src="assets/scripts/features/pwa-install.js"></script>
+</body>
+</html>

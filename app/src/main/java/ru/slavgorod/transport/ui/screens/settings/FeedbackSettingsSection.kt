@@ -35,7 +35,7 @@ import ru.slavgorod.transport.core.Constants
 import ru.slavgorod.transport.ui.components.settings.SettingsMenuRow
 import ru.slavgorod.transport.ui.components.settings.SettingsRadioRow
 
-private const val FEEDBACK_EMAIL = "vladislav-olyushin@mail.ru"
+private const val FEEDBACK_EMAIL = "vsemirka200@bk.ru"
 private const val FEEDBACK_VK_URL = "https://vk.ru/letsgoslavgorod"
 
 private enum class FeedbackType(@StringRes val title: Int, @StringRes val body: Int) {

@@ -3,6 +3,14 @@ package ru.slavgorod.transport.data.model
 import androidx.compose.runtime.Immutable
 import ru.slavgorod.transport.domain.util.ValidationUtils
 
+/**
+ * Отдельное отправление маршрута с точкой, временем и календарём работы.
+ *
+ * [departureTime] хранит местное время в текстовом виде, а [serviceCalendar]
+ * определяет даты, на которые этот рейс действительно назначен. Поля [dayOfWeek]
+ * и [isWeekend] сохранены для совместимости; при проверке конкретной даты следует
+ * использовать календарь, поскольку он также учитывает исключения и праздники.
+ */
 @Immutable
 data class BusSchedule(
     val id: String,

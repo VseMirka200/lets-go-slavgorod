@@ -3,6 +3,14 @@ package ru.slavgorod.transport.data.model
 import androidx.compose.runtime.Immutable
 import ru.slavgorod.transport.domain.util.ValidationUtils
 
+/**
+ * Сведения о маршруте, отображаемые в списке и на экране расписания.
+ *
+ * [id] связывает маршрут с рейсами и должен быть устойчивым между обновлениями;
+ * [routeNumber] предназначен для отображения и может отличаться от идентификатора.
+ * Цены, время в пути и способы оплаты являются необязательным текстом источника,
+ * поэтому их нельзя использовать как числовые значения без дополнительного разбора.
+ */
 @Immutable
 data class BusRoute(
     val id: String,

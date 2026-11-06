@@ -39,9 +39,9 @@
 
 ## Контакт
 
-По вопросам конфиденциальности: **vladislav-olyushin@mail.ru**.
+По вопросам конфиденциальности: **vsemirka200@bk.ru**.
 
-Публичная расширенная версия политики опубликована на сайте проекта:
+Публичная версия политики находится в репозитории проекта:
 
 https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/policies/PRIVACY.md
 

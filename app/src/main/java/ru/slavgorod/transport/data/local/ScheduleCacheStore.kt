@@ -9,6 +9,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.charset.StandardCharsets
 
+/** Сохранённый текст расписания и время записи файла в миллисекундах Unix. */
 data class CachedScheduleSnapshot(
     val json: String,
     val savedAtMillis: Long

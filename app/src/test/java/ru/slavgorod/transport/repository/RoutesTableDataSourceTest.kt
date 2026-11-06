@@ -353,9 +353,9 @@ class RoutesTableDataSourceTest {
         var scheduleIndexBuildCount = 0
             private set
 
-        override fun buildSchedulesIndex(jsonString: String): Map<String, List<ru.slavgorod.transport.data.model.BusSchedule>> {
+        override fun parseSnapshot(json: String): ru.slavgorod.transport.data.repository.ParsedScheduleSnapshot? {
             scheduleIndexBuildCount += 1
-            return super.buildSchedulesIndex(jsonString)
+            return super.parseSnapshot(json)
         }
     }
 }

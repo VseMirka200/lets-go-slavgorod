@@ -48,7 +48,8 @@ class RoutesTableDataSource(
     ),
     private val scheduleJsonParser: ScheduleJsonParser = ScheduleJsonParser(jsonDataSource),
     externalScope: CoroutineScope? = null,
-    autoLoadOnInit: Boolean = true
+    autoLoadOnInit: Boolean = true,
+    private val currentTimeMillis: () -> Long = System::currentTimeMillis
 ) {
 
     private val _routes = MutableStateFlow<List<BusRoute>>(emptyList())
@@ -69,7 +70,7 @@ class RoutesTableDataSource(
     init {
         if (autoLoadOnInit) {
             repositoryScope.launch {
-                loadRoutesFromPersistentCache()
+                loadMutex.withLock { ensureRoutesLoadedFromPersistentCache() }
                 refreshRoutesFromLocal(notifyUser = false)
             }
         }
@@ -77,44 +78,59 @@ class RoutesTableDataSource(
 
     fun isOnline(): Boolean = remoteScheduleFetcher.isOnline()
 
+    /** Ищет маршрут в текущем снимке; пустой или неизвестный идентификатор даёт `null`. */
     fun getRouteById(routeId: String?): BusRoute? =
         routeId?.takeIf(String::isNotBlank)?.let(memoryCache::routeById)
 
+    /** Ищет среди загруженных маршрутов; пустой запрос возвращает полный список. */
     fun searchRoutes(query: String): List<BusRoute> =
         if (query.isBlank()) getAllRoutes() else _routes.value.search(query)
 
+    /** Возвращает текущий список без ожидания первоначальной сетевой загрузки. */
     fun getAllRoutes(): List<BusRoute> = _routes.value
 
-    suspend fun getSchedulesForRoute(routeId: String): List<BusSchedule> {
-        require(routeId.isNotBlank()) { "Идентификатор маршрута не может быть пустым" }
+    /**
+     * Возвращает рейсы маршрута из проверенного снимка, восстанавливая кэш при необходимости.
+     * Если подходящие данные недоступны или некорректны, результат будет пустым.
+     * Загрузка и разбор выполняются вне главного потока под общей блокировкой обновлений.
+     *
+     * @param routeId Непустой устойчивый идентификатор маршрута.
+     * @throws IllegalArgumentException если идентификатор пустой.
+     */
+    suspend fun getSchedulesForRoute(routeId: String): List<BusSchedule> = withContext(Dispatchers.IO) {
+        loadMutex.withLock {
+            require(routeId.isNotBlank()) { "Идентификатор маршрута не может быть пустым" }
+            ensureRoutesLoadedFromPersistentCache()
+            memoryCache.schedulesForRoute(routeId)?.let { return@withLock it }
 
-        ensureRoutesLoadedFromPersistentCache()
-        memoryCache.schedulesForRoute(routeId)?.let { return it }
+            val jsonSnapshot = memoryCache.latestJson ?: remoteScheduleFetcher.fetchWithRetry()
+            if (jsonSnapshot.isNullOrBlank()) {
+                Timber.e("Источник JSON недоступен для маршрута %s", routeId)
+                return@withLock emptyList()
+            }
 
-        val jsonSnapshot = memoryCache.latestJson ?: remoteScheduleFetcher.fetchWithRetry()
-        if (jsonSnapshot.isNullOrBlank()) {
-            Timber.e("Источник JSON недоступен для маршрута %s", routeId)
-            return emptyList()
+            val snapshot = scheduleJsonParser.parseSnapshot(jsonSnapshot) ?: return@withLock emptyList()
+            memoryCache.updateLatestJson(jsonSnapshot)
+            snapshotWritePending = true
+            memoryCache.updateSchedules(snapshot.schedules)
+            updateRoutesState(snapshot.routes)
+            memoryCache.schedulesForRoute(routeId).orEmpty()
         }
-
-        cacheSchedulesFromJson(jsonSnapshot)
-        if (!memoryCache.hasRoutes) {
-            scheduleJsonParser.parseRoutes(jsonSnapshot)
-                .takeIf(List<BusRoute>::isNotEmpty)
-                ?.let(::updateRoutesState)
-        }
-
-        return memoryCache.schedulesForRoute(routeId).orEmpty()
     }
 
-    suspend fun getScheduleChanges(): List<ScheduleChange> {
-        ensureRoutesLoadedFromPersistentCache()
-        return memoryCache.latestJson?.let(scheduleJsonParser::parseScheduleChanges).orEmpty()
+    /** Возвращает корректные объявления из текущей сохранённой копии расписания. */
+    suspend fun getScheduleChanges(): List<ScheduleChange> = withContext(Dispatchers.IO) {
+        loadMutex.withLock {
+            ensureRoutesLoadedFromPersistentCache()
+            memoryCache.latestJson?.let(scheduleJsonParser::parseScheduleChanges).orEmpty()
+        }
     }
 
+    /** Проверяет удалённый источник и публикует итоговый статус для интерфейса. */
     suspend fun refreshRoutesFromLocal(notifyUser: Boolean = true): RoutesLoadState =
         loadRoutesFromRemote(reportStatus = true, notifyUser = notifyUser)
 
+    /** Проверяет обновления без замены основного статуса загрузки интерфейса. */
     suspend fun checkRoutesForUpdates(notifyUser: Boolean = true): RoutesLoadState =
         loadRoutesFromRemote(reportStatus = false, notifyUser = notifyUser)
 
@@ -142,19 +158,18 @@ class RoutesTableDataSource(
                 )
             }
 
-            val parsedRoutes = scheduleJsonParser.parseRoutes(remoteJson)
-            if (parsedRoutes.isEmpty()) {
+            if (remoteJson == memoryCache.latestJson) {
+                if (snapshotWritePending) saveSnapshot(remoteJson, _routes.value.size)
+                return@withLock reportNoChanges(reportStatus)
+            }
+
+            val snapshot = scheduleJsonParser.parseSnapshot(remoteJson)
+            if (snapshot == null) {
                 Timber.w("JSON удалённого расписания пуст или некорректен; обновление пропущено")
                 return@withLock reportInvalidJson(memoryCache.hasCachedData, reportStatus)
             }
 
-            if (remoteJson == memoryCache.latestJson) {
-                // Повторяем неудавшуюся запись, даже если сервер вернул прежние данные.
-                if (snapshotWritePending) saveSnapshot(remoteJson, parsedRoutes.size)
-                return@withLock reportNoChanges(reportStatus)
-            }
-
-            persistRemoteRoutes(remoteJson, parsedRoutes, notifyUser)
+            persistRemoteRoutes(remoteJson, snapshot.routes, snapshot.schedules, notifyUser)
         }
     }
 
@@ -190,31 +205,35 @@ class RoutesTableDataSource(
     }
 
     private fun reportNoChanges(reportStatus: Boolean): RoutesLoadState {
+        val checkedAt = currentTimeMillis()
         reportLoadState(
             loadState = RoutesLoadState.NO_CHANGES,
             source = ScheduleDataSource.REMOTE_CACHE,
             reportStatus = reportStatus,
-            lastUpdatedAtMillis = System.currentTimeMillis()
+            lastCheckedAtMillis = checkedAt
         )
+        if (!reportStatus) _dataSourceStatus.value = _dataSourceStatus.value.copy(lastCheckedAtMillis = checkedAt)
         return RoutesLoadState.NO_CHANGES
     }
 
     private suspend fun persistRemoteRoutes(
         remoteJson: String,
         parsedRoutes: List<BusRoute>,
+        schedules: Map<String, List<BusSchedule>>,
         notifyUser: Boolean
     ): RoutesLoadState {
-        val updatedAtMillis = System.currentTimeMillis()
+        val updatedAtMillis = currentTimeMillis()
         snapshotWritePending = true
         memoryCache.updateLatestJson(remoteJson)
         updateRoutesState(parsedRoutes)
-        cacheSchedulesFromJson(remoteJson)
+        memoryCache.updateSchedules(schedules)
 
         saveSnapshot(remoteJson, parsedRoutes.size)
 
         publishDataSourceStatus(
             source = ScheduleDataSource.REMOTE_CACHE,
             lastUpdatedAtMillis = updatedAtMillis,
+            lastCheckedAtMillis = updatedAtMillis,
             loadState = RoutesLoadState.SUCCESS,
             markScheduleUpdated = true
         )
@@ -243,11 +262,12 @@ class RoutesTableDataSource(
         loadState: RoutesLoadState,
         source: ScheduleDataSource,
         reportStatus: Boolean,
-        lastUpdatedAtMillis: Long? = null
+        lastUpdatedAtMillis: Long? = null,
+        lastCheckedAtMillis: Long? = null
     ) {
         UserActionLogger.scheduleUpdateResult(loadState.logMessageResId())
         if (reportStatus) {
-            publishDataSourceStatus(source, lastUpdatedAtMillis, loadState)
+            publishDataSourceStatus(source, lastUpdatedAtMillis, loadState, lastCheckedAtMillis = lastCheckedAtMillis)
         }
     }
 
@@ -256,20 +276,18 @@ class RoutesTableDataSource(
         _routes.value = routes
     }
 
-    private fun cacheSchedulesFromJson(json: String) {
-        memoryCache.updateSchedules(scheduleJsonParser.buildSchedulesIndex(json))
-    }
-
     private fun publishDataSourceStatus(
         source: ScheduleDataSource = ScheduleDataSource.NONE,
         lastUpdatedAtMillis: Long? = null,
         loadState: RoutesLoadState = RoutesLoadState.IDLE,
-        markScheduleUpdated: Boolean = false
+        markScheduleUpdated: Boolean = false,
+        lastCheckedAtMillis: Long? = null
     ) {
         val previous = _dataSourceStatus.value
         _dataSourceStatus.value = ScheduleDataSourceStatus(
             source = source,
             lastUpdatedAtMillis = lastUpdatedAtMillis ?: previous.lastUpdatedAtMillis,
+            lastCheckedAtMillis = lastCheckedAtMillis ?: previous.lastCheckedAtMillis,
             isOnline = isOnline(),
             loadState = loadState,
             // Изменение счётчика заставляет экран заново получить рейсы для маршрута.
@@ -284,15 +302,15 @@ class RoutesTableDataSource(
 
     private suspend fun loadRoutesFromPersistentCache(): Boolean {
         val snapshot = scheduleSnapshotRepository.readSnapshot() ?: return false
-        val routes = scheduleJsonParser.parseRoutes(snapshot.json)
-        if (routes.isEmpty()) {
+        val parsed = scheduleJsonParser.parseSnapshot(snapshot.json)
+        if (parsed == null) {
             Timber.w("Сохранённый кэш расписания пуст или некорректен")
             return false
         }
 
         memoryCache.updateLatestJson(snapshot.json)
-        memoryCache.updateSchedules(scheduleJsonParser.buildSchedulesIndex(snapshot.json))
-        updateRoutesState(routes)
+        memoryCache.updateSchedules(parsed.schedules)
+        updateRoutesState(parsed.routes)
         UserActionLogger.scheduleCacheLoaded(
             scheduleSnapshotRepository.formatSavedAt(snapshot.savedAtMillis)
         )
@@ -338,9 +356,17 @@ enum class ScheduleDataSource {
     REMOTE_CACHE
 }
 
+/**
+ * Состояние источника для интерфейса.
+ *
+ * [lastUpdatedAtMillis] — время получения текущей копии; [lastCheckedAtMillis] —
+ * время последней успешной проверки источника. Обе отметки используют миллисекунды
+ * Unix и не подтверждают дату изменения данных перевозчиком.
+ */
 data class ScheduleDataSourceStatus(
     val source: ScheduleDataSource = ScheduleDataSource.NONE,
     val lastUpdatedAtMillis: Long? = null,
+    val lastCheckedAtMillis: Long? = null,
     val isOnline: Boolean = true,
     val loadState: RoutesLoadState = RoutesLoadState.IDLE,
     val updateEventId: Long = 0L

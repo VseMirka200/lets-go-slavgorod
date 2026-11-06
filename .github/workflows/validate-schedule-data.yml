@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    paths: ["tools/validate-published-schedule.mjs", ".github/workflows/validate-schedule-data.yml"]
+    paths: ["tools/validate-published-schedule.mjs", "tools/validate-published-schedule.test.mjs", ".github/workflows/validate-schedule-data.yml"]
   workflow_dispatch:
 
 jobs:

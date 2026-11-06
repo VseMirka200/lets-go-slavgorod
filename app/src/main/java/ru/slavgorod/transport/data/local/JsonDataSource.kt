@@ -21,17 +21,7 @@ class JsonDataSource {
         withContext(Dispatchers.IO) {
             try {
                 val jsonObject = JsonParser.parseString(jsonString).asJsonObject
-                val routesArray = jsonObject.getAsJsonArray(RoutesJsonContract.ROOT_ROUTES)
-                    ?: return@withContext emptyList()
-                val routes = mutableListOf<BusRoute>()
-
-                for (element in routesArray) {
-                    val routeJson = element.asJsonObjectOrNull() ?: continue
-                    val route = buildRoute(routeJson) ?: continue
-                    routes += route
-                }
-
-                JsonValidator.validateRoutes(routes)
+                parseRoutesFromObject(jsonObject)
             } catch (exception: CancellationException) {
                 throw exception
             } catch (exception: Exception) {
@@ -39,6 +29,14 @@ class JsonDataSource {
                 emptyList()
             }
         }
+
+    internal fun parseRoutesFromObject(jsonObject: JsonObject): List<BusRoute> {
+        val routesArray = jsonObject.getAsJsonArray(RoutesJsonContract.ROOT_ROUTES) ?: return emptyList()
+        val routes = routesArray.mapNotNull { element ->
+            element.asJsonObjectOrNull()?.let(::buildRoute)
+        }
+        return JsonValidator.validateRoutes(routes)
+    }
 
     private fun buildRoute(routeJson: JsonObject): BusRoute? {
         val id = routeJson.requiredText(RoutesJsonContract.ROUTE_ID) ?: return null
