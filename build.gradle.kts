@@ -11,6 +11,7 @@ buildscript {
                 "org.bitbucket.b_c:jose4j" -> useVersion("0.9.6")
                 "org.jdom:jdom2" -> useVersion("2.0.6.1")
                 "org.apache.httpcomponents:httpclient" -> useVersion("4.5.14")
+                "org.jetbrains.kotlin:kotlin-gradle-plugin" -> useVersion("2.4.21")
             }
             if (requested.group == "org.bouncycastle" && requested.name.endsWith("-jdk18on")) {
                 useVersion("1.85")
