@@ -141,4 +141,30 @@ class RemoteScheduleFetcherTest {
         assertTrue(canceled.get(), "Отмена корутины должна отменять сетевой запрос")
     }
 
+
+    @Test
+    fun `rejects oversized declared response above 2 MiB`() = runTest {
+        server.enqueue(MockResponse().setBody("x".repeat(2 * 1024 * 1024 + 1)))
+        assertNull(fetcherWithoutRetries().fetchWithRetry())
+    }
+
+    @Test
+    fun `rejects oversized chunked response above 2 MiB`() = runTest {
+        server.enqueue(MockResponse().setChunkedBody("x".repeat(2 * 1024 * 1024 + 1), 8192))
+        assertNull(fetcherWithoutRetries().fetchWithRetry())
+    }
+
+    @Test
+    fun `accepts response at 2 MiB byte limit`() = runTest {
+        val body = "x".repeat(2 * 1024 * 1024)
+        server.enqueue(MockResponse().setBody(body))
+        assertEquals(body, fetcherWithoutRetries().fetchWithRetry())
+    }
+
+    private fun fetcherWithoutRetries() = RemoteScheduleFetcher(
+        remoteJsonUrlProvider = { server.url("/schedule.json").toString() },
+        onlineChecker = { true },
+        retryDelaysMillis = emptyList(),
+        delayProvider = {}
+    )
 }

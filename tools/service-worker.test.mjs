@@ -28,7 +28,7 @@ test('activation removes only obsolete application caches', async () => {
     let completion;
     handlers.activate({ waitUntil: promise => { completion = promise; } });
     await completion;
-    assert.deepEqual(removed, ['lets-go-slavgorod-web-v40']);
+    assert.deepEqual(removed, ['lets-go-slavgorod-web-v40', 'lets-go-slavgorod-web-v41']);
 });
 
 test('does not cache failed HTTP responses', async () => {

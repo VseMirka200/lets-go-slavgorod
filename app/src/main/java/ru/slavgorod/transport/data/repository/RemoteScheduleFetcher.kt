@@ -86,7 +86,7 @@ class RemoteScheduleFetcher(
 }
 
 // Ограничение применяется и к ответам без Content-Length, включая распакованные тела.
-private const val MAX_SCHEDULE_BYTES = 5L * 1024 * 1024
+private const val MAX_SCHEDULE_BYTES = 2L * 1024 * 1024
 
 private data class FetchResult(val value: String?, val retryable: Boolean)
 

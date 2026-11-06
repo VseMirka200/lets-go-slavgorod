@@ -17,10 +17,30 @@ jobs:
     timeout-minutes: 25
     steps:
       - name: Check out code
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Verify Windows and macOS AAPT2 artifacts
+        run: python tools/verify-platform-artifacts.py
+
+      - name: Scan complete fetched Git history for secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          scan_dir="$(mktemp -d)"
+          trap 'rm -rf "$scan_dir"' EXIT
+          curl --fail --location --retry 3 --output "$scan_dir/gitleaks.tar.gz" https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  $scan_dir/gitleaks.tar.gz" | sha256sum --check --strict
+          tar -xzf "$scan_dir/gitleaks.tar.gz" -C "$scan_dir" gitleaks
+          "$scan_dir/gitleaks" git --redact=100 --no-banner --log-opts="--all" .
+
+      - name: Validate Gradle Wrapper before executing it
+        uses: gradle/actions/wrapper-validation@ed408507eac070d1f99cc633dbcf757c94c7933a # v4.4.3
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
         with:
           distribution: temurin
           java-version: "21"
@@ -29,7 +49,8 @@ jobs:
       - name: Grant execute permission to Gradle Wrapper
         run: chmod +x gradlew
 
-      - name: Run unit tests, Android lint and Detekt
-        run: ./gradlew --no-daemon testDebugUnitTest lintDebug detekt
+      - name: Run unit tests, Android lint, Detekt and assemble debug APK
+        run: ./gradlew --no-daemon --dependency-verification=strict testDebugUnitTest lintDebug detekt assembleDebug
+
       - name: Run web tests
         run: node --test tools/*.test.mjs
