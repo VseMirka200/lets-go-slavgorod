@@ -3,6 +3,10 @@ name: Dependency scope audit
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: '37 4 * * 1'
   workflow_dispatch:
 
 permissions:
@@ -48,3 +52,9 @@ jobs:
           grep -Ein 'bouncycastle|bcprov|bcpkix|jdom2|jose4j|guava|commons-lang3|httpclient|kotlin-gradle-plugin' "$RUNNER_TEMP/build-dependencies.txt" || true
           echo "== Build environment dependency count =="
           wc -l "$RUNNER_TEMP/build-dependencies.txt"
+
+      - name: Verify patched versions and release scope
+        shell: bash
+        run: |
+          python -m unittest discover -s tools -p 'test_gradle_security_baseline.py'
+          python tools/check_gradle_security_baseline.py "$RUNNER_TEMP/release-dependencies.txt" "$RUNNER_TEMP/build-dependencies.txt"
