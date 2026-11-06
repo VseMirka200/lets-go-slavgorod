@@ -66,3 +66,33 @@ jobs:
         run: |
           python -m unittest discover -s tools -p 'test_gradle_security_baseline.py'
           python tools/check_gradle_security_baseline.py "$RUNNER_TEMP/release-dependencies.txt" "$RUNNER_TEMP/build-dependencies.txt" "$RUNNER_TEMP/compiler-dependencies.txt"
+
+      - name: Record Android variant Guava checksum for review (temporary)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp gradle/verification-metadata.xml "$RUNNER_TEMP/pre-android-variant.xml"
+          status=0
+          ./gradlew --no-daemon --write-verification-metadata sha256 :app:compileDebugUnitTestKotlin || status=$?
+          python - <<'PY'
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          import os
+          ns = "{https://schema.gradle.org/dependency-verification}"
+          before = ET.parse(Path(os.environ["RUNNER_TEMP"]) / "pre-android-variant.xml").getroot()
+          after = ET.parse("gradle/verification-metadata.xml").getroot()
+          def artifacts(root):
+              found = {}
+              for c in root.findall(f"{ns}components/{ns}component"):
+                  coord = (c.get("group"), c.get("name"), c.get("version"))
+                  for a in c.findall(f"{ns}artifact"):
+                      sha = a.find(f"{ns}sha256")
+                      if sha is not None:
+                          found[(*coord, a.get("name"))] = sha.get("value")
+              return found
+          old = artifacts(before)
+          for key, sha in sorted(artifacts(after).items()):
+              if old.get(key) != sha:
+                  print("VERIFIED_NEW_SHA256", *key, sha, flush=True)
+          PY
+          exit "$status"
