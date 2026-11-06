@@ -32,6 +32,23 @@ class DependencyAuditTests(unittest.TestCase):
         )
         self.assertTrue(any("release runtime" in value for value in errors))
 
+    def test_rejects_vulnerable_kotlin_compiler_plugin(self):
+        errors = audit(
+            "org.jetbrains.kotlin:kotlin-stdlib:2.4.21",
+            "org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.21",
+            "org.bouncycastle:bcprov-jdk18on:1.76",
+        )
+        self.assertTrue(any("compiler plugin" in value for value in errors))
+
+    def test_accepts_patched_compiler_plugin(self):
+        errors = audit(
+            "org.jetbrains.kotlin:kotlin-stdlib:2.4.21",
+            "org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.21",
+            "org.bouncycastle:bcprov-jdk18on:1.76 -> 1.85\n"
+            "com.google.guava:guava:31.1-jre -> 33.8.0-jre",
+        )
+        self.assertEqual(errors, [])
+
     def test_accepts_patched_build_classpath(self):
         report = "\n".join([
             "org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.10 -> 2.4.21",

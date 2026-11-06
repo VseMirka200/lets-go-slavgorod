@@ -51,10 +51,11 @@ Plugin и их вспомогательные библиотеки). Не сле
 такие предупреждения к уязвимостям в устанавливаемом Android APK.
 
 Workflow `Dependency scope audit` в строгом режиме строит
-`releaseRuntimeClasspath` и `buildEnvironment`, затем запускает
+`releaseRuntimeClasspath`, `buildEnvironment` и конфигурацию
+Kotlin compiler plugin для unit-тестов, затем запускает
 `tools/check_gradle_security_baseline.py`. Проверка гарантирует, что
 отмеченные пакеты не попали в релизные runtime-зависимости и версии Gradle
-build tools не ниже проверенных исправленных порогов.
+build tools и Kotlin compiler plugin не ниже исправленных порогов.
 
 Сейчас в проекте зафиксированы Kotlin Gradle Plugin 2.4.21, Bouncy Castle
 jdk18on 1.85, Guava 33.8.0-jre, Commons Lang 3.18.0, jose4j 0.9.6,

@@ -50,9 +50,10 @@ def is_watched(group: str, name: str) -> bool:
         group == "org.bouncycastle" and name.endswith("-jdk18on")
     )
 
-def audit(release: str, build: str) -> list[str]:
+def audit(release: str, build: str, compiler: str = "") -> list[str]:
     release_modules = extract_modules(release)
     build_modules = extract_modules(build)
+    compiler_modules = extract_modules(compiler)
     problems = []
     for group, name, version in sorted(release_modules):
         if is_watched(group, name):
@@ -68,6 +69,15 @@ def audit(release: str, build: str) -> list[str]:
             problems.append(
                 f"Vulnerable or unrecognized Gradle plugin dependency: {group}:{name}:{version}"
             )
+    for group, name, version in sorted(compiler_modules):
+        if not is_watched(group, name):
+            continue
+        minimum = (1, 85) if group == "org.bouncycastle" else FLOORS[(group, name)]
+        selected = numeric_version(version)
+        if not selected or selected < minimum:
+            problems.append(
+                f"Vulnerable Kotlin compiler plugin dependency: {group}:{name}:{version}"
+            )
     # A Gradle plugin audit that cannot see the Kotlin plugin is incomplete.
     if not any(
         group == "org.jetbrains.kotlin" and name == "kotlin-gradle-plugin"
@@ -77,18 +87,19 @@ def audit(release: str, build: str) -> list[str]:
     return problems
 
 def main() -> int:
-    if len(sys.argv) != 3:
-        print("Usage: check_gradle_security_baseline.py RELEASE_REPORT BUILD_REPORT", file=sys.stderr)
+    if len(sys.argv) not in (3, 4):
+        print("Usage: check_gradle_security_baseline.py RELEASE_REPORT BUILD_REPORT [COMPILER_REPORT]", file=sys.stderr)
         return 2
     problems = audit(
         Path(sys.argv[1]).read_text(encoding="utf-8"),
         Path(sys.argv[2]).read_text(encoding="utf-8"),
+        Path(sys.argv[3]).read_text(encoding="utf-8") if len(sys.argv) == 4 else "",
     )
     if problems:
         for problem in problems:
             print("ERROR: " + problem, file=sys.stderr)
         return 1
-    print("OK: no flagged modules in release runtime; Gradle plugin versions meet security floors")
+    print("OK: no flagged modules in release runtime; Gradle plugin and compiler versions meet security floors")
     return 0
 
 if __name__ == "__main__":

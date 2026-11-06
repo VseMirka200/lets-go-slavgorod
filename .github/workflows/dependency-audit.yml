@@ -53,8 +53,16 @@ jobs:
           echo "== Build environment dependency count =="
           wc -l "$RUNNER_TEMP/build-dependencies.txt"
 
+      - name: Inspect unit-test Kotlin compiler plugin dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon --dependency-verification=strict :app:dependencies --configuration kotlinCompilerPluginClasspathDebugUnitTest > "$RUNNER_TEMP/compiler-dependencies.txt"
+          echo "== Kotlin compiler plugin dependencies associated with Dependabot alerts =="
+          grep -Ein 'bouncycastle|bcprov|bcpkix|jdom2|jose4j|guava|commons-lang3|httpclient|kotlin-gradle-plugin' "$RUNNER_TEMP/compiler-dependencies.txt" || true
+
       - name: Verify patched versions and release scope
         shell: bash
         run: |
           python -m unittest discover -s tools -p 'test_gradle_security_baseline.py'
-          python tools/check_gradle_security_baseline.py "$RUNNER_TEMP/release-dependencies.txt" "$RUNNER_TEMP/build-dependencies.txt"
+          python tools/check_gradle_security_baseline.py "$RUNNER_TEMP/release-dependencies.txt" "$RUNNER_TEMP/build-dependencies.txt" "$RUNNER_TEMP/compiler-dependencies.txt"
