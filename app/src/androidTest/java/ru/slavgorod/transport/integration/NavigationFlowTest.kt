@@ -3,24 +3,69 @@ package ru.slavgorod.transport.integration
 import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import kotlinx.coroutines.runBlocking
+import org.junit.rules.ExternalResource
+import org.koin.core.context.GlobalContext
+import org.koin.dsl.module
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import ru.slavgorod.transport.R
 import ru.slavgorod.transport.app.bootstrap.MainActivity
+import ru.slavgorod.transport.data.local.CachedScheduleSnapshot
+import ru.slavgorod.transport.data.local.DisclaimerManager
+import ru.slavgorod.transport.data.repository.RoutesTableDataSource
+import ru.slavgorod.transport.data.repository.ScheduleFetcher
+import ru.slavgorod.transport.data.repository.ScheduleSnapshotStore
 
 @RunWith(AndroidJUnit4::class)
 class NavigationFlowTest {
 
-    @get:Rule
+    @get:Rule(order = 0)
+    val testData = object : ExternalResource() {
+        private lateinit var previousRepository: RoutesTableDataSource
+
+        override fun before() {
+            val context = ApplicationProvider.getApplicationContext<Context>()
+            val koin = GlobalContext.get()
+            previousRepository = koin.get()
+            val json = """{"routes":[{"id":"102","routeNumber":"102","name":"Славгород — Яровое","description":"Рынок — вокзал","color":"#1976D2","schedules":[{"id":"102_1","departurePoint":"Рынок","departureTime":"06:25"}]}]}"""
+            val fetcher = object : ScheduleFetcher {
+                override fun isOnline() = true
+                override suspend fun fetchWithRetry() = json
+            }
+            val store = object : ScheduleSnapshotStore {
+                override suspend fun readSnapshot(): CachedScheduleSnapshot? = null
+                override suspend fun writeSnapshot(json: String) = Unit
+                override suspend fun hasSnapshot() = false
+                override fun formatSavedAt(timestampMillis: Long) = ""
+            }
+            val repository = RoutesTableDataSource(
+                context = context,
+                remoteScheduleFetcher = fetcher,
+                scheduleSnapshotRepository = store,
+                autoLoadOnInit = false
+            )
+            runBlocking {
+                DisclaimerManager.markDisclaimerAccepted(context)
+                repository.refreshRoutesFromLocal(notifyUser = false)
+            }
+            koin.loadModules(listOf(module { single { repository } }))
+        }
+
+        override fun after() {
+            val original = previousRepository
+            GlobalContext.get().loadModules(listOf(module { single { original } }))
+        }
+    }
+
+    @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
     private val context: Context
@@ -35,10 +80,7 @@ class NavigationFlowTest {
 
     @Test
     fun homeScreen_canNavigateToSettings() {
-        composeTestRule
-            .onNodeWithContentDescription(context.getString(R.string.action_open_settings))
-            .assertIsDisplayed()
-            .performClick()
+        openSettings()
 
         composeTestRule
             .onNodeWithText(context.getString(R.string.settings_title))
@@ -51,9 +93,7 @@ class NavigationFlowTest {
 
     @Test
     fun settingsScreen_canNavigateBack() {
-        composeTestRule
-            .onNodeWithContentDescription(context.getString(R.string.action_open_settings))
-            .performClick()
+        openSettings()
 
         composeTestRule
             .onNodeWithContentDescription(context.getString(R.string.accessibility_back_button))
@@ -77,22 +117,27 @@ class NavigationFlowTest {
             .onNodeWithText(context.getString(R.string.search_placeholder))
             .performTextInput("102")
 
-        composeTestRule
-            .onNodeWithText("102")
-            .assertIsDisplayed()
+        routeCard().assertIsDisplayed()
     }
 
     @Test
     fun homeScreen_canOpenRouteSchedule() {
         composeTestRule.waitForIdle()
 
-        composeTestRule
-            .onAllNodesWithText("102")
-            .onFirst()
-            .performClick()
+        routeCard().performClick()
 
         composeTestRule
             .onNodeWithText(context.getString(R.string.schedule_title_bus_format, "102"))
             .assertIsDisplayed()
     }
+
+    private fun openSettings() {
+        composeTestRule.onNodeWithContentDescription(context.getString(R.string.home_menu_more))
+            .performClick()
+        composeTestRule.onNodeWithText(context.getString(R.string.home_settings)).performClick()
+    }
+
+    private fun routeCard() = composeTestRule.onNodeWithContentDescription(
+        context.getString(R.string.accessibility_route_card_description, "102", "Славгород — Яровое")
+    )
 }

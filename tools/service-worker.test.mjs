@@ -1,7 +1,23 @@
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
+
+test('installation precaches existing pages and assets', async () => {
+    const handlers = {};
+    let shell = [];
+    let skipped = false;
+    const self = { addEventListener: (name, fn) => { handlers[name] = fn; }, skipWaiting() { skipped = true; } };
+    const caches = { open: async () => ({ addAll: async paths => { shell = paths; } }) };
+    runInNewContext(readFileSync('docs/sw.js', 'utf8'), { self, caches });
+    let completion;
+    handlers.install({ waitUntil: promise => { completion = promise; } });
+    await completion;
+    assert.equal(skipped, true);
+    for (const path of shell) assert.ok(existsSync(`docs/${path}`), `Отсутствует ресурс ${path}`);
+    assert.ok(shell.includes('./feedback.html'));
+    assert.ok(shell.includes('./assets/scripts/features/site-search.js'));
+});
 
 test('activation removes only obsolete application caches', async () => {
     const handlers = {};

@@ -53,3 +53,23 @@ test('каждая почта получает адрес, тему и шабл�
         }
     }
 });
+
+test('смена почты и темы обновляет письмо и способ открытия', () => {
+    const { events, selection, link } = createFeedback();
+    selection.client = 'gmail';
+    events.client();
+    assert.equal(link.target, '_blank');
+    selection.topic = 'schedule';
+    events.topic();
+    assert.equal(new URL(link.href).searchParams.get('su'), 'Поехали! Славгород — Неточность в расписании');
+    selection.client = 'app';
+    events.client();
+    assert.equal(link.target, undefined);
+    assert.equal(new URL(link.href).searchParams.get('subject'), 'Поехали! Славгород — Неточность в расписании');
+});
+
+test('неизвестная почта или тема не создаёт ссылку', () => {
+    const { context } = createFeedback();
+    assert.equal(context.buildFeedbackUrl('unknown', 'bug'), null);
+    assert.equal(context.buildFeedbackUrl('gmail', 'unknown'), null);
+});

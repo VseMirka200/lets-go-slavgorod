@@ -69,6 +69,8 @@ class SearchFlowTest {
 
     @Test
     fun searchWithNonExistentQuery_returnsEmptyList() = runBlocking {
+        // Сначала дожидаемся исходного списка: начальное пустое состояние не является результатом поиска.
+        withTimeout(5000) { viewModel.uiState.first { it.routes.size == 3 } }
         viewModel.onSearchQueryChange("MissingRoute123")
         val uiState = withTimeout(5000) { viewModel.uiState.first { !it.isLoading && it.routes.isEmpty() } }
         assertTrue(uiState.routes.isEmpty())

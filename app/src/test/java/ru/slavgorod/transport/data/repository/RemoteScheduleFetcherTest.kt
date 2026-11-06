@@ -10,12 +10,17 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import okhttp3.mockwebserver.SocketPolicy
+import okhttp3.Call
+import okhttp3.EventListener
+import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
+import java.util.concurrent.atomic.AtomicBoolean
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class RemoteScheduleFetcherTest {
@@ -118,16 +123,22 @@ class RemoteScheduleFetcherTest {
     @Test
     fun `cancellation stops a pending request`() = runTest {
         server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
+        val canceled = AtomicBoolean(false)
+        val client = OkHttpClient.Builder().eventListener(object : EventListener() {
+            override fun canceled(call: Call) { canceled.set(true) }
+        }).build()
         val fetcher = RemoteScheduleFetcher(
             remoteJsonUrlProvider = { server.url("/pending").toString() },
             onlineChecker = { true },
+            httpClient = client,
             retryDelaysMillis = emptyList()
         )
         val job = launch { fetcher.fetchWithRetry() }
         runCurrent()
         assertNotNull(server.takeRequest(5, java.util.concurrent.TimeUnit.SECONDS))
         job.cancelAndJoin()
-        assertEquals(true, job.isCancelled)
+        assertTrue(job.isCancelled)
+        assertTrue(canceled.get(), "Отмена корутины должна отменять сетевой запрос")
     }
 
 }

@@ -31,5 +31,5 @@ jobs:
 
       - name: Run unit tests, Android lint and Detekt
         run: ./gradlew --no-daemon testDebugUnitTest lintDebug detekt
-      - name: Test schedule validator
+      - name: Run web tests
         run: node --test tools/*.test.mjs
