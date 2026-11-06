@@ -8,6 +8,27 @@ plugins {
     alias(libs.plugins.detekt)
 }
 
+/**
+ * Gradle resolves Kotlin compiler-plugin configurations separately from the root
+ * buildscript classpath. Ensure vulnerable transitives are also replaced there.
+ * This does not add these libraries to the APK's runtime dependencies.
+ */
+configurations.configureEach {
+    resolutionStrategy.eachDependency {
+        when ("${requested.group}:${requested.name}") {
+            "com.google.guava:guava" -> useVersion("33.8.0-jre")
+            "org.apache.commons:commons-lang3" -> useVersion("3.18.0")
+            "org.bitbucket.b_c:jose4j" -> useVersion("0.9.6")
+            "org.jdom:jdom2" -> useVersion("2.0.6.1")
+            "org.apache.httpcomponents:httpclient" -> useVersion("4.5.14")
+            "org.jetbrains.kotlin:kotlin-gradle-plugin" -> useVersion("2.4.21")
+        }
+        if (requested.group == "org.bouncycastle" && requested.name.endsWith("-jdk18on")) {
+            useVersion("1.85")
+        }
+    }
+}
+
 val scheduleSourceUrl = providers.gradleProperty("scheduleSourceUrl")
     .orElse(providers.environmentVariable("SCHEDULE_SOURCE_URL"))
     .orElse("https://script.google.com/macros/s/AKfycbzus49Rc3LBZPDNcwqGteLHFViRCV9nItnX5PgvSkqSiId3mVxg1tp--7o4Cre2Mv40GA/exec")
