@@ -30,7 +30,7 @@ kotlinxCoroutinesTest = "1.9.0"
 mockito = "5.8.0"
 mockitoKotlin = "5.2.1"
 androidxArchCore = "2.2.0"
-kotlinTest = "2.0.21"
+kotlinTest = "2.4.21"
 androidxTestCore = "1.6.1"
 robolectric = "4.11.1"
 
