@@ -20,7 +20,7 @@ navigationCompose = "2.8.2"
 datastorePreferences = "1.1.1"
 
 # Coroutines
-kotlinxCoroutines = "1.9.0"
+kotlinxCoroutines = "1.11.0"
 
 # Testing
 junit = "4.13.2"
