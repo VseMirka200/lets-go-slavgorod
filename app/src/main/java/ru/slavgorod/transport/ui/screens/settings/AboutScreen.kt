@@ -55,6 +55,11 @@ fun AboutScreen(
 ) {
     val context = LocalContext.current
     val fontScale = LocalDensity.current.fontScale
+    val detailsFailureMessage = stringResource(R.string.about_open_details_failed)
+    val privacyFailureMessage = stringResource(R.string.about_open_privacy_policy_failed)
+    val sourceFailureMessage = stringResource(R.string.about_open_source_code_failed)
+    val vkFailureMessage = stringResource(R.string.about_open_vk_group_failed)
+    val maxFailureMessage = stringResource(R.string.about_open_max_channel_failed)
 
     LaunchedEffect(Unit) {
         UserActionLogger.screenOpened(R.string.about_screen_title)
@@ -95,7 +100,7 @@ fun AboutScreen(
                         onClick = {
                             context.openExternalUrl(
                                 url = DETAILS_URL,
-                                failureLogMessage = context.getString(R.string.about_open_details_failed)
+                                failureLogMessage = detailsFailureMessage
                             )
                         }
                     )
@@ -112,7 +117,7 @@ fun AboutScreen(
                         onClick = {
                             context.openExternalUrl(
                                 url = PRIVACY_POLICY_URL,
-                                failureLogMessage = context.getString(R.string.about_open_privacy_policy_failed)
+                                failureLogMessage = privacyFailureMessage
                             )
                         }
                     )
@@ -129,7 +134,7 @@ fun AboutScreen(
                         onClick = {
                             context.openExternalUrl(
                                 url = SOURCE_CODE_URL,
-                                failureLogMessage = context.getString(R.string.about_open_source_code_failed)
+                                failureLogMessage = sourceFailureMessage
                             )
                         }
                     )
@@ -138,13 +143,13 @@ fun AboutScreen(
                     onVkClick = {
                         context.openExternalUrl(
                             url = VK_GROUP_URL,
-                            failureLogMessage = context.getString(R.string.about_open_vk_group_failed)
+                            failureLogMessage = vkFailureMessage
                         )
                     },
                     onMaxClick = {
                         context.openExternalUrl(
                             url = MAX_CHANNEL_URL,
-                            failureLogMessage = context.getString(R.string.about_open_max_channel_failed)
+                            failureLogMessage = maxFailureMessage
                         )
                     }
                 )
