@@ -25,3 +25,9 @@ updates:
       - dependency-name: "androidx.compose:compose-bom"
         update-types:
           - "version-update:semver-major"
+      # AndroidX Core 1.19 and Navigation 2.10 require compileSdk 37.
+      # Remove these constraints when the project migrates from compileSdk 36.
+      - dependency-name: "androidx.core:core-ktx"
+        versions: [">=1.19.0"]
+      - dependency-name: "androidx.navigation:navigation-compose"
+        versions: [">=2.10.0"]
