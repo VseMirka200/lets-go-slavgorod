@@ -14,3 +14,14 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    groups:
+      gradle-routine:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+    # Compose 2026.09 requires compileSdk >= 37; lift this restriction after SDK migration.
+    ignore:
+      - dependency-name: "androidx.compose:compose-bom"
+        update-types:
+          - "version-update:semver-major"

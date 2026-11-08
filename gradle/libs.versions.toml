@@ -28,20 +28,20 @@ androidxJunit = "1.2.1"
 espressoCore = "3.6.1"
 kotlinxCoroutinesTest = "1.11.0"
 mockito = "5.24.0"
-mockitoKotlin = "5.2.1"
+mockitoKotlin = "6.4.0"
 androidxArchCore = "2.2.0"
 kotlinTest = "2.4.21"
 androidxTestCore = "1.6.1"
-robolectric = "4.11.1"
+robolectric = "4.17"
 
 # Desugaring
 desugarJdkLibs = "2.1.5"
 
 # Logging
 timber = "5.0.1"
-koin = "3.5.6"
+koin = "4.2.2"
 okhttp = "4.12.0"
-gson = "2.11.0"
+gson = "2.15.0"
 
 # Detekt
 detekt = "2.0.0-alpha.6"

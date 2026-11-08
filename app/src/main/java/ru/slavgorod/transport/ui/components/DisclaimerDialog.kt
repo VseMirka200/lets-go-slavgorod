@@ -153,9 +153,9 @@ private fun ThanksContent() {
 @Composable
 private fun WelcomeLink(label: String, icon: Int, url: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val failure = stringResource(R.string.welcome_link_failed)
     Surface(
         onClick = {
-            val failure = context.getString(R.string.welcome_link_failed)
             if (!context.openExternalUrl(url, failure)) {
                 Toast.makeText(context, failure, Toast.LENGTH_SHORT).show()
             }
