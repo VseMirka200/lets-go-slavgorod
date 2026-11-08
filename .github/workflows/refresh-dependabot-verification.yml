@@ -1,0 +1,83 @@
+name: Refresh Dependabot verification (temporary)
+
+on:
+  push:
+    branches:
+      - fix/dependabot-batch-2026-11-08
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-checksums:
+    if: github.repository == 'VseMirka200/lets-go-slavgorod'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Check out isolated upgrade branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: true
+      - name: Validate wrapper
+        uses: gradle/actions/wrapper-validation@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+      - name: Install JDK 21
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+      - name: Recalculate checksums for all updated dependencies
+        shell: bash
+        run: |
+          set -uo pipefail
+          status=0
+          ./gradlew --no-daemon --no-configuration-cache --write-verification-metadata sha256 testDebugUnitTest lintDebug detekt assembleDebug || status=$?
+          ./gradlew --no-daemon --no-configuration-cache --write-verification-metadata sha256 :app:dependencies --configuration releaseRuntimeClasspath || status=$?
+          ./gradlew --no-daemon --no-configuration-cache --write-verification-metadata sha256 :app:dependencies --configuration kotlinCompilerPluginClasspathDebugUnitTest || status=$?
+          ./gradlew --no-daemon --no-configuration-cache --write-verification-metadata sha256 :buildEnvironment :app:buildEnvironment || status=$?
+          echo "GRADLE_INITIAL_STATUS=$status"
+      - name: Verify AAPT2 checksums for Windows and macOS from official Google Maven
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib, re, urllib.request
+          from pathlib import Path
+          path = Path("gradle/verification-metadata.xml")
+          text = path.read_text()
+          pat = re.compile(r'(?P<all>      <component group="com.android.tools.build" name="aapt2" version="(?P<version>[^"]+)">(?P<body>[\s\S]*?)      </component>\n)')
+          changes = []
+          def amend(match):
+              version = match.group("version")
+              block = match.group("all")
+              for platform in ("windows", "osx"):
+                  name = f"aapt2-{version}-{platform}.jar"
+                  url = f"https://dl.google.com/dl/android/maven2/com/android/tools/build/aapt2/{version}/{name}"
+                  with urllib.request.urlopen(url, timeout=90) as f:
+                      payload = f.read()
+                  sha = hashlib.sha256(payload).hexdigest()
+                  existing = re.search(r'<artifact name="' + re.escape(name) + r'">\s*<sha256 value="([a-f0-9]+)"', block)
+                  if existing and existing.group(1) != sha:
+                      raise RuntimeError("AAPT2 trust mismatch for " + name)
+                  if not existing:
+                      entry = f'         <artifact name="{name}">\n            <sha256 value="{sha}" origin="official Google Maven"/>\n         </artifact>\n'
+                      block = block.replace("      </component>\n",entry+"      </component>\n")
+                      changes.append(name)
+                  print("Verified", name, sha)
+              return block
+          updated, count = pat.subn(amend, text)
+          if count == 0:
+              raise RuntimeError("No AAPT2 records found")
+          path.write_text(updated)
+          print("AAPT2_COMPONENTS",count,"NEW_PLATFORM_ARTIFACTS",len(changes))
+          PY
+      - name: Commit generated SHA-256 only on isolated branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/verify-platform-artifacts.py
+          git diff --check
+          git add gradle/verification-metadata.xml
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Update SHA-256 verification metadata for Dependabot batch'
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
