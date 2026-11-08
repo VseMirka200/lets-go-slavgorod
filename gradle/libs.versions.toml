@@ -10,7 +10,7 @@ lifecycleRuntimeCompose = "2.8.6"
 activityCompose = "1.9.2"
 
 # Compose
-composeBom = "2024.12.01"
+composeBom = "2026.09.00"
 composeMaterial = "1.7.6"
 
 # Navigation
