@@ -18,6 +18,7 @@
         <link rel="stylesheet" href="assets/styles/core/branding.css">
         <link rel="stylesheet" href="assets/styles/features/pwa-install.css">
         <link rel="stylesheet" href="assets/styles/features/mobile.css">
+    <link rel="stylesheet" href="assets/styles/core/multifora.css">
     </head>
     <body>
         <div class="portal-shell">
@@ -36,41 +37,17 @@
                 </button>
                 <details class="portal-menu" open>
                     <summary>Меню</summary>
-                    <nav class="portal-nav">
-                    <a class="active" href="#top">
-                        Начало
-                    </a>
-                    <a href="schedule.html">
-                        Расписание
-                    </a>
-                    <p>
-                        Пользователям
-                    </p>
-                    <a href="#how">
-                        Как пользоваться
-                    </a>
-                    <a href="https://www.rustore.ru/catalog/app/ru.slavgorod.transport" target="_blank" rel="noreferrer">
-                        Скачать из RuStore
-                    </a>
-                    <a href="https://play.google.com/store/apps/details?id=ru.slavgorod.transport" target="_blank" rel="noreferrer">
-                        Скачать из Google Play
-                    </a>
-                    <a href="https://github.com/VseMirka200/lets-go-slavgorod/releases" target="_blank" rel="noreferrer">
-                        Скачать APK (GitHub)
-                    </a>
-                    <a href="feedback.html">
-                        Обратная связь
-                    </a>
-                    <p>
-                        Проект
-                    </p>
-                    <a href="#project">
-                        Документация
-                    </a>
-                    <a href="https://github.com/VseMirka200/lets-go-slavgorod" target="_blank" rel="noreferrer">
-                        GitHub
-                    </a>
-                    </nav>
+                    <nav class="portal-nav" aria-label="Навигация">
+                    <a href="index.html" class="active" aria-current="page">Начало</a>
+                    <a href="schedule.html">Расписание</a>
+                    <p>Пользователям</p>
+                    <a href="index.html#how">Как пользоваться</a>
+                    <a href="index.html#download">Скачать приложение</a>
+                    <a href="feedback.html">Обратная связь</a>
+                    <p>Проект</p>
+                    <a href="index.html#project">Документация</a>
+                    <a href="support.html">Поддержать проект</a>
+                </nav>
                 </details>
             </aside>
             <main id="top" class="portal-main">
@@ -81,8 +58,8 @@
                     <a href="https://max.ru/channel_letsgoslavgorod" target="_blank" rel="noreferrer">
                         Канал в МАКС
                     </a>
-                    <a href="https://github.com/VseMirka200/lets-go-slavgorod/releases" target="_blank" rel="noreferrer">
-                        Релизы GitHub
+                    <a href="https://github.com/VseMirka200/lets-go-slavgorod" target="_blank" rel="noreferrer">
+                        GitHub
                     </a>
                 </div>
                 <header class="portal-hero">
@@ -95,75 +72,20 @@
                     <p>
                         «Поехали! Славгород» помогает быстро найти автобус и ближайшее отправление. Актуальное расписание доступно на сайте и в приложении.
                     </p>
-                    <div class="portal-actions portal-actions--downloads">
+                    <div class="portal-actions">
                         <a class="portal-button primary" href="schedule.html">
                             Открыть расписание
                         </a>
-                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/releases" target="_blank" rel="noreferrer">
-                            <img class="store-icon" src="assets/media/icons/github-logo.svg" alt="">
-                            Скачать APK
-                        </a>
-                        <a class="portal-button" href="https://www.rustore.ru/catalog/app/ru.slavgorod.transport" target="_blank" rel="noreferrer">
-                            <img class="store-icon" src="assets/media/icons/rustore-logo.svg" alt="">
-                            RuStore
-                        </a>
-                        <a class="portal-button" href="https://play.google.com/store/apps/details?id=ru.slavgorod.transport" target="_blank" rel="noreferrer">
-                            <img class="store-icon" src="assets/media/icons/play-market-logo.svg" alt="">
-                            Google Play
-                        </a>
-                        <button class="portal-button" type="button" data-install-web-app hidden>
-                            Установить веб-версию
-                        </button>
                     </div>
                     <p class="portal-note">
                         Неофициальный справочный проект. Важное время поездки сверяйте с объявлениями перевозчика.
                     </p>
                 </header>
-                <section class="portal-grid">
-                    <a class="portal-card accent" href="schedule.html">
-                        <span>
-                            🚌
-                        </span>
-                        <h2>
-                            Расписание
-                        </h2>
-                        <p>
-                            Ищите маршрут по номеру, названию, остановке или времени отправления.
-                        </p>
-                    </a>
-                    <a class="portal-card" href="schedule.html">
-                        <span>
-                            🔎
-                        </span>
-                        <h2>
-                            Быстрый поиск
-                        </h2>
-                        <p>
-                            Откройте нужный рейс и посмотрите подробные отправления.
-                        </p>
-                    </a>
-                    <a class="portal-card" href="https://github.com/VseMirka200/lets-go-slavgorod/releases" target="_blank" rel="noreferrer">
-                        <span>
-                            📱
-                        </span>
-                        <h2>
-                            Приложение
-                        </h2>
-                        <p>
-                            Загрузите актуальную версию из релизов GitHub.
-                        </p>
-                    </a>
-                    <a class="portal-card" href="feedback.html">
-                        <span>
-                            💬
-                        </span>
-                        <h2>
-                            Обратная связь
-                        </h2>
-                        <p>
-                            Сообщите об ошибке, неточности данных или новой идее.
-                        </p>
-                    </a>
+                <section class="portal-grid" aria-label="Основные разделы">
+                    <a class="portal-card accent" href="schedule.html"><span aria-hidden="true">🚌</span><h2>Расписание</h2><p>Найдите маршрут и время отправления.</p></a>
+                    <a class="portal-card" href="#download"><span aria-hidden="true">📱</span><h2>Приложение</h2><p>Выберите удобный способ установки.</p></a>
+                    <a class="portal-card" href="#how"><span aria-hidden="true">🔎</span><h2>Как пользоваться</h2><p>Узнайте, как найти нужный рейс.</p></a>
+                    <a class="portal-card" href="feedback.html"><span aria-hidden="true">💬</span><h2>Обратная связь</h2><p>Сообщите об ошибке или предложите улучшение.</p></a>
                 </section>
                 <section id="how" class="portal-section">
                     <span class="portal-eyebrow">
@@ -208,6 +130,33 @@
                         <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/guides/SCHEDULE_DATA.md" target="_blank" rel="noreferrer">Как обновляется расписание</a>
                     </div>
                 </section>
+                <section id="download" class="portal-section">
+                    <span class="portal-eyebrow">Приложение</span>
+                    <h2>Расписание всегда под рукой</h2>
+                    <p>Установите приложение для Android или добавьте веб-версию на главный экран устройства.</p>
+                    <div class="portal-actions portal-actions--downloads">
+                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/releases" target="_blank" rel="noreferrer">
+                            <img class="store-icon" src="assets/media/icons/github-logo.svg" alt="">
+                            Скачать APK
+                        </a>
+                        <a class="portal-button" href="https://www.rustore.ru/catalog/app/ru.slavgorod.transport" target="_blank" rel="noreferrer">
+                            <img class="store-icon" src="assets/media/icons/rustore-logo.svg" alt="">
+                            RuStore
+                        </a>
+                        <a class="portal-button" href="https://play.google.com/store/apps/details?id=ru.slavgorod.transport" target="_blank" rel="noreferrer">
+                            <img class="store-icon" src="assets/media/icons/play-market-logo.svg" alt="">
+                            Google Play
+                        </a>
+                        <button class="portal-button" type="button" data-install-web-app hidden>
+                            Установить веб-версию
+                        </button>
+                    </div>
+                </section>
+                <section id="contact" class="portal-section" aria-labelledby="contact-heading">
+                    <h2 id="contact-heading">Связаться с проектом</h2>
+                    <p>Вопросы, предложения и замечания по расписанию можно отправить на <a href="mailto:vsemirka200@bk.ru">vsemirka200@bk.ru</a>. Для сообщений об уязвимостях используйте <a href="https://github.com/VseMirka200/lets-go-slavgorod/security/advisories/new">приватное обращение</a>.</p>
+                    <div class="portal-actions"><a class="portal-button" href="feedback.html">Связаться с нами</a></div>
+                </section>
                 <section id="project" class="portal-section">
                     <span class="portal-eyebrow">
                         Проект
@@ -218,20 +167,31 @@
                     <p>
                         Открытая документация, правила проекта и способы помочь.
                     </p>
+                    <h3>О проекте</h3>
                     <div class="portal-actions portal-document-actions">
                         <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/guides/SCHEDULE_DATA.md" target="_blank" rel="noreferrer">Расписание и источники</a>
-                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/CONTRIBUTING.md" target="_blank" rel="noreferrer">
+
+                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/release/CHANGELOG.md" target="_blank" rel="noreferrer">
+                            История изменений
+                        </a>
+                    </div>
+                    <h3>Разработка и участие</h3>
+                    <div class="portal-actions portal-document-actions">
+                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/guides/CONTRIBUTING.md" target="_blank" rel="noreferrer">
                             Участие
                         </a>
                         <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/guides/FEEDBACK_LESSONS_RU.md" target="_blank" rel="noreferrer">
                             Обратная связь
                         </a>
-                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/LIBRARIES.md" target="_blank" rel="noreferrer">
+                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/guides/LIBRARIES.md" target="_blank" rel="noreferrer">
                             Библиотеки
                         </a>
-                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/SECURITY_CHECKS.md" target="_blank" rel="noreferrer">
+                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/guides/SECURITY_CHECKS.md" target="_blank" rel="noreferrer">
                             Проверки безопасности
                         </a>
+                    </div>
+                    <h3>Правила и безопасность</h3>
+                    <div class="portal-actions portal-document-actions">
                         <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/policies/SECURITY.md" target="_blank" rel="noreferrer">
                             Политика безопасности
                         </a>
@@ -241,9 +201,6 @@
                         <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/policies/CODE_OF_CONDUCT.md" target="_blank" rel="noreferrer">
                             Кодекс поведения
                         </a>
-                        <a class="portal-button" href="https://github.com/VseMirka200/lets-go-slavgorod/blob/main/docs/release/CHANGELOG.md" target="_blank" rel="noreferrer">
-                            История изменений
-                        </a>
                     </div>
                 </section>
                 <section id="support" class="portal-support">
@@ -252,17 +209,12 @@
                             Поддержите проект
                         </h2>
                         <p>
-                            Ваш донат помогает поддерживать сайт, обновлять расписание и развивать приложение для Славгорода и Ярового.
+                            Помогите проекту развиваться: поставьте звезду на GitHub или поддержите его финансово.
                         </p>
                     </div>
-                    <a class="portal-button primary" href="https://pay.cloudtips.ru/p/1fa22ea5" target="_blank" rel="noreferrer">
+                    <a class="portal-button primary" href="support.html">
                         Поддержать проект
                     </a>
-                </section>
-                <section id="contact" class="portal-section" aria-labelledby="contact-heading">
-                    <h2 id="contact-heading">Связаться с проектом</h2>
-                    <p>Вопросы, предложения и замечания по расписанию можно отправить на <a href="mailto:vsemirka200@bk.ru">vsemirka200@bk.ru</a>. Для сообщений об уязвимостях используйте приватное обращение.</p>
-                    <div class="portal-actions"><a class="portal-button" href="mailto:vsemirka200@bk.ru">Написать на почту</a></div>
                 </section>
                 <footer>
                     © Поехали! Славгород ·

@@ -4,9 +4,9 @@
 
 Используйте Android Studio с Android SDK для `compileSdk 36` и Gradle Wrapper
 из репозитория. Версии плагинов и библиотек заданы в
-[`libs.versions.toml`](../gradle/libs.versions.toml).
+[`libs.versions.toml`](../../gradle/libs.versions.toml).
 
-[`gradle-daemon-jvm.properties`](../gradle/gradle-daemon-jvm.properties)
+[`gradle-daemon-jvm.properties`](../../gradle/gradle-daemon-jvm.properties)
 задаёт JDK 21 для Gradle daemon; Wrapper может загрузить её автоматически.
 Workflow GitHub Actions также настраивает JDK 21.
 Для проверки расписания используется Node.js 22.
@@ -40,13 +40,27 @@ Debug APK создаётся в `app/build/outputs/apk/debug/`; его applicati
 | `.github/workflows/` | CI и анализ безопасности |
 | `docs/` | Сайт и документация |
 
+## Сайт
+
+Страницы сайта находятся в `docs/`: `index.html`, `schedule.html`,
+`feedback.html` и `support.html`. Общая навигация присутствует на каждой
+странице; при её изменении обновляйте все четыре страницы и поиск в
+`assets/scripts/features/site-search.js`. Стили основы и адаптации находятся в
+`assets/styles/core/`, стили отдельных страниц — в `assets/styles/pages/`.
+Скрипт `contact.js` формирует ссылки на почтовые приложения, не отправляя письма.
+
+`sw.js` кэширует оболочку для работы без сети. При изменении опубликованных
+файлов увеличивайте версию кэша и добавляйте новые необходимые ресурсы в
+`APP_SHELL`. Проверяйте сайт локально через HTTP-сервер, например
+`python -m http.server 8000 --directory docs`, затем открывайте
+`http://localhost:8000/`. Обновление service worker может требовать перезагрузки.
+
 Инструментальные тесты требуют устройства или эмулятора и отдельно запускаются
 через `./gradlew connectedDebugAndroidTest`. Основной workflow CI их не запускает.
 
 ## Изменения и выпуск
 
-Изменения отправляйте через PR в `main`. Проверяйте все четыре статуса,
-указанные в [настройке защиты](GITHUB_SECURITY_SETUP.md).
+Изменения отправляйте через PR в `main`. Проверяйте результаты CI перед слиянием.
 Обновления Dependabot сливаются вручную.
 
 Для release необходим существующий ключ подписи и переменные, перечисленные в

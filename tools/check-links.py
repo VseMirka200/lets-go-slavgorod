@@ -15,6 +15,7 @@ import urllib.parse
 import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
+REPOSITORY_BLOB_PREFIX = "/VseMirka200/lets-go-slavgorod/blob/main/"
 
 
 class HtmlLinks(html.parser.HTMLParser):
@@ -88,7 +89,24 @@ def main():
     for path, (links, _) in parsed.items():
         for link in links:
             parsed_url = urllib.parse.urlsplit(link)
-            if parsed_url.scheme in ("http", "https"):
+            # Ссылки на файлы текущей ветки GitHub проверяем по рабочему дереву:
+            # это позволяет заметить устаревшие пути до публикации изменений.
+            repository_file = (
+                parsed_url.netloc.lower() == "github.com"
+                and parsed_url.path.startswith(REPOSITORY_BLOB_PREFIX)
+            )
+            if repository_file:
+                local_count += 1
+                target = (ROOT / urllib.parse.unquote(parsed_url.path[len(REPOSITORY_BLOB_PREFIX):])).resolve()
+                if not target.is_relative_to(ROOT) or not target.is_file():
+                    failures.append(f"{path.relative_to(ROOT)}: отсутствует {link}")
+                elif parsed_url.fragment and target.suffix.lower() in (".html", ".md"):
+                    ids = parsed.get(target, (None, None))[1]
+                    if ids is None:
+                        ids = extract(target)[1]
+                    if urllib.parse.unquote(parsed_url.fragment) not in ids:
+                        failures.append(f"{path.relative_to(ROOT)}: не найден якорь {link}")
+            elif parsed_url.scheme in ("http", "https"):
                 external.add(urllib.parse.urldefrag(link).url)
             elif not parsed_url.scheme and not link.startswith("//"):
                 local_count += 1

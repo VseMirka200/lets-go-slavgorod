@@ -65,9 +65,9 @@ cd lets-go-slavgorod
 - [Сообщить об ошибке или предложить улучшение](https://github.com/VseMirka200/lets-go-slavgorod/issues/new)
 - [Политика конфиденциальности](docs/policies/PRIVACY.md)
 - [Политика безопасности](docs/policies/SECURITY.md)
-- [Правила участия в разработке](docs/CONTRIBUTING.md)
+- [Правила участия в разработке](docs/guides/CONTRIBUTING.md)
 - [Как редактировать и передавать расписание](docs/guides/SCHEDULE_DATA.md)
-- [Проверки проекта](docs/SECURITY_CHECKS.md)
+- [Проверки проекта](docs/guides/SECURITY_CHECKS.md)
 - [История изменений](docs/release/CHANGELOG.md)
 
 ## Документация
@@ -78,9 +78,9 @@ cd lets-go-slavgorod
 
 Проект распространяется под лицензией [MIT](LICENSE).
 Copyright (c) 2026 VseMirka200.
-Сведения об используемых библиотеках приведены в [отдельном документе](docs/LIBRARIES.md).
+Сведения об используемых библиотеках приведены в [отдельном документе](docs/guides/LIBRARIES.md).
 
 ## Контакты
 
 По вопросам проекта, конфиденциальности и безопасности: [**vsemirka200@bk.ru**](mailto:vsemirka200@bk.ru).
-Уязвимости отправляйте приватно по инструкции в [SECURITY.md](SECURITY.md).
+Уязвимости отправляйте приватно по инструкции в [SECURITY.md](docs/SECURITY.md).

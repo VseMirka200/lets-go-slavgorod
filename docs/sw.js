@@ -1,21 +1,24 @@
 // Версия меняется при обновлении оболочки, чтобы браузер загрузил новые ресурсы.
 const CACHE_PREFIX = "lets-go-slavgorod-web-";
-const CACHE_NAME = `${CACHE_PREFIX}v42`;
+const CACHE_NAME = `${CACHE_PREFIX}v56`;
 const APP_SHELL = [
     "./",
     "./index.html",
     "./schedule.html",
     "./feedback.html",
+    "./support.html",
     "./manifest.webmanifest",
     "./assets/styles/core/portal.css",
+    "./assets/styles/core/multifora.css",
+    "./assets/styles/pages/contact.css",
+    "./assets/styles/pages/support-project.css",
+    "./assets/scripts/pages/contact.js",
     "./assets/styles/pages/schedule-portal.css",
-    "./assets/styles/pages/feedback.css",
     "./assets/styles/core/branding.css",
     "./assets/styles/features/pwa-install.css",
     "./assets/styles/features/store-icons.css",
     "./assets/styles/features/mobile.css",
     "./assets/scripts/pages/schedule-page.js",
-    "./assets/scripts/pages/feedback-page.js",
     "./assets/scripts/features/pwa-install.js",
     "./assets/scripts/features/site-search.js",
     "./assets/media/branding/app-logo.png",
