@@ -47,7 +47,6 @@
     <string name="settings_schedule_updates_title">Обновление расписания</string>
     <string name="settings_schedule_management_title">Обновление расписания</string>
     <string name="settings_source_title">Источник расписания</string>
-    <string name="schedule_source_backup">Загружена резервная копия GitHub. Данные могут быть не самыми свежими.</string>
     <string name="settings_source_subtitle">Изменить ссылку для загрузки данных о маршрутах</string>
     <string name="settings_schedule_notifications_title">Уведомления об изменениях расписания</string>
     <string name="settings_schedule_notifications_subtitle">Системные уведомления об изменениях в расписании</string>
@@ -71,6 +70,16 @@
     <string name="settings_reset_affected_preferences">Остальные пользовательские предпочтения</string>
     <string name="settings_reset_preserved_logs">Логи приложения</string>
     <string name="schedule_refresh_button">Обновить данные</string>
+    <string name="schedule_delete_reload_button">Удалить</string>
+    <string name="schedule_delete_reload_failed">Не удалось удалить расписание</string>
+    <string name="schedule_source_subtitle">Адрес загрузки данных расписания</string>
+    <string name="schedule_source_warning">Изменение источника может привести к загрузке неверных данных или к недоступности расписания. Используйте только доверенный адрес. Новый источник применяется при следующем обновлении.</string>
+    <string name="schedule_source_unlock">Разрешить редактирование источника</string>
+    <string name="schedule_source_url">Адрес источника</string>
+    <string name="schedule_source_invalid">Введите корректный HTTPS-адрес без имени пользователя и пароля.</string>
+    <string name="schedule_source_save">Сохранить</string>
+    <string name="schedule_source_save_failed">Не удалось сохранить адрес источника.</string>
+    <string name="schedule_source_restore_default">Вернуть исходный адрес</string>
     <string name="schedule_refreshing_label">Обновляем данные...</string>
     <string name="schedule_refresh_success">Расписание обновлено</string>
     <string name="schedule_refresh_success_with_date">Расписание обновлено. Дата: %1$s</string>
@@ -82,11 +91,11 @@
     <string name="schedule_updated_at_title">Последнее обновление</string>
     <string name="schedule_network_title">Подключение</string>
     <string name="schedule_status_title">Текущее состояние</string>
-    <string name="schedule_source_remote">Данные из GitHub</string>
+    <string name="schedule_source_remote">Загруженное расписание</string>
     <string name="schedule_source_saved">Сохранённая копия</string>
     <string name="schedule_source_bundled">Встроенная копия из APK</string>
     <string name="schedule_source_unknown">Источник пока не определён</string>
-    <string name="schedule_status_remote">Сейчас используются данные из GitHub</string>
+    <string name="schedule_status_remote">Сейчас используется загруженное расписание</string>
     <string name="schedule_status_saved">Сейчас используются данные</string>
     <string name="schedule_status_bundled">Сейчас используется встроенная резервная копия</string>
     <string name="schedule_status_live">Приложение использует актуальные данные расписания</string>
@@ -136,7 +145,6 @@
     <string name="loading_generic">Загрузка…</string>
     <string name="schedule_update_success">Расписание успешно обновлено!</string>
     <string name="schedule_update_notice_with_date">Расписание обновлено. Дата: %1$s</string>
-    <string name="schedule_update_loading">Загрузка расписания из GitHub…</string>
     <string name="schedule_update_no_changes">Расписание уже актуальное</string>
     <string name="schedule_update_failed">Не удалось загрузить обновление</string>
     <string name="schedule_check_updates">Проверка обновлений…</string>

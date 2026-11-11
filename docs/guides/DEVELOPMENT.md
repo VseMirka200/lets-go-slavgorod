@@ -2,7 +2,7 @@
 
 ## Окружение
 
-Используйте Android Studio с Android SDK для `compileSdk 36` и Gradle Wrapper
+Используйте Android Studio с Android SDK для `compileSdk 37` и Gradle Wrapper
 из репозитория. Версии плагинов и библиотек заданы в
 [`libs.versions.toml`](../../gradle/libs.versions.toml).
 
@@ -20,8 +20,8 @@ Workflow GitHub Actions также настраивает JDK 21.
 
 ```bash
 ./gradlew --no-daemon testDebugUnitTest lintDebug detekt assembleDebug
-node --test tools/*.test.mjs
-python tools/check-links.py
+node --test scripts/*.test.mjs
+python scripts/check-links.py
 ```
 
 В Windows используйте `./gradlew` через Git Bash или WSL.
@@ -36,7 +36,7 @@ Debug APK создаётся в `app/build/outputs/apk/debug/`; его applicati
 | `app/src/test/` | Unit-тесты |
 | `app/src/androidTest/` | Инструментальные и UI-тесты |
 | `docs/guides/SCHEDULE_DATA.md` | Источник и процесс публикации расписания |
-| `tools/` | Тесты сайта и проверка опубликованного расписания |
+| `scripts/` | Тесты сайта и проверка опубликованного расписания |
 | `.github/workflows/` | CI и анализ безопасности |
 | `docs/` | Сайт и документация |
 

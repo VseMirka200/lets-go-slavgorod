@@ -25,6 +25,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 @OptIn(ExperimentalCoroutinesApi::class)
 class RemoteScheduleFetcherTest {
 
+    @Test
+    fun `default client does not follow redirects between HTTP and HTTPS`() {
+        assertTrue(!defaultScheduleHttpClient().followSslRedirects)
+    }
+
     private lateinit var server: MockWebServer
 
     @Before
@@ -118,6 +123,34 @@ class RemoteScheduleFetcherTest {
         )
         assertEquals("{}", fetcher.fetchWithRetry())
         assertEquals(2, server.requestCount)
+    }
+
+    @Test
+    fun `offline fetch does not request source or contact server`() = runTest {
+        var sourceReads = 0
+        val fetcher = RemoteScheduleFetcher(
+            remoteJsonUrlProvider = { sourceReads++; server.url("/routes").toString() },
+            onlineChecker = { false },
+            delayProvider = {}
+        )
+        assertNull(fetcher.fetchWithRetry())
+        assertEquals(0, sourceReads)
+        assertEquals(0, server.requestCount)
+    }
+
+    @Test
+    fun `invalid source is rejected without retry`() = runTest {
+        var sourceReads = 0
+        var delays = 0
+        val fetcher = RemoteScheduleFetcher(
+            remoteJsonUrlProvider = { sourceReads++; "not a url" },
+            onlineChecker = { true },
+            delayProvider = { delays++ }
+        )
+        assertNull(fetcher.fetchWithRetry())
+        assertEquals(1, sourceReads)
+        assertEquals(0, delays)
+        assertEquals(0, server.requestCount)
     }
 
     @Test

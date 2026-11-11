@@ -24,7 +24,7 @@ cd lets-go-slavgorod
 
 На Windows запускайте `./gradlew` из Git Bash или WSL. Сборка непосредственно из PowerShell и `cmd.exe` не поддерживается.
 
-Проект использует Android Gradle Plugin и Gradle Wrapper из репозитория. Для Gradle настроен JDK 21; установите также Android SDK для `compileSdk 36`.
+Проект использует Android Gradle Plugin и Gradle Wrapper из репозитория. Для Gradle настроен JDK 21; установите также Android SDK для `compileSdk 37`.
 
 ## Проверки
 
@@ -34,8 +34,8 @@ cd lets-go-slavgorod
 ./gradlew testDebugUnitTest
 ./gradlew lintDebug
 ./gradlew detekt
-node --test tools/*.test.mjs
-python tools/check-links.py
+node --test scripts/*.test.mjs
+python scripts/check-links.py
 ```
 
 Если изменение касается UI, маршрутизации или Android API, дополнительно проверьте приложение на эмуляторе или физическом устройстве.

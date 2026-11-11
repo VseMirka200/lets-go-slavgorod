@@ -9,6 +9,10 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -20,6 +24,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.runner.RunWith
 import ru.slavgorod.transport.R
 import ru.slavgorod.transport.data.model.BusRoute
@@ -55,6 +61,7 @@ class HomeScreenTest {
             scheduleSnapshotRepository = object : ScheduleSnapshotStore {
                 override suspend fun readSnapshot(): CachedScheduleSnapshot? = null
                 override suspend fun writeSnapshot(json: String) = Unit
+                override suspend fun clear() = Unit
                 override suspend fun hasSnapshot() = false
                 override fun formatSavedAt(timestampMillis: Long) = ""
             },
@@ -171,6 +178,33 @@ class HomeScreenTest {
         composeTestRule
             .onNodeWithText("105")
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun routesListState_appliesSelectedColumnsOnNarrowScreen() {
+        val routes = listOf(
+            route("101", "101", "First"),
+            route("102", "102", "Second"),
+            route("103", "103", "Third")
+        )
+        var columns by mutableIntStateOf(2)
+        composeTestRule.setContent {
+            RoutesListStateForTest(
+                routes = routes,
+                navController = rememberNavController(),
+                modifier = Modifier.width(280.dp),
+                gridColumns = columns
+            )
+        }
+
+        val firstRow = composeTestRule.onNodeWithText("101").getUnclippedBoundsInRoot().top
+        val thirdWithTwoColumns = composeTestRule.onNodeWithText("103").getUnclippedBoundsInRoot().top
+        assertTrue(thirdWithTwoColumns > firstRow)
+
+        composeTestRule.runOnIdle { columns = 3 }
+        val firstWithThreeColumns = composeTestRule.onNodeWithText("101").getUnclippedBoundsInRoot().top
+        val thirdWithThreeColumns = composeTestRule.onNodeWithText("103").getUnclippedBoundsInRoot().top
+        assertEquals(firstWithThreeColumns.value, thirdWithThreeColumns.value, 0.5f)
     }
 
     @Test

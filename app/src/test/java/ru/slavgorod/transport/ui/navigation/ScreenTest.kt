@@ -38,6 +38,10 @@ class ScreenTest {
     fun `Settings destinations should include nested settings screens`() {
         assertTrue(Screen.isSettingsDestination(Screen.Settings.route))
         assertTrue(Screen.isSettingsDestination(Screen.DisplaySettings.route))
+        assertTrue(Screen.isSettingsDestination(Screen.ColumnsSettings.route))
+        assertTrue(Screen.isSettingsDestination(Screen.ScheduleSettings.route))
+        assertTrue(Screen.isSettingsDestination(Screen.ScheduleUpdates.route))
+        assertTrue(Screen.isSettingsDestination(Screen.ScheduleNotifications.route))
         assertTrue(Screen.isSettingsDestination(Screen.About.route))
         assertTrue(Screen.isSettingsDestination(Screen.ResetSettings.route))
     }

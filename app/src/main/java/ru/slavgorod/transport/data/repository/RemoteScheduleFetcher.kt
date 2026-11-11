@@ -71,7 +71,7 @@ class RemoteScheduleFetcher(
         } catch (exception: CancellationException) {
             throw exception
         } catch (exception: Exception) {
-            Timber.w(exception, "Не удалось загрузить JSON удалённого расписания")
+            Timber.w("Не удалось загрузить JSON удалённого расписания (%s)", exception.javaClass.simpleName)
             FetchResult(null, retryable = false)
         }
     }
@@ -100,7 +100,7 @@ private suspend fun Call.awaitSchedule(): FetchResult = suspendCancellableCorout
     enqueue(object : Callback {
         override fun onFailure(call: Call, e: IOException) {
             if (continuation.isActive) {
-                Timber.w(e, "Не удалось загрузить JSON удалённого расписания")
+                Timber.w("Не удалось загрузить JSON удалённого расписания (%s)", e.javaClass.simpleName)
                 continuation.resume(FetchResult(null, retryable = true))
             }
         }
@@ -112,7 +112,7 @@ private suspend fun Call.awaitSchedule(): FetchResult = suspendCancellableCorout
                         Timber.w("Удалённое расписание вернуло код %d", response.code)
                         FetchResult(null, retryable = response.code == 408 || response.code == 429 || response.code >= 500)
                     } else {
-                        val body = response.body ?: return@use FetchResult(null, retryable = false)
+                        val body = response.body
                         if (body.contentLength() > MAX_SCHEDULE_BYTES) return@use FetchResult(null, retryable = false)
                         val source = body.source()
                         val buffer = okio.Buffer()
@@ -126,7 +126,7 @@ private suspend fun Call.awaitSchedule(): FetchResult = suspendCancellableCorout
                     }
                 }
             } catch (e: IOException) {
-                Timber.w(e, "Не удалось прочитать расписание")
+                Timber.w("Не удалось прочитать расписание (%s)", e.javaClass.simpleName)
                 FetchResult(null, retryable = true)
             }
             if (continuation.isActive) continuation.resume(result)
@@ -135,6 +135,7 @@ private suspend fun Call.awaitSchedule(): FetchResult = suspendCancellableCorout
 }
 
 internal fun defaultScheduleHttpClient(): OkHttpClient = OkHttpClient.Builder()
+    .followSslRedirects(false)
     .connectTimeout(Constants.REMOTE_CONNECTION_TIMEOUT.toLong(), TimeUnit.MILLISECONDS)
     .readTimeout(Constants.REMOTE_READ_TIMEOUT.toLong(), TimeUnit.MILLISECONDS)
     .build()

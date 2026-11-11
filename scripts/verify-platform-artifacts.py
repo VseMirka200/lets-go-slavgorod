@@ -1,4 +1,8 @@
-"""Check non-Linux AAPT2 artifacts against the committed Gradle trust baseline."""
+"""Проверяет SHA-256 AAPT2 для Windows и macOS по метаданным Gradle.
+
+Скачивает артефакты из Google Maven и завершает работу с ошибкой, если запись
+или подходящая контрольная сумма отсутствует либо загрузка не удалась.
+"""
 import hashlib
 import urllib.request
 import xml.etree.ElementTree as ET

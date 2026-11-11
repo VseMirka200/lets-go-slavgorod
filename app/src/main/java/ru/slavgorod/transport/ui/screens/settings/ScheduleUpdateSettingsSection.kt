@@ -1,5 +1,6 @@
 package ru.slavgorod.transport.ui.screens.settings
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,12 +21,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 import org.koin.compose.koinInject
 import ru.slavgorod.transport.R
 import ru.slavgorod.transport.core.AppText
@@ -36,6 +40,7 @@ import ru.slavgorod.transport.data.repository.ScheduleDataSourceStatus
 import ru.slavgorod.transport.domain.util.DateTimeFormatterUtils
 import ru.slavgorod.transport.logging.UserActionLogger
 import ru.slavgorod.transport.ui.components.app.AppOutlinedButton
+import ru.slavgorod.transport.ui.components.app.AppButton
 import ru.slavgorod.transport.ui.components.settings.SettingsSurfaceCard
 import ru.slavgorod.transport.ui.viewmodel.UiMessageSpec
 import ru.slavgorod.transport.ui.viewmodel.buildRefreshUiMessage
@@ -49,12 +54,15 @@ internal fun ScheduleUpdateSettingsSection(
     embedded: Boolean = false
 ) {
     val repository: RoutesTableDataSource = koinInject()
+    val context = LocalContext.current
 
     val screenTitle = stringResource(R.string.settings_schedule_updates_title)
     val updatedAtTitle = stringResource(R.string.schedule_updated_at_title)
     val networkTitle = stringResource(R.string.schedule_network_title)
     val statusTitle = stringResource(R.string.schedule_status_title)
     val refreshButton = stringResource(R.string.schedule_refresh_button)
+    val deleteReloadButton = stringResource(R.string.schedule_delete_reload_button)
+    val deleteReloadFailed = stringResource(R.string.schedule_delete_reload_failed)
     val refreshingLabel = stringResource(R.string.schedule_refreshing_label)
     val refreshFailed = stringResource(R.string.schedule_refresh_failed)
     val refreshOffline = stringResource(R.string.schedule_refresh_offline)
@@ -104,6 +112,7 @@ internal fun ScheduleUpdateSettingsSection(
                 bottom = Constants.SETTINGS_SCREEN_EDGE_PADDING.dp
             )
         ) {
+          Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             AppOutlinedButton(
                 onClick = {
                     UserActionLogger.routeRefreshRequested(screenTitle)
@@ -132,8 +141,8 @@ internal fun ScheduleUpdateSettingsSection(
                     }
                 },
                 enabled = !isRefreshing,
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
             ) {
                 if (isRefreshing) {
                     Row(
@@ -153,10 +162,39 @@ internal fun ScheduleUpdateSettingsSection(
                 } else {
                     Text(
                         text = refreshButton,
+                        textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
             }
+            AppButton(
+                onClick = {
+                    if (!isRefreshing) {
+                        isRefreshing = true
+                        coroutineScope.launch {
+                            try {
+                                repository.deleteSchedule()
+                                UserActionLogger.scheduleUpdateResult("$screenTitle: $deleteReloadButton")
+                            } catch (exception: CancellationException) {
+                                throw exception
+                            } catch (exception: Exception) {
+                                Toast.makeText(context, deleteReloadFailed, Toast.LENGTH_LONG).show()
+                                UserActionLogger.scheduleUpdateResult("$screenTitle: $deleteReloadFailed")
+                            } finally {
+                                isRefreshing = false
+                            }
+                        }
+                    }
+                },
+                enabled = !isRefreshing,
+                modifier = Modifier.weight(1f),
+                containerColor = MaterialTheme.colorScheme.error,
+                contentColor = MaterialTheme.colorScheme.onError,
+                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
+            ) {
+                Text(text = deleteReloadButton, textAlign = TextAlign.Center, style = MaterialTheme.typography.labelLarge)
+            }
+          }
         }
     }
 }

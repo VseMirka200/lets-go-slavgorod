@@ -44,6 +44,7 @@ open class ScheduleJsonParser(
      */
     open fun parseSnapshot(json: String): ParsedScheduleSnapshot? = try {
         val root = JsonParser.parseString(json).asJsonObject
+        require(hasSafeScheduleLimits(root)) { "Превышены ограничения расписания" }
         val routes = jsonDataSource.parseRoutesFromObject(root)
         val schedules = buildSchedulesIndex(root)
         if (isCompleteSnapshot(root, routes, schedules)) ParsedScheduleSnapshot(routes, schedules) else null
@@ -136,6 +137,34 @@ open class ScheduleJsonParser(
                 )
             }.orEmpty()
     }.getOrElse { emptyList() }
+}
+
+/** Ограничивает вложенность и размеры входных данных до создания моделей. */
+private fun hasSafeScheduleLimits(root: JsonObject): Boolean {
+    val routes = root.get(RoutesJsonContract.ROOT_ROUTES)
+    if (routes == null || !routes.isJsonArray || routes.asJsonArray.size() > 1000) return false
+    val pending = java.util.ArrayDeque<Pair<JsonElement, Int>>()
+    pending.add(root to 0)
+    while (pending.isNotEmpty()) {
+        val (element, depth) = pending.removeLast()
+        if (depth > 32) return false
+        when {
+            element.isJsonObject -> {
+                if (element.asJsonObject.size() > 1000) return false
+                element.asJsonObject.entrySet().forEach { (key, value) ->
+                    if (key.length > 1024) return false
+                    pending.add(value to depth + 1)
+                }
+            }
+            element.isJsonArray -> {
+                if (element.asJsonArray.size() > 10000) return false
+                element.asJsonArray.forEach { pending.add(it to depth + 1) }
+            }
+            element.isJsonPrimitive && element.asJsonPrimitive.isString ->
+                if (element.asString.length > 8192) return false
+        }
+    }
+    return true
 }
 
 private fun parseRouteSchedules(

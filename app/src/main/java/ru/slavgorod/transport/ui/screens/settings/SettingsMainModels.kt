@@ -11,20 +11,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import ru.slavgorod.transport.R
+import ru.slavgorod.transport.ui.navigation.Screen
 
 internal enum class SettingsModalSheet {
     THEME,
-    COLUMNS,
     ABOUT,
-    SCHEDULE,
-    SCHEDULE_UPDATES,
-    SCHEDULE_NOTIFICATIONS,
-    SCHEDULE_SOURCE
 }
 
 /** Действие пункта настроек: внутренний раздел приложения или страница сайта. */
 internal sealed interface SettingsDestination {
     data class Sheet(val sheet: SettingsModalSheet) : SettingsDestination
+    data class Page(val screen: Screen) : SettingsDestination
     data class Website(val url: String) : SettingsDestination
 }
 
@@ -49,13 +46,13 @@ internal fun buildSettingsEntries(): List<SettingsEntry> {
             icon = Icons.Default.ViewModule,
             title = stringResource(R.string.settings_columns_title),
             subtitle = stringResource(R.string.settings_columns_subtitle),
-            destination = SettingsDestination.Sheet(SettingsModalSheet.COLUMNS)
+            destination = SettingsDestination.Page(Screen.ColumnsSettings)
         ),
         SettingsEntry(
             icon = Icons.Default.SystemUpdateAlt,
             title = stringResource(R.string.settings_schedule_category),
             subtitle = stringResource(R.string.settings_schedule_category_description),
-            destination = SettingsDestination.Sheet(SettingsModalSheet.SCHEDULE)
+            destination = SettingsDestination.Page(Screen.ScheduleSettings)
         ),
         SettingsEntry(
             icon = Icons.Default.Feedback,
@@ -73,7 +70,7 @@ internal fun buildSettingsEntries(): List<SettingsEntry> {
             icon = Icons.Default.Payments,
             title = stringResource(R.string.settings_support_title),
             subtitle = stringResource(R.string.settings_support_subtitle),
-            destination = SettingsDestination.Website("https://vsemirka200.github.io/lets-go-slavgorod/#support")
+            destination = SettingsDestination.Website("https://vsemirka200.github.io/lets-go-slavgorod/support.html")
         )
     )
 }

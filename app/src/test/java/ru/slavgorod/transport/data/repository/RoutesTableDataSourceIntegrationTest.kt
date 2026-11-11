@@ -20,6 +20,7 @@ import java.io.File
 import java.nio.file.Files
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -27,11 +28,78 @@ import kotlin.test.assertTrue
 class RoutesTableDataSourceIntegrationTest {
 
     @Test
+    fun `delete clears saved and in-memory data without downloading`() = runTest {
+        val json = """{"routes":[{"id":"1","routeNumber":"1","name":"Route","description":"Description","color":"#123456","schedules":[]}]}"""
+        cacheStore.writeSnapshot(json)
+        var fetches = 0
+        val fetcher = object : ScheduleFetcher {
+            override fun isOnline() = true
+            override suspend fun fetchWithRetry(): String { fetches++; return json }
+        }
+        val repository = RoutesTableDataSource(context, remoteScheduleFetcher = fetcher,
+            scheduleSnapshotRepository = ScheduleSnapshotRepository(cacheStore), autoLoadOnInit = false)
+
+        repository.getSchedulesForRoute("1")
+        assertNotNull(repository.getRouteById("1"))
+        repository.deleteSchedule()
+
+        assertEquals(0, fetches)
+        assertNull(cacheStore.readSnapshot())
+        assertNull(repository.getRouteById("1"))
+        assertTrue(repository.routes.value.isEmpty())
+        assertNull(repository.dataSourceStatus.value.lastUpdatedAtMillis)
+    }
+
+    @Test
+    fun `delete and reload replaces cached and in-memory schedules even when response is unchanged`() = runTest {
+        val json = """{"routes":[{"id":"1","routeNumber":"1","name":"Route","description":"Description","color":"#123456","schedules":[{"id":"a","departurePoint":"Stop","departureTime":"06:25"}]}]}"""
+        cacheStore.writeSnapshot(json)
+        var fetches = 0
+        val fetcher = object : ScheduleFetcher {
+            override fun isOnline() = true
+            override suspend fun fetchWithRetry(): String {
+                fetches++
+                assertNull(cacheStore.readSnapshot())
+                return json
+            }
+        }
+        val repository = RoutesTableDataSource(context, remoteScheduleFetcher = fetcher,
+            scheduleSnapshotRepository = ScheduleSnapshotRepository(cacheStore), autoLoadOnInit = false)
+
+        assertEquals("06:25", repository.getSchedulesForRoute("1").single().departureTime)
+        assertEquals(RoutesLoadState.SUCCESS, repository.deleteAndReloadSchedule())
+        assertEquals(1, fetches)
+        assertEquals(json, cacheStore.readSnapshot()?.json)
+        assertEquals("06:25", repository.getSchedulesForRoute("1").single().departureTime)
+    }
+
+    @Test
+    fun `delete and reload offline removes old data and reports absence of a copy`() = runTest {
+        val json = """{"routes":[{"id":"1","routeNumber":"1","name":"Route","description":"Description","color":"#123456","schedules":[]}]}"""
+        cacheStore.writeSnapshot(json)
+        val fetcher = object : ScheduleFetcher {
+            override fun isOnline() = false
+            override suspend fun fetchWithRetry(): String? = null
+        }
+        val repository = RoutesTableDataSource(context, remoteScheduleFetcher = fetcher,
+            scheduleSnapshotRepository = ScheduleSnapshotRepository(cacheStore), autoLoadOnInit = false)
+
+        repository.refreshRoutesFromLocal()
+        assertNotNull(repository.getRouteById("1"))
+        assertEquals(RoutesLoadState.OFFLINE_NO_DATA, repository.deleteAndReloadSchedule())
+        assertNull(cacheStore.readSnapshot())
+        assertNull(repository.getRouteById("1"))
+        assertTrue(repository.routes.value.isEmpty())
+        assertNull(repository.dataSourceStatus.value.lastUpdatedAtMillis)
+    }
+
+    @Test
     fun `unchanged update records check time without changing snapshot time`() = runTest {
         val json = """{"routes":[{"id":"1","routeNumber":"1","name":"Route","description":"Description","color":"#123456","schedules":[]}]}"""
         val store = object : ScheduleSnapshotStore {
             override suspend fun readSnapshot() = CachedScheduleSnapshot(json, 100L)
             override suspend fun writeSnapshot(json: String) = Unit
+            override suspend fun clear() = Unit
             override suspend fun hasSnapshot() = true
             override fun formatSavedAt(timestampMillis: Long) = "saved"
         }
@@ -61,6 +129,7 @@ class RoutesTableDataSourceIntegrationTest {
                 return CachedScheduleSnapshot(old, 1)
             }
             override suspend fun writeSnapshot(json: String) = Unit
+            override suspend fun clear() = Unit
             override suspend fun hasSnapshot() = true
             override fun formatSavedAt(timestampMillis: Long) = "saved"
         }
@@ -373,6 +442,8 @@ class RoutesTableDataSourceIntegrationTest {
         }
 
         override suspend fun hasSnapshot(): Boolean = repository.hasSnapshot()
+
+        override suspend fun clear() = repository.clear()
 
         override fun formatSavedAt(timestampMillis: Long): String =
             repository.formatSavedAt(timestampMillis)

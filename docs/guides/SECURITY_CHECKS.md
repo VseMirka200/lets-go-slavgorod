@@ -13,12 +13,12 @@
 
 ```bash
 ./gradlew --no-daemon --dependency-verification=strict testDebugUnitTest lintDebug detekt assembleDebug
-node --test tools/*.test.mjs
-python tools/check-links.py
+node --test scripts/*.test.mjs
+python scripts/check-links.py
 ```
 
 Для ручной проверки источника можно выполнить
-`node tools/validate-published-schedule.mjs URL`, где URL — действующий HTTPS-адрес.
+`node scripts/validate-published-schedule.mjs URL`, где URL — действующий HTTPS-адрес.
 Скрипт проверяет структуру, а не достоверность расписания перевозчика.
 Инструментальные Android-тесты запускаются командой `./gradlew connectedDebugAndroidTest`
 при наличии устройства или эмулятора.

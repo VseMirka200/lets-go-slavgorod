@@ -22,6 +22,10 @@ class ScheduleSnapshotRepository(
         cacheStore.writeSnapshot(json)
     }
 
+    override suspend fun clear() {
+        cacheStore.clear()
+    }
+
     override suspend fun hasSnapshot(): Boolean {
         return cacheStore.hasSnapshot()
     }

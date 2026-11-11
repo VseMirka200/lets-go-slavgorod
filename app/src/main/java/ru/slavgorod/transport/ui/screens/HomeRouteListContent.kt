@@ -1,14 +1,13 @@
 package ru.slavgorod.transport.ui.screens
 
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.ui.platform.LocalDensity
-import ru.slavgorod.transport.ui.theme.adaptiveColumnCount
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -17,6 +16,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import org.koin.androidx.compose.koinViewModel
@@ -29,7 +29,8 @@ private val RouteCardsSpacing = 12.dp
 internal fun RoutesListState(
     routes: List<BusRoute>,
     navController: NavController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    header: (@Composable () -> Unit)? = null
 ) {
     val gridColumns = run {
         val displaySettingsViewModel: DisplaySettingsViewModel = koinViewModel()
@@ -39,7 +40,8 @@ internal fun RoutesListState(
         routes = routes,
         navController = navController,
         modifier = modifier,
-        gridColumns = gridColumns
+        gridColumns = gridColumns,
+        header = header
     )
 }
 
@@ -48,13 +50,16 @@ internal fun RoutesListStateForTest(
     routes: List<BusRoute>,
     navController: NavController,
     modifier: Modifier = Modifier,
-    gridColumns: Int
+    gridColumns: Int,
+    topPadding: Dp = RouteCardsSpacing
 ) {
     RoutesListStateContent(
         routes = routes,
         navController = navController,
         modifier = modifier,
-        gridColumns = gridColumns
+        gridColumns = gridColumns,
+        header = null,
+        topPadding = topPadding
     )
 }
 
@@ -63,27 +68,24 @@ private fun RoutesListStateContent(
     routes: List<BusRoute>,
     navController: NavController,
     modifier: Modifier = Modifier,
-    gridColumns: Int
+    gridColumns: Int,
+    header: (@Composable () -> Unit)?,
+    topPadding: Dp = if (header == null) RouteCardsSpacing else 0.dp
 ) {
-    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        val resolvedColumns = adaptiveColumnCount(
-            availableWidth = maxWidth,
-            fontScale = LocalDensity.current.fontScale,
-            preferredColumns = gridColumns,
-            minColumnWidth = 100.dp,
-            spacing = RouteCardsSpacing
-        )
+    Box(modifier = modifier.fillMaxSize()) {
+        val resolvedColumns = gridColumns.coerceIn(1, 4)
         if (resolvedColumns == 1) {
             val listState = rememberLazyListState()
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
-                    top = RouteCardsSpacing,
+                    top = topPadding,
                     bottom = RouteCardsSpacing
                 ),
                 verticalArrangement = Arrangement.spacedBy(RouteCardsSpacing),
                 state = listState
             ) {
+                if (header != null) item(key = "search_header") { header() }
                 addRoutes(
                     routes = routes,
                     gridColumns = resolvedColumns,
@@ -96,12 +98,13 @@ private fun RoutesListStateContent(
                 columns = GridCells.Fixed(resolvedColumns),
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
-                    top = RouteCardsSpacing,
+                    top = topPadding,
                     bottom = RouteCardsSpacing
                 ),
                 horizontalArrangement = Arrangement.spacedBy(RouteCardsSpacing),
                 verticalArrangement = Arrangement.spacedBy(RouteCardsSpacing)
             ) {
+                if (header != null) item(key = "search_header", span = { GridItemSpan(maxLineSpan) }) { header() }
                 addRoutes(
                     routes = routes,
                     gridColumns = resolvedColumns,

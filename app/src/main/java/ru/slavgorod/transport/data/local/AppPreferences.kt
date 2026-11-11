@@ -27,6 +27,7 @@ object PreferencesKeys {
     val swapScheduleColumns = booleanPreferencesKey("swap_schedule_columns")
     val scheduleDaySelectionMode = stringPreferencesKey("schedule_day_selection_mode")
     val scheduleNotificationsEnabled = booleanPreferencesKey("schedule_notifications_enabled")
+    val scheduleSourceUrl = stringPreferencesKey("schedule_source_url")
     val appTheme = stringPreferencesKey("app_theme")
 }
 

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -15,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -57,6 +59,9 @@ fun HomeScreen(
     val refreshScheduleText = stringResource(R.string.home_refresh_schedule)
     val refreshingScheduleText = stringResource(R.string.home_refreshing_schedule)
     val settingsText = stringResource(R.string.home_settings)
+    val searchBar: @Composable () -> Unit = {
+        SearchBar(query = searchQuery, onQueryChange = viewModel::onSearchQueryChange, onSearch = {})
+    }
 
     LaunchedEffect(Unit) {
         UserActionLogger.screenOpened(homeScreenTitle)
@@ -109,12 +114,6 @@ fun HomeScreen(
                 .padding(paddingValues)
                 .padding(horizontal = RouteCardsOuterPadding)
         ) {
-            SearchBar(
-                query = searchQuery,
-                onQueryChange = viewModel::onSearchQueryChange,
-                onSearch = {}
-            )
-
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -127,36 +126,45 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     when {
-                        uiState.isLoading -> LoadingState()
-                        uiState.error != null -> ErrorState(
-                            errorMessage = uiState.error.orEmpty(),
-                            onRetry = { viewModel.refresh(homeScreenTitle) }
-                        )
-
-                        uiState.routes.isEmpty() -> EmptyState(searchQuery = searchQuery)
+                        uiState.isLoading || uiState.error != null || uiState.routes.isEmpty() -> Column {
+                            searchBar()
+                            when {
+                                uiState.isLoading -> LoadingState()
+                                uiState.error != null -> ErrorState(
+                                    errorMessage = uiState.error.orEmpty(),
+                                    onRetry = { viewModel.refresh(homeScreenTitle) }
+                                )
+                                else -> EmptyState(searchQuery = searchQuery)
+                            }
+                        }
                         else -> RoutesListState(
                             routes = uiState.routes,
-                            navController = navController
+                            navController = navController,
+                            header = searchBar
                         )
                     }
                 }
-            }
 
-            val lastUpdated = uiState.dataSourceStatus.lastUpdatedAtMillis
-            Text(
-                text = if (lastUpdated != null) {
-                    stringResource(
-                        R.string.home_schedule_updated_at,
-                        DateTimeFormatterUtils.formatFullDateTime(lastUpdated)
-                    )
-                } else {
-                    stringResource(R.string.home_schedule_updated_unknown)
-                },
-                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
+                val lastUpdated = uiState.dataSourceStatus.lastUpdatedAtMillis
+                Text(
+                    text = if (lastUpdated != null) {
+                        stringResource(
+                            R.string.home_schedule_updated_at,
+                            DateTimeFormatterUtils.formatFullDateTime(lastUpdated)
+                        )
+                    } else {
+                        stringResource(R.string.home_schedule_updated_unknown)
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .navigationBarsPadding()
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }

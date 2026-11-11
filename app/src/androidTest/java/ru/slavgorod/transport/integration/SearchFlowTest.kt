@@ -38,6 +38,7 @@ class SearchFlowTest {
         val store = object : ScheduleSnapshotStore {
             override suspend fun readSnapshot(): CachedScheduleSnapshot? = null
             override suspend fun writeSnapshot(json: String) = Unit
+            override suspend fun clear() = Unit
             override suspend fun hasSnapshot() = false
             override fun formatSavedAt(timestampMillis: Long) = ""
         }

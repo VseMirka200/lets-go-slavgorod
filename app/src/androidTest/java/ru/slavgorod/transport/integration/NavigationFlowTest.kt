@@ -43,6 +43,7 @@ class NavigationFlowTest {
             val store = object : ScheduleSnapshotStore {
                 override suspend fun readSnapshot(): CachedScheduleSnapshot? = null
                 override suspend fun writeSnapshot(json: String) = Unit
+                override suspend fun clear() = Unit
                 override suspend fun hasSnapshot() = false
                 override fun formatSavedAt(timestampMillis: Long) = ""
             }
@@ -129,6 +130,20 @@ class NavigationFlowTest {
         composeTestRule
             .onNodeWithText(context.getString(R.string.schedule_title_bus_format, "102"))
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun scheduleScreen_systemBackReturnsToRoutes() {
+        routeCard().performClick()
+        composeTestRule
+            .onNodeWithText(context.getString(R.string.schedule_title_bus_format, "102"))
+            .assertIsDisplayed()
+
+        composeTestRule.activityRule.scenario.onActivity {
+            it.onBackPressedDispatcher.onBackPressed()
+        }
+
+        routeCard().assertIsDisplayed()
     }
 
     private fun openSettings() {

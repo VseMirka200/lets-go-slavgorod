@@ -26,6 +26,7 @@
     const input = dialog.querySelector('#search-input');
     const results = dialog.querySelector('#results');
 
+    /** Обновляет ссылки по подстроке названия без учёта регистра и пробелов по краям. */
     const render = () => {
         const query = input.value.trim().toLocaleLowerCase('ru');
         const matches = pages.filter(([title]) => title.toLocaleLowerCase('ru').includes(query));
@@ -41,6 +42,7 @@
             results.appendChild(link);
         }
     };
+    /** Открывает поиск с пустым запросом и переносит фокус в поле ввода. */
     const open = () => {
         if (dialog.open) return;
         input.value = '';

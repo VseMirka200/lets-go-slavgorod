@@ -1,5 +1,5 @@
 // Сравнивает стоимость формирования полного экрана и обновляемого блока.
-// Запуск: node tools/benchmark-schedule-page.mjs
+// Запуск: node scripts/benchmark-schedule-page.mjs
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { performance } from 'node:perf_hooks';

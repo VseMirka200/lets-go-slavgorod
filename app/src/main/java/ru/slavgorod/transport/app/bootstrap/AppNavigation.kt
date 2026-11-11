@@ -1,6 +1,14 @@
 package ru.slavgorod.transport.app.bootstrap
 
 import androidx.compose.runtime.Composable
+import androidx.activity.BackEventCompat
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -17,6 +25,8 @@ import ru.slavgorod.transport.ui.screens.settings.AboutScreen
 import ru.slavgorod.transport.ui.screens.settings.DisplaySettingsScreen
 import ru.slavgorod.transport.ui.screens.settings.ResetSettingsScreen
 import ru.slavgorod.transport.ui.screens.settings.SettingsMainScreen
+import ru.slavgorod.transport.ui.screens.settings.ScheduleSettingsScreen
+import ru.slavgorod.transport.ui.screens.settings.ScheduleSettingsDetailScreen
 import ru.slavgorod.transport.ui.viewmodel.RoutesViewModel
 import ru.slavgorod.transport.ui.viewmodel.ThemeViewModel
 
@@ -37,7 +47,15 @@ fun AppNavHost(
     NavHost(
         navController = navController,
         startDestination = Screen.Home.route,
-        modifier = modifier
+        modifier = modifier,
+        popEnterTransition = { slideInHorizontally(tween(300)) { -it / 4 } },
+        popExitTransition = { slideOutHorizontally(tween(300)) { it } },
+        predictivePopEnterTransition = { edge ->
+            slideInHorizontally(tween(300)) { if (edge == BackEventCompat.EDGE_RIGHT) it / 4 else -it / 4 }
+        },
+        predictivePopExitTransition = { edge ->
+            slideOutHorizontally(tween(300)) { if (edge == BackEventCompat.EDGE_RIGHT) -it else it }
+        }
     ) {
         homeGraph(navController, sharedRoutesViewModel, routesStatusMessage)
         scheduleGraph(navController, sharedRoutesViewModel)
@@ -71,12 +89,14 @@ private fun NavGraphBuilder.scheduleGraph(
     ) { backStackEntry ->
         val routeId = backStackEntry.arguments?.getString(Screen.Schedule.ARG_ROUTE_ID) ?: ""
         val routeRepository: RoutesTableDataSource = koinInject()
-        ScheduleScreen(
-            routeId = routeId,
-            routeRepository = routeRepository,
-            routesViewModel = sharedRoutesViewModel,
-            onBackClick = { navController.popBackStack() }
-        )
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            ScheduleScreen(
+                routeId = routeId,
+                routeRepository = routeRepository,
+                routesViewModel = sharedRoutesViewModel,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
     }
 }
 
@@ -87,7 +107,8 @@ private fun NavGraphBuilder.settingsGraph(
     composable(route = Screen.Settings.route) {
         SettingsMainScreen(
             themeViewModel = themeViewModel,
-            onBackClick = { navController.popBackStack() }
+            onBackClick = { navController.popBackStack() },
+            onOpenPage = { navController.navigate(it) }
         )
     }
     composable(route = Screen.About.route) {
@@ -98,6 +119,24 @@ private fun NavGraphBuilder.settingsGraph(
             themeViewModel = themeViewModel,
             onBackClick = { navController.popBackStack() }
         )
+    }
+    composable(route = Screen.ColumnsSettings.route) {
+        DisplaySettingsScreen(
+            themeViewModel = themeViewModel,
+            onBackClick = { navController.popBackStack() },
+            showThemeSection = false
+        )
+    }
+    composable(route = Screen.ScheduleSettings.route) {
+        ScheduleSettingsScreen(
+            onBackClick = { navController.popBackStack() }
+        )
+    }
+    composable(route = Screen.ScheduleUpdates.route) {
+        ScheduleSettingsDetailScreen(showNotifications = false, onBackClick = { navController.popBackStack() })
+    }
+    composable(route = Screen.ScheduleNotifications.route) {
+        ScheduleSettingsDetailScreen(showNotifications = true, onBackClick = { navController.popBackStack() })
     }
     composable(route = Screen.ResetSettings.route) {
         ResetSettingsScreen(onBackClick = { navController.popBackStack() })

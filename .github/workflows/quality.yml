@@ -23,7 +23,7 @@ jobs:
           fetch-depth: 0
 
       - name: Verify Windows and macOS AAPT2 artifacts
-        run: python tools/verify-platform-artifacts.py
+        run: python scripts/verify-platform-artifacts.py
 
       - name: Scan complete fetched Git history for secrets
         shell: bash
@@ -52,5 +52,13 @@ jobs:
       - name: Run unit tests, Android lint, Detekt and assemble debug APK
         run: ./gradlew --no-daemon --dependency-verification=strict testDebugUnitTest lintDebug detekt assembleDebug
 
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+
       - name: Run web tests
-        run: node --test tools/*.test.mjs
+        run: node --test scripts/*.test.mjs
+
+      - name: Test dependency security baseline checks
+        run: python -m unittest discover -s scripts -p 'test_*.py'
