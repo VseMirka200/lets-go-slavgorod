@@ -15,6 +15,7 @@ local.properties
 *.keystore
 
 # Android build artifacts
+/app/release/
 *.apk
 *.aab
 *.aar
