@@ -1,5 +1,4 @@
 * text=auto eol=lf
-
 *.kt text working-tree-encoding=UTF-8
 *.kts text working-tree-encoding=UTF-8
 *.java text working-tree-encoding=UTF-8
@@ -11,3 +10,4 @@
 *.json text working-tree-encoding=UTF-8
 *.txt text working-tree-encoding=UTF-8
 *.pro text working-tree-encoding=UTF-8
+app/release/mapping.txt filter=lfs diff=lfs merge=lfs -text
