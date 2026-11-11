@@ -45,8 +45,9 @@ fun DisplaySettingsScreen(
         .collectAsStateWithLifecycle(initialValue = ScheduleDaySelectionMode.Default)
     val currentTheme by themeViewModel.currentTheme.collectAsStateWithLifecycle(initialValue = AppTheme.SYSTEM)
     val isInlineEmbedded = !showTopBar && !scrollEnabled
-    val contentSpacing = if (showTopBar) Constants.SETTINGS_ITEM_SPACING.dp else 8.dp
-    val optionVerticalPadding = if (showTopBar) 8.dp else 0.dp
+    val contentSpacing =
+        if (showDisplayModeSection) 2.dp else if (showTopBar) Constants.SETTINGS_ITEM_SPACING.dp else 8.dp
+    val optionVerticalPadding = if (showDisplayModeSection) 0.dp else if (showTopBar) 8.dp else 0.dp
     val contentHorizontalPadding = when {
         isInlineEmbedded -> 0.dp
         showTopBar -> 0.dp

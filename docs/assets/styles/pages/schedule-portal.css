@@ -279,11 +279,11 @@
     text-align:center;
 }
 .schedule-day-card strong {
-    font-size:14px;
+    font-size:18px;
 }
 .schedule-day-card span {
     margin-top:3px;
-    font-size:12px;
+    font-size:14px;
 }
 .schedule-day-card.is-selected {
     border-color:#ffe18a;

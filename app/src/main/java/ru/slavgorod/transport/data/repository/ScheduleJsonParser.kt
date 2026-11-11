@@ -95,6 +95,7 @@ open class ScheduleJsonParser(
         false
     }
 
+    /** Разбирает маршруты без проверки полноты снимка; при ошибке возвращает пустой список. */
     open suspend fun parseRoutes(jsonString: String): List<BusRoute> {
         return jsonDataSource.parseRoutesFromJson(jsonString)
     }
@@ -116,7 +117,11 @@ open class ScheduleJsonParser(
             ?.toMap().orEmpty()
     }
 
-    /** Пропускает объявления без обязательных полей или корректной начальной даты. */
+    /**
+     * Пропускает объявления без обязательных полей или корректной начальной даты.
+     * При ошибке разбора документа возвращает пустой список; некорректная конечная
+     * дата отдельного объявления считается отсутствующей.
+     */
     open fun parseScheduleChanges(jsonString: String): List<ScheduleChange> = runCatching {
         val root = JsonParser.parseString(jsonString).asJsonObject
         root.getAsJsonArray(RoutesJsonContract.ROOT_SCHEDULE_CHANGES)

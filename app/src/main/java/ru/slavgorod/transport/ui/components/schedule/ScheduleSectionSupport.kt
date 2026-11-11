@@ -1,29 +1,48 @@
 package ru.slavgorod.transport.ui.components.schedule
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import ru.slavgorod.transport.R
 import ru.slavgorod.transport.data.model.BusSchedule
 import ru.slavgorod.transport.logging.UserActionLogger
+import kotlin.math.roundToInt
 
 internal data class ScheduleSectionDescriptor(
     val key: String,
@@ -170,6 +189,7 @@ private fun LazyListScope.addSectionItem(
 @Composable
 internal fun TwoColumnScheduleSectionGrid(
     sections: List<ScheduleSectionDescriptor>,
+    orderKey: String = "default",
     showOnlyUpcoming: Boolean,
     collapsedStates: MutableMap<String, Boolean> = mutableMapOf(),
     swapScheduleColumns: Boolean = false,
@@ -187,10 +207,77 @@ internal fun TwoColumnScheduleSectionGrid(
     val splitIndex = (orderedSections.size + 1) / 2
     val firstColumnSections = orderedSections.take(splitIndex)
     val secondColumnSections = orderedSections.drop(splitIndex)
-    val leftColumnSections = if (swapScheduleColumns) secondColumnSections else firstColumnSections
-    val rightColumnSections = if (swapScheduleColumns) firstColumnSections else secondColumnSections
+    val context = LocalContext.current
+    val preferences = remember(context) {
+        context.getSharedPreferences(
+            "schedule_column_order",
+            android.content.Context.MODE_PRIVATE
+        )
+    }
+    var userSwapped by remember(orderKey) {
+        mutableStateOf(
+            preferences.getBoolean(
+                orderKey,
+                false
+            )
+        )
+    }
+    val haptic = LocalHapticFeedback.current
     val columnDividerColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.14f)
+    val density = LocalDensity.current
+    val previewThreshold = with(density) { 30.dp.toPx() }
+    val dividerWidth = with(density) { (1.dp + columnSpacing * 2).toPx() }
+    var draggedColumn by remember(orderKey) { mutableStateOf<Boolean?>(null) }
+    var dragX by remember(orderKey) { mutableFloatStateOf(0f) }
+    var columnWidth by remember(orderKey) { mutableFloatStateOf(0f) }
 
+    run {
+        val swapped = userSwapped
+        val reverse = swapScheduleColumns.xor(swapped)
+        val leftColumnSections = if (reverse) secondColumnSections else firstColumnSections
+        val rightColumnSections = if (reverse) firstColumnSections else secondColumnSections
+        val columnDrag: @Composable (Boolean) -> Modifier = { isLeft ->
+            val showSwap = (draggedColumn == true && dragX > previewThreshold) ||
+                    (draggedColumn == false && dragX < -previewThreshold)
+            val previewOffset by animateFloatAsState(
+                targetValue = if (showSwap && draggedColumn != isLeft) {
+                    if (isLeft) columnWidth + dividerWidth else -columnWidth - dividerWidth
+                } else 0f,
+                animationSpec = if (draggedColumn == null) snap() else spring(),
+                label = "schedule column preview"
+            )
+            Modifier
+                .onSizeChanged { columnWidth = it.width.toFloat() }
+                .pointerInput(orderKey, swapped, isLeft) {
+                    detectDragGesturesAfterLongPress(
+                        onDragStart = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            draggedColumn = isLeft
+                            dragX = 0f
+                        },
+                        onDragCancel = { dragX = 0f; draggedColumn = null },
+                        onDragEnd = {
+                            if ((isLeft && dragX > 30.dp.toPx()) || (!isLeft && dragX < -30.dp.toPx())) {
+                                userSwapped = !swapped
+                                preferences.edit().putBoolean(orderKey, userSwapped).apply()
+                            }
+                            dragX = 0f
+                            draggedColumn = null
+                        },
+                        onDrag = { change, amount -> change.consume(); dragX += amount.x }
+                    )
+                }
+                .zIndex(if (draggedColumn == isLeft) 1f else 0f)
+                .offset {
+                    IntOffset(
+                        when {
+                            draggedColumn == null -> 0
+                            draggedColumn == isLeft -> dragX.roundToInt()
+                            else -> previewOffset.roundToInt()
+                        }, 0
+                    )
+                }
+        }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -199,7 +286,9 @@ internal fun TwoColumnScheduleSectionGrid(
         verticalAlignment = Alignment.Top
     ) {
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .then(columnDrag(true)),
             verticalArrangement = Arrangement.spacedBy(sectionSpacing)
         ) {
             leftColumnSections.forEach { section ->
@@ -233,7 +322,9 @@ internal fun TwoColumnScheduleSectionGrid(
         )
 
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .then(columnDrag(false)),
             verticalArrangement = Arrangement.spacedBy(sectionSpacing)
         ) {
             rightColumnSections.forEach { section ->
@@ -248,6 +339,7 @@ internal fun TwoColumnScheduleSectionGrid(
                 )
             }
         }
+    }
     }
 }
 

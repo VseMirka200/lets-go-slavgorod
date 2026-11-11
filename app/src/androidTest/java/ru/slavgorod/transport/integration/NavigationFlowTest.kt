@@ -2,6 +2,8 @@ package ru.slavgorod.transport.integration
 
 import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -118,6 +120,17 @@ class NavigationFlowTest {
             .onNodeWithText(context.getString(R.string.search_placeholder))
             .performTextInput("102")
 
+        routeCard().assertIsDisplayed()
+    }
+
+    @Test
+    fun homeScreen_searchRemainsAfterActivityRecreation() {
+        composeTestRule.onNodeWithText(context.getString(R.string.search_placeholder)).performTextInput("102")
+        routeCard().assertIsDisplayed()
+
+        composeTestRule.activityRule.scenario.recreate()
+
+        composeTestRule.onNode(hasSetTextAction() and hasText("102")).assertIsDisplayed()
         routeCard().assertIsDisplayed()
     }
 

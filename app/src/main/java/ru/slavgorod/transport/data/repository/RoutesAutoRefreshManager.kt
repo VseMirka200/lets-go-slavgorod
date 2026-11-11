@@ -36,11 +36,13 @@ class RoutesAutoRefreshManager(
     private var connectionObserverJob: Job? = null
     private var wasOnline = initialConnectionState
 
+    /** Запускает таймер и наблюдение за сетью; повторный вызов не дублирует задачи. */
     fun start() {
         startPeriodicRefresh()
         observeNetworkRestoration()
     }
 
+    /** Отменяет задачи проверки и наблюдения; переданная извне область не отменяется. */
     fun stop() {
         refreshJob?.cancel()
         refreshJob = null

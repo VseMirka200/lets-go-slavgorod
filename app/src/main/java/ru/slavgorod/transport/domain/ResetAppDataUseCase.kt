@@ -16,10 +16,15 @@ import timber.log.Timber
 import java.io.File
 import kotlin.system.exitProcess
 
+/** Очищает известные данные приложения и предоставляет отдельную операцию перезапуска. */
 class ResetAppDataUseCase(
     private val appContext: Context
 ) {
 
+    /**
+     * Очищает настройки и сохранённые копии расписания. Ошибки отдельных операций
+     * записываются в журнал, после чего очистка продолжается; отмена передаётся наружу.
+     */
     suspend fun resetApplicationData() {
         UserActionLogger.action(R.string.reset_data_started)
         clearKnownDataStores()
@@ -27,6 +32,7 @@ class ResetAppDataUseCase(
         UserActionLogger.action(R.string.reset_data_finished)
     }
 
+    /** Пытается открыть стартовый экран и завершает текущий процесс приложения. */
     fun restartApplication() {
         try {
             UserActionLogger.action(R.string.reset_data_restart)

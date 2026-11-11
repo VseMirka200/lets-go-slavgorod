@@ -13,11 +13,11 @@ class ScheduleUpdateNotificationCoordinator(
     private val routeRepository: RoutesTableDataSource,
     private val appForegroundTracker: AppForegroundTracker,
     private val notificationSettings: ScheduleNotificationSettings,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    private val sendNotice: (ScheduleUpdateNotice) -> Unit = ScheduleUpdateNotificationSender(context.applicationContext)::show
 ) {
 
     private val appContext = context.applicationContext
-    private val sender = ScheduleUpdateNotificationSender(appContext)
 
     fun start() {
         scope.launch {
@@ -36,6 +36,6 @@ class ScheduleUpdateNotificationCoordinator(
             return
         }
 
-        sender.show(notice)
+        sendNotice(notice)
     }
 }

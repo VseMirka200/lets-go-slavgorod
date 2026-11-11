@@ -28,6 +28,26 @@ import kotlin.test.assertTrue
 class RoutesTableDataSourceIntegrationTest {
 
     @Test
+    fun `corrupt cached snapshot is ignored offline and replaced after recovery`() = runTest {
+        cacheStore.writeSnapshot("{broken")
+        var online = false
+        val json = """{"routes":[{"id":"1","routeNumber":"1","name":"Route","description":"Route","color":"#123456","schedules":[]}]}"""
+        val fetcher = object : ScheduleFetcher {
+            override fun isOnline() = online
+            override suspend fun fetchWithRetry() = json
+        }
+        val repository = RoutesTableDataSource(context, remoteScheduleFetcher = fetcher,
+            scheduleSnapshotRepository = ScheduleSnapshotRepository(cacheStore), autoLoadOnInit = false)
+
+        assertEquals(RoutesLoadState.OFFLINE_NO_DATA, repository.refreshRoutesFromLocal())
+        assertTrue(repository.routes.value.isEmpty())
+        online = true
+        assertEquals(RoutesLoadState.SUCCESS, repository.refreshRoutesFromLocal())
+        assertEquals("1", repository.getRouteById("1")?.id)
+        assertEquals(json, cacheStore.readSnapshot()?.json)
+    }
+
+    @Test
     fun `delete clears saved and in-memory data without downloading`() = runTest {
         val json = """{"routes":[{"id":"1","routeNumber":"1","name":"Route","description":"Description","color":"#123456","schedules":[]}]}"""
         cacheStore.writeSnapshot(json)

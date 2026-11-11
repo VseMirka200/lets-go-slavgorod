@@ -164,6 +164,33 @@ class RoutesAutoRefreshManagerTest {
         manager.stop()
     }
 
+    @Test
+    fun `network observer continues after a failed refresh`() = runTest {
+        val connection = MutableStateFlow(false)
+        var calls = 0
+        val manager = RoutesAutoRefreshManager(
+            routeRepository = createRepository(),
+            connectionStateFlow = connection,
+            initialConnectionState = false,
+            dispatcher = StandardTestDispatcher(testScheduler),
+            refreshAction = {
+                calls++
+                if (calls == 1) error("temporary failure")
+                RoutesLoadState.NO_CHANGES
+            }
+        )
+        manager.start()
+        runCurrent()
+        connection.value = true
+        runCurrent()
+        connection.value = false
+        runCurrent()
+        connection.value = true
+        runCurrent()
+        assertEquals(2, calls)
+        manager.stop()
+    }
+
     private fun createRepository(): RoutesTableDataSource {
         return RoutesTableDataSource(
             context = context,

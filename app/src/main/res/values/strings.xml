@@ -207,8 +207,8 @@
     <string name="schedule_header_payment_methods">Способы оплаты</string>
     <string name="schedule_header_route">Маршрут</string>
     <string name="schedule_header_note">Примечание: указано время отправления от начальных и конечных остановок маршрута.</string>
-    <string name="schedule_upcoming_departures_title">БЛИЖАЙШЕЕ ОТПРАВЛЕНИЕ</string>
-    <string name="schedule_upcoming_departures_title_for_day">БЛИЖАЙШЕЕ ОТПРАВЛЕНИЕ · %1$s</string>
+    <string name="schedule_upcoming_departures_title">Ближайшее отправление</string>
+    <string name="schedule_upcoming_departures_title_for_day">Ближайшее отправление | %1$s</string>
     <string name="schedule_in_transit_column">В пути</string>
     <string name="schedule_next_departure_column">Следующий</string>
     <string name="schedule_no_upcoming_departures">Нет предстоящих рейсов</string>

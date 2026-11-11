@@ -28,6 +28,11 @@ class ScheduleCacheStore(context: Context) {
     private val atomicCacheFile = AtomicFile(cacheFile)
     private val mutex = Mutex()
 
+    /**
+     * Читает копию в UTF-8, удаляя пробелы по краям. При отсутствии файла,
+     * пустом содержимом или ошибке чтения возвращает `null`. Если время изменения
+     * файла недоступно, в результате используется текущее время.
+     */
     suspend fun readSnapshot(): CachedScheduleSnapshot? = withContext(Dispatchers.IO) {
         mutex.withLock {
             runCatching {
@@ -46,6 +51,12 @@ class ScheduleCacheStore(context: Context) {
         }
     }
 
+    /**
+     * Атомарно сохраняет непустой текст после удаления пробелов по краям.
+     * Корректность JSON здесь не проверяется; ошибки записи передаются вызывающему коду.
+     *
+     * @throws IllegalArgumentException если текст пуст после удаления пробелов.
+     */
     suspend fun writeSnapshot(json: String) = withContext(Dispatchers.IO) {
         val normalizedJson = json.trim()
         require(normalizedJson.isNotBlank()) { "JSON снимка не может быть пустым" }
@@ -66,6 +77,7 @@ class ScheduleCacheStore(context: Context) {
         }
     }
 
+    /** Удаляет основную и временную копии, а также опустевший каталог кэша. */
     suspend fun clear() = withContext(Dispatchers.IO) {
         mutex.withLock {
             atomicCacheFile.delete()
@@ -76,6 +88,7 @@ class ScheduleCacheStore(context: Context) {
         }
     }
 
+    /** Сообщает, доступна ли непустая копия для чтения, без проверки её JSON. */
     suspend fun hasSnapshot(): Boolean = readSnapshot() != null
 
     private companion object {

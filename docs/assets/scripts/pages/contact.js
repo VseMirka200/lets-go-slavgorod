@@ -22,6 +22,7 @@
     if (opening) emailSection.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
+  /** Обновляет ссылки создания письма по текущим теме и тексту формы. */
   function updateLinks() {
     // Сервисы используют разные имена параметров; URLSearchParams кодирует текст.
     const params = new URLSearchParams({ to: address, subject: subject.value, body: message.value });

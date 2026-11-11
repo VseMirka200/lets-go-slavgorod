@@ -56,7 +56,8 @@ Debug APK создаётся в `app/build/outputs/apk/debug/`; его applicati
 `http://localhost:8000/`. Обновление service worker может требовать перезагрузки.
 
 Инструментальные тесты требуют устройства или эмулятора и отдельно запускаются
-через `./gradlew connectedDebugAndroidTest`. Основной workflow CI их не запускает.
+через `./gradlew connectedDebugAndroidTest`. Отдельный workflow Android UI tests
+запускает их на эмуляторе еженедельно и вручную через GitHub Actions.
 
 ## Изменения и выпуск
 
