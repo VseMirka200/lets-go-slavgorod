@@ -25,12 +25,12 @@ internal fun ScheduleSourceBanner(status: ScheduleDataSourceStatus, modifier: Mo
     val updatedAt = status.lastUpdatedAtMillis?.let(DateTimeFormatterUtils::formatFullDateTime)
         ?: stringResource(R.string.schedule_updated_unknown)
     Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)) {
-        Text("Источник: $source", style = MaterialTheme.typography.labelMedium,
+        Text(stringResource(R.string.schedule_source_banner_source, source), style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text("Последняя загрузка: $updatedAt", style = MaterialTheme.typography.bodySmall,
+        Text(stringResource(R.string.schedule_source_banner_updated, updatedAt), style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         status.lastCheckedAtMillis?.let {
-            Text("Последняя проверка: ${DateTimeFormatterUtils.formatFullDateTime(it)}",
+            Text(stringResource(R.string.schedule_source_banner_checked, DateTimeFormatterUtils.formatFullDateTime(it)),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }

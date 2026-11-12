@@ -32,6 +32,7 @@ import ru.slavgorod.transport.data.local.ScheduleSourceSettings
 import ru.slavgorod.transport.data.local.isValidScheduleSourceUrl
 import ru.slavgorod.transport.ui.components.app.AppButton
 import ru.slavgorod.transport.ui.components.app.AppOutlinedButton
+import timber.log.Timber
 
 @Composable
 internal fun ScheduleSourceEditor() {
@@ -74,6 +75,7 @@ internal fun ScheduleSourceEditor() {
                         settings.saveUrl(draft)
                         unlocked = false
                     } catch (exception: java.io.IOException) {
+                        Timber.w(exception, "Failed to save schedule source")
                         saveFailed = true
                     }
                 }

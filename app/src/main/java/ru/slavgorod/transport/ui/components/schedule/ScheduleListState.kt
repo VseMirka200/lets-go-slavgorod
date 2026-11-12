@@ -5,11 +5,13 @@ import androidx.compose.ui.unit.dp
 import ru.slavgorod.transport.data.model.BusSchedule
 import ru.slavgorod.transport.ui.model.DeparturePointSchedules
 
+/** Выбранные фильтры; `null` означает отсутствие ограничения по соответствующему полю. */
 internal data class ScheduleFilterState(
     val selectedDescriptionLabel: String?,
     val selectedDeparturePointId: String?
 )
 
+/** Подготовленные данные для фильтров, секций списка и карточек ближайших рейсов. */
 internal data class ScheduleListDisplayState(
     val allSchedules: List<BusSchedule>,
     val upcomingEntries: List<UpcomingScheduleEntry>,
@@ -20,7 +22,11 @@ internal data class ScheduleListDisplayState(
     val hasFilterControls: Boolean
 )
 
-/** Собирает фильтры, видимые секции и карточки ближайших рейсов для экрана. */
+/**
+ * Собирает фильтры, видимые секции и карточки ближайших рейсов для экрана.
+ * Фильтры применяются к секциям списка; карточки ближайших рейсов строятся по всем
+ * пунктам отправления. Ключ пункта в фильтре зависит от его позиции во входном списке.
+ */
 internal fun buildScheduleListDisplayState(
     departurePoints: List<DeparturePointSchedules>,
     filterState: ScheduleFilterState,

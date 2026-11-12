@@ -1,6 +1,6 @@
 // Версия меняется при обновлении оболочки, чтобы браузер загрузил новые ресурсы.
 const CACHE_PREFIX = "lets-go-slavgorod-web-";
-const CACHE_NAME = `${CACHE_PREFIX}v56`;
+const CACHE_NAME = `${CACHE_PREFIX}v57`;
 const APP_SHELL = [
     "./",
     "./index.html",

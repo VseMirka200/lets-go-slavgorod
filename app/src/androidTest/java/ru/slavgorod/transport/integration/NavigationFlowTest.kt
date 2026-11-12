@@ -8,9 +8,11 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.espresso.Espresso
 import kotlinx.coroutines.runBlocking
 import org.junit.rules.ExternalResource
 import org.koin.core.context.GlobalContext
@@ -90,8 +92,26 @@ class NavigationFlowTest {
             .assertIsDisplayed()
 
         composeTestRule
-            .onNodeWithText(context.getString(R.string.settings_theme_title))
+            .onNodeWithText(context.getString(R.string.settings_appearance_title))
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun settingsScreen_canOpenInterfaceSettings() {
+        openSettings()
+
+        composeTestRule.onNodeWithText(context.getString(R.string.settings_appearance_title)).performClick()
+        composeTestRule.onNodeWithText(context.getString(R.string.settings_theme_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.settings_columns_title)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.settings_theme_title)).performClick()
+        composeTestRule.onNodeWithText(context.getString(R.string.theme_light)).assertIsDisplayed()
+        Espresso.pressBack()
+        composeTestRule.onNodeWithText(context.getString(R.string.settings_columns_title)).performClick()
+        composeTestRule.onNodeWithText(context.getString(R.string.grid_columns_1)).assertIsDisplayed()
+        Espresso.pressBack()
+        composeTestRule.onNodeWithText(context.getString(R.string.settings_schedule_day_mode_title))
+            .performScrollTo().performClick()
+        composeTestRule.onNodeWithText(context.getString(R.string.settings_schedule_day_mode_day_first)).assertIsDisplayed()
     }
 
     @Test

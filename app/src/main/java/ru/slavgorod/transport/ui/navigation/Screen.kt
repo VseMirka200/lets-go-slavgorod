@@ -14,6 +14,7 @@ private const val ROUTE_ID_ARG = "routeId"
 private const val SCHEDULE_BASE_ROUTE = "schedule"
 private const val SCHEDULE_ROUTE = "$SCHEDULE_BASE_ROUTE/{$ROUTE_ID_ARG}"
 
+/** Маршруты навигации и шаблон экрана расписания с идентификатором маршрута. */
 sealed class Screen(val route: String) {
     data object Home : Screen(HOME_ROUTE)
 
@@ -21,6 +22,7 @@ sealed class Screen(val route: String) {
         const val ARG_ROUTE_ID = ROUTE_ID_ARG
         const val BASE_ROUTE = SCHEDULE_BASE_ROUTE
 
+        /** Подставляет идентификатор в путь расписания без дополнительного кодирования. */
         fun createRoute(routeId: String): String {
             return "$BASE_ROUTE/$routeId"
         }
@@ -36,6 +38,7 @@ sealed class Screen(val route: String) {
     data object ResetSettings : Screen(RESET_SETTINGS_ROUTE)
 
     companion object {
+        /** Проверяет шаблон текущего назначения для раздела маршрутов. */
         fun isRoutesDestination(route: String?): Boolean {
             return when (route) {
                 HOME_ROUTE,
@@ -45,6 +48,7 @@ sealed class Screen(val route: String) {
             }
         }
 
+        /** Проверяет шаблон текущего назначения для настроек и вложенных экранов. */
         fun isSettingsDestination(route: String?): Boolean {
             return when (route) {
                 SETTINGS_ROUTE,

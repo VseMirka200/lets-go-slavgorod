@@ -31,6 +31,7 @@ fun DisplaySettingsScreen(
     modifier: Modifier = Modifier,
     showThemeSection: Boolean = true,
     showDisplayModeSection: Boolean = true,
+    showScheduleDaySection: Boolean = showDisplayModeSection,
     showTopBar: Boolean = true,
     scrollEnabled: Boolean = true
 ) {
@@ -130,10 +131,11 @@ fun DisplaySettingsScreen(
                             horizontalPadding = rowHorizontalPadding
                         )
                     }
-
+                }
+                if (showScheduleDaySection) {
                     SettingsSectionHeader(
                         title = scheduleDayModeTitle,
-                        visible = true,
+                        visible = showTopBar,
                         modifier = Modifier.padding(top = 16.dp)
                     )
                     SettingsRadioRow(

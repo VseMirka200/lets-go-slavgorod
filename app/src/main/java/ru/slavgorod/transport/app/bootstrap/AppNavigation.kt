@@ -23,6 +23,7 @@ import ru.slavgorod.transport.ui.screens.HomeScreen
 import ru.slavgorod.transport.ui.screens.ScheduleScreen
 import ru.slavgorod.transport.ui.screens.settings.AboutScreen
 import ru.slavgorod.transport.ui.screens.settings.DisplaySettingsScreen
+import ru.slavgorod.transport.ui.screens.settings.InterfaceSettingsScreen
 import ru.slavgorod.transport.ui.screens.settings.ResetSettingsScreen
 import ru.slavgorod.transport.ui.screens.settings.SettingsMainScreen
 import ru.slavgorod.transport.ui.screens.settings.ScheduleSettingsScreen
@@ -115,7 +116,7 @@ private fun NavGraphBuilder.settingsGraph(
         AboutScreen(onBackClick = { navController.popBackStack() })
     }
     composable(route = Screen.DisplaySettings.route) {
-        DisplaySettingsScreen(
+        InterfaceSettingsScreen(
             themeViewModel = themeViewModel,
             onBackClick = { navController.popBackStack() }
         )

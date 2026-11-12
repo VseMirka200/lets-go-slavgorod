@@ -47,6 +47,7 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -57,6 +58,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import org.json.JSONArray
 import org.koin.androidx.compose.koinViewModel
+import ru.slavgorod.transport.R
 import ru.slavgorod.transport.data.model.BusRoute
 import ru.slavgorod.transport.ui.viewmodel.DisplaySettingsViewModel
 import kotlin.math.roundToInt
@@ -239,7 +241,7 @@ private fun RoutesListStateContent(
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer
             ) {
                 Text(
-                    text = if (id in pinned) "Открепить" else "Закрепить",
+                    text = stringResource(if (id in pinned) R.string.route_unpin else R.string.route_pin),
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 7.dp),
                     fontSize = 12.sp,
                     maxLines = 1,
@@ -280,7 +282,7 @@ private fun RoutesListStateContent(
             ) {
                 if (header != null) item(key = "search_header") { header() }
                 if (pinnedRoutes.isNotEmpty()) {
-                    item(key = "pinned_routes_heading") { RouteGroupHeading("Закреплённые маршруты") }
+                    item(key = "pinned_routes_heading") { RouteGroupHeading(stringResource(R.string.route_pinned_heading)) }
                     addRoutes(
                         routes = pinnedRoutes,
                         gridColumns = resolvedColumns,
@@ -296,7 +298,7 @@ private fun RoutesListStateContent(
                     )
                     if (otherRoutes.isNotEmpty()) item(key = "other_routes_heading") {
                         RouteGroupHeading(
-                            "Другие маршруты"
+                            stringResource(R.string.route_other_heading)
                         )
                     }
                 }
@@ -329,7 +331,7 @@ private fun RoutesListStateContent(
                 if (pinnedRoutes.isNotEmpty()) {
                     item(
                         key = "pinned_routes_heading",
-                        span = { GridItemSpan(maxLineSpan) }) { RouteGroupHeading("Закреплённые маршруты") }
+                        span = { GridItemSpan(maxLineSpan) }) { RouteGroupHeading(stringResource(R.string.route_pinned_heading)) }
                     addRoutes(
                         routes = pinnedRoutes,
                         gridColumns = resolvedColumns,
@@ -345,7 +347,7 @@ private fun RoutesListStateContent(
                     )
                     if (otherRoutes.isNotEmpty()) item(
                         key = "other_routes_heading",
-                        span = { GridItemSpan(maxLineSpan) }) { RouteGroupHeading("Другие маршруты") }
+                        span = { GridItemSpan(maxLineSpan) }) { RouteGroupHeading(stringResource(R.string.route_other_heading)) }
                 }
                 addRoutes(
                     routes = otherRoutes,

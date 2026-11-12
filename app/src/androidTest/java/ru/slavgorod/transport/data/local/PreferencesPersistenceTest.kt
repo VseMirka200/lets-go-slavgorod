@@ -1,6 +1,9 @@
 package ru.slavgorod.transport.data.local
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.test.core.app.ApplicationProvider
 import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +24,17 @@ import org.junit.Assert.assertTrue
 @RunWith(AndroidJUnit4::class)
 class PreferencesPersistenceTest {
     @get:Rule val folder = TemporaryFolder()
+
+    @Test
+    fun scheduleSnapshotReplacementIsPersistedOnAndroid() = runBlocking {
+        val context = object : ContextWrapper(ApplicationProvider.getApplicationContext<Context>()) {
+            override fun getFilesDir() = folder.root
+        }
+        val store = ScheduleCacheStore(context)
+        store.writeSnapshot("old")
+        store.writeSnapshot("new")
+        assertEquals("new", ScheduleCacheStore(context).readSnapshot()?.json)
+    }
 
     @Test
     fun settingsSurviveReopeningAndReturnToDefaultsAfterClearing() = runBlocking {

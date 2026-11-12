@@ -145,7 +145,7 @@ fun ScheduleScreen(
                     context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
                         type = "text/plain"
                         putExtra(Intent.EXTRA_TEXT, link)
-                    }, "Поделиться маршрутом"))
+                    }, context.getString(R.string.route_share)))
                 },
                 scheduleExtraLabelProvider = { schedule ->
                     buildScheduleExtraLabel(

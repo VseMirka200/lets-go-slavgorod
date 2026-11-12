@@ -98,7 +98,7 @@ fun SettingsMainScreen(
                     is SettingsDestination.Website -> {
                         if (!context.openExternalUrl(
                                 destination.url,
-                                "Не удалось открыть страницу сайта"
+                                context.getString(R.string.welcome_link_failed)
                             )
                         ) {
                             Toast.makeText(

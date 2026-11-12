@@ -22,9 +22,13 @@ Workflow GitHub Actions также настраивает JDK 21.
 ./gradlew --no-daemon testDebugUnitTest lintDebug detekt assembleDebug
 node --test scripts/*.test.mjs
 python scripts/check-links.py
+python scripts/check-links.py --external
 ```
 
 В Windows используйте `./gradlew` через Git Bash или WSL.
+Проверка с `--external` обращается к внешним сайтам; ошибки сети и HTTP 403
+могут требовать ручной проверки. Для команд `node` и `python` нужны установленные
+Node.js и Python, доступные в `PATH`.
 Debug APK создаётся в `app/build/outputs/apk/debug/`; его applicationId
 имеет суффикс `.debug`. Это отдельная сборка для разработки.
 

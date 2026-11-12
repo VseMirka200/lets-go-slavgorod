@@ -111,7 +111,9 @@ def main():
             elif not parsed_url.scheme and not link.startswith("//"):
                 local_count += 1
                 target = (path.parent / urllib.parse.unquote(parsed_url.path)).resolve() if parsed_url.path else path
-                if target.is_dir():
+                # GitHub отображает ссылки на каталоги из Markdown как списки файлов.
+                # Веб-серверу же для ссылки на каталог нужна индексная страница.
+                if target.is_dir() and path.suffix.lower() != ".md":
                     target = target / "index.html"
                 if not target.exists():
                     failures.append(f"{path.relative_to(ROOT)}: отсутствует {link}")

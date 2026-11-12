@@ -133,6 +133,10 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            // Robolectric's Android file-descriptor interceptor accesses this JDK API.
+            it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED")
+        }
     }
 
     lint {
@@ -151,6 +155,7 @@ android {
         }
     }
 }
+
 
 kotlin {
     compilerOptions {

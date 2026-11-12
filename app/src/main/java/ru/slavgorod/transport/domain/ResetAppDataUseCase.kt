@@ -94,7 +94,7 @@ class ResetAppDataUseCase(
         }
     }
 
-    private suspend fun runClearOperation(nameResId: Int, action: suspend () -> Unit) {
+    internal suspend fun runClearOperation(nameResId: Int, action: suspend () -> Unit) {
         try {
             action()
         } catch (exception: CancellationException) {

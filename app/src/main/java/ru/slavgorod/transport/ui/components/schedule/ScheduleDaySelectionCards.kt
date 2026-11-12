@@ -69,7 +69,6 @@ internal fun ScheduleDaySelectionCards(
         }
     }
 }
-
 @Composable
 private fun DaySelectionCard(
     day: DayOfWeek,
@@ -93,7 +92,7 @@ private fun DaySelectionCard(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = day.getDisplayName(TextStyle.FULL_STANDALONE, RUSSIAN_LOCALE)
+                text = day.getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("ru"))
                     .replaceFirstChar(Char::titlecase),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
@@ -113,5 +112,3 @@ private fun DaySelectionCard(
         }
     }
 }
-
-private val RUSSIAN_LOCALE = Locale.forLanguageTag("ru")

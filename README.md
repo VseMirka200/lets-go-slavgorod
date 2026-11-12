@@ -66,6 +66,7 @@ cd lets-go-slavgorod
 - [Политика конфиденциальности](docs/policies/PRIVACY.md)
 - [Политика безопасности](docs/policies/SECURITY.md)
 - [Правила участия в разработке](docs/guides/CONTRIBUTING.md)
+- [Разработка и локальные проверки](docs/guides/DEVELOPMENT.md)
 - [Как редактировать и передавать расписание](docs/guides/SCHEDULE_DATA.md)
 - [Проверки проекта](docs/guides/SECURITY_CHECKS.md)
 - [История изменений](docs/release/CHANGELOG.md)

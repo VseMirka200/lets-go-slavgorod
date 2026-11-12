@@ -14,8 +14,8 @@ import ru.slavgorod.transport.data.repository.ScheduleFetcher
 import ru.slavgorod.transport.notifications.AppForegroundTracker
 
 /**
- * Proves that the Koin graph can be instantiated after a major Koin upgrade,
- * without replacing the process-wide GlobalContext used by other tests.
+ * Проверяет создание графа Koin после обновления основной версии библиотеки,
+ * не заменяя общий для процесса GlobalContext, используемый другими тестами.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])

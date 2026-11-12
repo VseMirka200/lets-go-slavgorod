@@ -35,7 +35,7 @@
 ## Сборка и статический анализ
 
 - Android Gradle Plugin;
-- Kotlin Android и Kotlin Compose Compiler;
+- встроенная в Android Gradle Plugin поддержка Kotlin и Kotlin Compose Compiler;
 - Detekt;
 - Desugar JDK Libraries.
 

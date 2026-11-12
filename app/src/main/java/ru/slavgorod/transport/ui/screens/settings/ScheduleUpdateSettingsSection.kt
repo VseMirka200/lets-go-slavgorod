@@ -45,6 +45,7 @@ import ru.slavgorod.transport.ui.components.settings.SettingsSurfaceCard
 import ru.slavgorod.transport.ui.viewmodel.UiMessageSpec
 import ru.slavgorod.transport.ui.viewmodel.buildRefreshUiMessage
 import ru.slavgorod.transport.ui.viewmodel.resolveScheduleStatusLabel
+import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -178,6 +179,7 @@ internal fun ScheduleUpdateSettingsSection(
                             } catch (exception: CancellationException) {
                                 throw exception
                             } catch (exception: Exception) {
+                                Timber.w(exception, "Failed to delete schedule")
                                 Toast.makeText(context, deleteReloadFailed, Toast.LENGTH_LONG).show()
                                 UserActionLogger.scheduleUpdateResult("$screenTitle: $deleteReloadFailed")
                             } finally {

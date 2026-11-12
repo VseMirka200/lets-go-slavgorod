@@ -6,7 +6,6 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.SystemUpdateAlt
-import androidx.compose.material.icons.filled.ViewModule
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -38,15 +37,9 @@ internal fun buildSettingsEntries(): List<SettingsEntry> {
     return listOf(
         SettingsEntry(
             icon = Icons.Default.Palette,
-            title = stringResource(R.string.settings_theme_title),
-            subtitle = stringResource(R.string.settings_theme_subtitle),
-            destination = SettingsDestination.Sheet(SettingsModalSheet.THEME)
-        ),
-        SettingsEntry(
-            icon = Icons.Default.ViewModule,
-            title = stringResource(R.string.settings_columns_title),
-            subtitle = stringResource(R.string.settings_columns_subtitle),
-            destination = SettingsDestination.Page(Screen.ColumnsSettings)
+            title = stringResource(R.string.settings_appearance_title),
+            subtitle = stringResource(R.string.settings_appearance_subtitle),
+            destination = SettingsDestination.Page(Screen.DisplaySettings)
         ),
         SettingsEntry(
             icon = Icons.Default.SystemUpdateAlt,

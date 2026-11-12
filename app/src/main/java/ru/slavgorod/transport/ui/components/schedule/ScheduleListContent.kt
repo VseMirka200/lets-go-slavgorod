@@ -102,7 +102,7 @@ internal fun ScheduleListScaffold(
                 AppIconButton(onClick = share) {
                     Icon(
                         imageVector = Icons.Default.Share,
-                        contentDescription = "Поделиться маршрутом",
+                        contentDescription = stringResource(R.string.route_share),
                         tint = Color.White
                     )
                 }
@@ -220,7 +220,7 @@ private fun LazyListScope.scheduleStickyHeader(
                 entries = displayState.upcomingEntries,
                 currentTimeMillis = currentTimeMillis,
                 layout = layout,
-                dayLabel = currentDay.getDisplayName(TextStyle.FULL_STANDALONE, RUSSIAN_LOCALE)
+                dayLabel = currentDay.getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("ru"))
                     .replaceFirstChar(Char::titlecase),
                 compactMode = false,
                 squareCorners = true,
@@ -423,7 +423,6 @@ private fun ScheduleFiltersOverlay(
 private fun filtersBottomBarOffset(layout: ScheduleResponsiveLayoutSpec) =
     if (layout.mode == ScheduleResponsiveLayoutMode.TIGHT) 8.dp else 10.dp
 
-private val RUSSIAN_LOCALE = Locale.forLanguageTag("ru")
 private val FILTERS_BOTTOM_RESERVE_COLLAPSED = 96.dp
 private val FILTERS_BOTTOM_RESERVE_EXPANDED = 240.dp
 private val FILTERS_PANEL_EXTRA_HEIGHT = 32.dp

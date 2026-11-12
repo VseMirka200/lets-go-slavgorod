@@ -24,6 +24,7 @@ class DisplaySettingsViewModel(
     private val dataStore: DataStore<Preferences>
 ) : ViewModel() {
 
+    /** Число колонок в диапазоне от 1 до 4; до загрузки настроек используется 2. */
     val gridColumns: StateFlow<Int> = dataStore.stateInPreferences(
         scope = viewModelScope,
         initialValue = DEFAULT_GRID_COLUMNS
@@ -32,6 +33,7 @@ class DisplaySettingsViewModel(
             .coerceIn(MIN_GRID_COLUMNS, MAX_GRID_COLUMNS)
     }
 
+    /** Сохранённый порядок колонок расписания; до загрузки используется `false`. */
     val swapScheduleColumns: StateFlow<Boolean> = dataStore.stateInPreferences(
         scope = viewModelScope,
         initialValue = DEFAULT_SWAP_SCHEDULE_COLUMNS
@@ -39,6 +41,7 @@ class DisplaySettingsViewModel(
         preferences[PreferencesKeys.swapScheduleColumns] ?: DEFAULT_SWAP_SCHEDULE_COLUMNS
     }
 
+    /** Режим выбора дня; неизвестное сохранённое значение заменяется режимом по умолчанию. */
     val scheduleDaySelectionMode: StateFlow<ScheduleDaySelectionMode> = dataStore.stateInPreferences(
         scope = viewModelScope,
         initialValue = DEFAULT_SCHEDULE_DAY_SELECTION_MODE
@@ -47,6 +50,7 @@ class DisplaySettingsViewModel(
             .toEnumOrDefault(DEFAULT_SCHEDULE_DAY_SELECTION_MODE)
     }
 
+    /** Ограничивает число колонок допустимым диапазоном и запускает сохранение. */
     fun setGridColumns(columns: Int) {
         val normalizedColumns = columns.coerceGridColumns()
         UserActionLogger.preferenceChanged(
@@ -56,6 +60,7 @@ class DisplaySettingsViewModel(
         persistDisplaySettings(columns = normalizedColumns)
     }
 
+    /** Запускает сохранение выбранного режима в области жизненного цикла ViewModel. */
     fun setScheduleDaySelectionMode(mode: ScheduleDaySelectionMode) {
         UserActionLogger.preferenceChanged(R.string.settings_schedule_day_mode_title, mode.name)
         viewModelScope.launch {
