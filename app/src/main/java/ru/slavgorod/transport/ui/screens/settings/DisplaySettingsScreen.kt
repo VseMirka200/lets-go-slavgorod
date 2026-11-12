@@ -47,7 +47,7 @@ fun DisplaySettingsScreen(
     val isInlineEmbedded = !showTopBar && !scrollEnabled
     val contentSpacing =
         if (showDisplayModeSection) 2.dp else if (showTopBar) Constants.SETTINGS_ITEM_SPACING.dp else 8.dp
-    val optionVerticalPadding = if (showDisplayModeSection) 0.dp else if (showTopBar) 8.dp else 0.dp
+    val optionVerticalPadding = if (showDisplayModeSection) 4.dp else if (showTopBar) 8.dp else 0.dp
     val contentHorizontalPadding = when {
         isInlineEmbedded -> 0.dp
         showTopBar -> 0.dp
@@ -133,10 +133,12 @@ fun DisplaySettingsScreen(
 
                     SettingsSectionHeader(
                         title = scheduleDayModeTitle,
-                        visible = true
+                        visible = true,
+                        modifier = Modifier.padding(top = 16.dp)
                     )
                     SettingsRadioRow(
                         selected = scheduleDaySelectionMode == ScheduleDaySelectionMode.DAY_FIRST,
+                        modifier = Modifier.padding(top = 8.dp),
                         title = stringResource(R.string.settings_schedule_day_mode_day_first),
                         subtitle = stringResource(R.string.settings_schedule_day_mode_day_first_subtitle),
                         onClick = {
@@ -183,12 +185,14 @@ fun DisplaySettingsScreen(
 @Composable
 private fun SettingsSectionHeader(
     title: String,
-    visible: Boolean
+    visible: Boolean,
+    modifier: Modifier = Modifier
 ) {
     if (!visible) return
 
     Text(
         text = title,
+        modifier = modifier,
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )

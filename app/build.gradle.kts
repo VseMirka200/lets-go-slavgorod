@@ -131,6 +131,10 @@ android {
         buildConfig = true
     }
 
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+
     lint {
         checkReleaseBuilds = true
         abortOnError = true
