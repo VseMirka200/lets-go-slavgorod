@@ -103,6 +103,7 @@ internal fun RoutesListStateForTest(
     )
 }
 
+@Suppress("CyclomaticComplexMethod")
 @Composable
 private fun RoutesListStateContent(
     routes: List<BusRoute>,
@@ -154,19 +155,14 @@ private fun RoutesListStateContent(
             preferences.edit().putString("order", JSONArray(order).toString()).apply()
         }
     }
-    val dragModifier: @Composable (String) -> Modifier = { id ->
+    @Composable
+    fun dragModifier(id: String): Modifier {
         DisposableEffect(id) { onDispose { positions.remove(id) } }
         val ids = orderedRoutes.filter { (it.id in pinned) == (id in pinned) }.map { it.id }
         val sourceIndex = ids.indexOf(draggedId)
         val targetIndex = ids.indexOf(hoveredId)
         val currentIndex = ids.indexOf(id)
-        val previewIndex = when {
-            sourceIndex < 0 || targetIndex < 0 -> currentIndex
-            currentIndex == sourceIndex -> targetIndex
-            sourceIndex < targetIndex && currentIndex in (sourceIndex + 1)..targetIndex -> currentIndex - 1
-            sourceIndex > targetIndex && currentIndex in targetIndex until sourceIndex -> currentIndex + 1
-            else -> currentIndex
-        }
+        val previewIndex = reorderPreviewIndex(sourceIndex, targetIndex, currentIndex)
         val originalBounds = positions[id]
         val previewBounds = ids.getOrNull(previewIndex)?.let { positions[it] }
         val previewOffset =
@@ -178,7 +174,7 @@ private fun RoutesListStateContent(
             animationSpec = if (draggedId == null) snap() else spring(),
             label = "route reorder preview"
         )
-        Modifier
+        return Modifier
             .onGloballyPositioned { positions[id] = it.boundsInRoot() }
             .pointerInput(id, orderedRoutes) {
                 detectDragGesturesAfterLongPress(
@@ -268,6 +264,32 @@ private fun RoutesListStateContent(
                     }
                 }
             }) {
+        RouteCardsContent(
+            pinnedRoutes = pinnedRoutes,
+            otherRoutes = otherRoutes,
+            gridColumns = gridColumns,
+            topPadding = topPadding,
+            header = header,
+            onRouteClick = { route ->
+                if (menuRoute != route.id && draggedId == null) navigateToSchedule(navController, route)
+            },
+            dragModifier = { dragModifier(it) },
+            routeMenu = routeMenu
+        )
+    }
+}
+
+@Composable
+private fun RouteCardsContent(
+    pinnedRoutes: List<BusRoute>,
+    otherRoutes: List<BusRoute>,
+    gridColumns: Int,
+    topPadding: Dp,
+    header: (@Composable () -> Unit)?,
+    onRouteClick: (BusRoute) -> Unit,
+    dragModifier: @Composable (String) -> Modifier,
+    routeMenu: @Composable (String) -> Unit
+) {
         val resolvedColumns = gridColumns.coerceIn(1, 4)
         if (resolvedColumns == 1) {
             val listState = rememberLazyListState()
@@ -287,13 +309,8 @@ private fun RoutesListStateContent(
                         routes = pinnedRoutes,
                         gridColumns = resolvedColumns,
                         isGridMode = false,
-                        onRouteClick = { route ->
-                            if (menuRoute != route.id && draggedId == null) navigateToSchedule(
-                                navController,
-                                route
-                            )
-                        },
-                        dragModifier = dragModifier,
+                        onRouteClick = onRouteClick,
+                        dragModifier = { dragModifier(it) },
                         routeMenu = routeMenu
                     )
                     if (otherRoutes.isNotEmpty()) item(key = "other_routes_heading") {
@@ -306,13 +323,8 @@ private fun RoutesListStateContent(
                     routes = otherRoutes,
                     gridColumns = resolvedColumns,
                     isGridMode = false,
-                    onRouteClick = { route ->
-                        if (menuRoute != route.id && draggedId == null) navigateToSchedule(
-                            navController,
-                            route
-                        )
-                    },
-                    dragModifier = dragModifier,
+                    onRouteClick = onRouteClick,
+                    dragModifier = { dragModifier(it) },
                     routeMenu = routeMenu
                 )
             }
@@ -336,13 +348,8 @@ private fun RoutesListStateContent(
                         routes = pinnedRoutes,
                         gridColumns = resolvedColumns,
                         isGridMode = true,
-                        onRouteClick = { route ->
-                            if (menuRoute != route.id && draggedId == null) navigateToSchedule(
-                                navController,
-                                route
-                            )
-                        },
-                        dragModifier = dragModifier,
+                        onRouteClick = onRouteClick,
+                        dragModifier = { dragModifier(it) },
                         routeMenu = routeMenu
                     )
                     if (otherRoutes.isNotEmpty()) item(
@@ -353,18 +360,12 @@ private fun RoutesListStateContent(
                     routes = otherRoutes,
                     gridColumns = resolvedColumns,
                     isGridMode = true,
-                    onRouteClick = { route ->
-                        if (menuRoute != route.id && draggedId == null) navigateToSchedule(
-                            navController,
-                            route
-                        )
-                    },
-                    dragModifier = dragModifier,
+                    onRouteClick = onRouteClick,
+                    dragModifier = { dragModifier(it) },
                     routeMenu = routeMenu
                 )
             }
         }
-    }
 }
 
 @Composable
@@ -420,4 +421,12 @@ private fun LazyGridScope.addRoutes(
             Box(modifier = Modifier.align(Alignment.TopEnd)) { routeMenu(route.id) }
         }
     }
+}
+
+private fun reorderPreviewIndex(sourceIndex: Int, targetIndex: Int, index: Int): Int = when {
+    sourceIndex < 0 || targetIndex < 0 -> index
+    index == sourceIndex -> targetIndex
+    sourceIndex < targetIndex && index in (sourceIndex + 1)..targetIndex -> index - 1
+    sourceIndex > targetIndex && index in targetIndex until sourceIndex -> index + 1
+    else -> index
 }

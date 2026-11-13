@@ -98,6 +98,7 @@ internal fun UpcomingSchedulesCard(
     }
 }
 
+@Suppress("CyclomaticComplexMethod")
 @Composable
 internal fun UpcomingSchedulesContent(
     entries: List<UpcomingScheduleEntry>,
@@ -197,8 +198,8 @@ internal fun UpcomingSchedulesContent(
                 run {
                     val displayedOrder = order
                     Column(verticalArrangement = Arrangement.spacedBy(contentSpacing)) {
-                        displayedOrder.mapNotNull { name -> entries.find { it.title == name } }
-                            .forEachIndexed { index, entry ->
+                        @Composable
+                        fun ScheduleEntry(index: Int, entry: UpcomingScheduleEntry) {
                     val nextCountdownLabel = resolveDepartureMillis(
                         departureTime = entry.nextSchedule.departureTime,
                         currentTimeMillis = currentTimeMillis
@@ -215,13 +216,7 @@ internal fun UpcomingSchedulesContent(
 
                                 val sourceIndex = displayedOrder.indexOf(draggedRow)
                                 val targetIndex = displayedOrder.indexOf(hoveredRow)
-                                val previewIndex = when {
-                                    sourceIndex < 0 || targetIndex < 0 -> index
-                                    index == sourceIndex -> targetIndex
-                                    sourceIndex < targetIndex && index in (sourceIndex + 1)..targetIndex -> index - 1
-                                    sourceIndex > targetIndex && index in targetIndex until sourceIndex -> index + 1
-                                    else -> index
-                                }
+                                val previewIndex = reorderPreviewIndex(sourceIndex, targetIndex, index)
                                 val ownBounds = rowBounds[entry.title]
                                 val previewBounds =
                                     displayedOrder.getOrNull(previewIndex)?.let { rowBounds[it] }
@@ -327,7 +322,9 @@ internal fun UpcomingSchedulesContent(
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
-                }
+                        }
+                        displayedOrder.mapNotNull { name -> entries.find { it.title == name } }
+                            .forEachIndexed { index, entry -> ScheduleEntry(index, entry) }
                     }
                 }
             }
@@ -677,4 +674,12 @@ private fun UpcomingTimeColumn(
             modifier = Modifier.fillMaxWidth()
         )
     }
+}
+
+private fun reorderPreviewIndex(sourceIndex: Int, targetIndex: Int, index: Int): Int = when {
+    sourceIndex < 0 || targetIndex < 0 -> index
+    index == sourceIndex -> targetIndex
+    sourceIndex < targetIndex && index in (sourceIndex + 1)..targetIndex -> index - 1
+    sourceIndex > targetIndex && index in targetIndex until sourceIndex -> index + 1
+    else -> index
 }
