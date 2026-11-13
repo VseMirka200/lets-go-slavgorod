@@ -34,7 +34,7 @@
       outlook: `https://outlook.live.com/mail/0/deeplink/compose?${params}`,
       yahoo: `https://compose.mail.yahoo.com/?${params}`,
       proton: `https://mail.proton.me/u/0/compose?${params}`,
-      app: `mailto:${address}?${new URLSearchParams({ subject: subject.value, body: message.value })}`,
+      app: `mailto:${address}?${"subject=" + encodeURIComponent(subject.value) + "&body=" + encodeURIComponent(message.value)}`,
     };
     providers.forEach((link) => { link.href = links[link.dataset.provider]; });
   }

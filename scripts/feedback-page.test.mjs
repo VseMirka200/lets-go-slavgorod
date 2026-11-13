@@ -42,3 +42,19 @@ test('шаблон расписания и изменённый текст пе�
         assert.equal(link.dataset.provider === 'app' ? url.pathname : params.get('to'), 'vsemirka200@bk.ru');
     }
 });
+
+test('mailto encodes spaces and special characters for URI decoding', () => {
+    const { subject, message, providers } = createForm();
+    subject.value = 'Bus + route & stop';
+    message.value = 'First line\nSecond + line & stop';
+    subject.events.input();
+    message.events.input();
+    const link = providers.find(item => item.dataset.provider === 'app').href;
+    const fields = Object.fromEntries(link.split('?')[1].split('&').map(field => {
+        const [name, value] = field.split('=');
+        return [name, decodeURIComponent(value)];
+    }));
+    assert.equal(fields.subject, subject.value);
+    assert.equal(fields.body, message.value);
+    assert.ok(!link.includes('+'));
+});
