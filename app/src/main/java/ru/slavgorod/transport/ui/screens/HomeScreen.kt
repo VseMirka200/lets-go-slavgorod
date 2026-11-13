@@ -125,23 +125,24 @@ fun HomeScreen(
                     state = pullToRefreshState,
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    when {
-                        uiState.isLoading || uiState.error != null || uiState.routes.isEmpty() -> Column {
-                            searchBar()
-                            when {
-                                uiState.isLoading -> LoadingState()
-                                uiState.error != null -> ErrorState(
-                                    errorMessage = uiState.error.orEmpty(),
-                                    onRetry = { viewModel.refresh(homeScreenTitle) }
-                                )
-                                else -> EmptyState(searchQuery = searchQuery)
+                    Column {
+                        searchBar()
+                        when {
+                            uiState.isLoading || uiState.error != null || uiState.routes.isEmpty() -> {
+                                when {
+                                    uiState.isLoading -> LoadingState()
+                                    uiState.error != null -> ErrorState(
+                                        errorMessage = uiState.error.orEmpty(),
+                                        onRetry = { viewModel.refresh(homeScreenTitle) }
+                                    )
+                                    else -> EmptyState(searchQuery = searchQuery)
+                                }
                             }
+                            else -> RoutesListState(
+                                routes = uiState.routes,
+                                navController = navController
+                            )
                         }
-                        else -> RoutesListState(
-                            routes = uiState.routes,
-                            navController = navController,
-                            header = searchBar
-                        )
                     }
                 }
 

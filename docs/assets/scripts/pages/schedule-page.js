@@ -905,8 +905,8 @@ function setupSchedulePage() {
         draggedCard.classList.remove("is-dragging");
         draggedCard = null;
     };
-    results.addEventListener("pointerup", finishUpcomingDrag);
-    results.addEventListener("pointercancel", finishUpcomingDrag);
+    window.addEventListener("pointerup", finishUpcomingDrag);
+    window.addEventListener("pointercancel", finishUpcomingDrag);
     let lastRefreshMinute = Math.floor(Date.now() / 60_000);
     window.setInterval(() => {
         if (draggedCard || dragTimer) return;
