@@ -40,6 +40,7 @@ internal fun ScheduleDayPicker(
     onDaySelected: (DayOfWeek) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val locale = Locale.forLanguageTag("ru")
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
@@ -82,13 +83,13 @@ internal fun ScheduleDayPicker(
                             onClick = { onDaySelected(day) })
                         .semantics {
                             contentDescription =
-                                day.getDisplayName(TextStyle.FULL_STANDALONE, RUSSIAN_LOCALE)
+                                day.getDisplayName(TextStyle.FULL_STANDALONE, locale)
                                     .replaceFirstChar(Char::titlecase)
                         },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = day.getDisplayName(TextStyle.SHORT, RUSSIAN_LOCALE)
+                        text = day.getDisplayName(TextStyle.SHORT, locale)
                             .replaceFirstChar(Char::titlecase),
                         color = contentColor,
                         fontWeight = if (isSelected || isToday) FontWeight.SemiBold else FontWeight.Normal,
@@ -100,6 +101,5 @@ internal fun ScheduleDayPicker(
     }
 }
 
-private val RUSSIAN_LOCALE = Locale.forLanguageTag("ru")
 internal val TODAY_HIGHLIGHT = Color(0xFFFFD54F)
 internal val TODAY_HIGHLIGHT_CONTENT = Color(0xFF251A00)

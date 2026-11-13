@@ -6,9 +6,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,8 +32,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -41,12 +41,12 @@ import androidx.compose.ui.unit.dp
 import ru.slavgorod.transport.R
 import ru.slavgorod.transport.data.model.BusRoute
 import ru.slavgorod.transport.data.model.BusSchedule
+import ru.slavgorod.transport.ui.components.app.AppIconButton
+import ru.slavgorod.transport.ui.components.app.ScheduleHeaderDetails
+import ru.slavgorod.transport.ui.components.app.ScheduleTitleBar
 import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Locale
-import ru.slavgorod.transport.ui.components.app.ScheduleHeaderDetails
-import ru.slavgorod.transport.ui.components.app.AppIconButton
-import ru.slavgorod.transport.ui.components.app.ScheduleTitleBar
 
 internal data class ScheduleListFilterUiState(
     val selectedDescriptionLabel: String?,
@@ -102,7 +102,7 @@ internal fun ScheduleListScaffold(
                 AppIconButton(onClick = share) {
                     Icon(
                         imageVector = Icons.Default.Share,
-                        contentDescription = "Поделиться маршрутом",
+                        contentDescription = stringResource(R.string.route_share),
                         tint = Color.White
                     )
                 }
@@ -220,7 +220,7 @@ private fun LazyListScope.scheduleStickyHeader(
                 entries = displayState.upcomingEntries,
                 currentTimeMillis = currentTimeMillis,
                 layout = layout,
-                dayLabel = currentDay.getDisplayName(TextStyle.FULL_STANDALONE, RUSSIAN_LOCALE)
+                dayLabel = currentDay.getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("ru"))
                     .replaceFirstChar(Char::titlecase),
                 compactMode = false,
                 squareCorners = true,
@@ -312,6 +312,7 @@ private fun LazyListScope.scheduleSections(
             item(key = "${sectionKeyPrefix}_two_column_grid") {
                 TwoColumnScheduleSectionGrid(
                     sections = displayState.visibleSections,
+                    orderKey = route.id,
                     showOnlyUpcoming = false,
                     collapsedStates = sectionCollapseStates,
                     swapScheduleColumns = swapScheduleColumns,
@@ -422,7 +423,6 @@ private fun ScheduleFiltersOverlay(
 private fun filtersBottomBarOffset(layout: ScheduleResponsiveLayoutSpec) =
     if (layout.mode == ScheduleResponsiveLayoutMode.TIGHT) 8.dp else 10.dp
 
-private val RUSSIAN_LOCALE = Locale.forLanguageTag("ru")
 private val FILTERS_BOTTOM_RESERVE_COLLAPSED = 96.dp
 private val FILTERS_BOTTOM_RESERVE_EXPANDED = 240.dp
 private val FILTERS_PANEL_EXTRA_HEIGHT = 32.dp

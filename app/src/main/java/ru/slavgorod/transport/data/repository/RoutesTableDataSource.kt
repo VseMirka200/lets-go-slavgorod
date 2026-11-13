@@ -4,6 +4,7 @@ import android.content.Context
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -134,43 +135,85 @@ class RoutesTableDataSource(
     suspend fun checkRoutesForUpdates(notifyUser: Boolean = true): RoutesLoadState =
         loadRoutesFromRemote(reportStatus = false, notifyUser = notifyUser)
 
+    suspend fun deleteAndReloadSchedule(): RoutesLoadState = withContext(Dispatchers.IO + NonCancellable) {
+        loadMutex.withLock {
+            clearScheduleLocked()
+            loadRoutesFromRemoteLocked(reportStatus = true, notifyUser = false)
+        }
+    }
+
+    suspend fun deleteSchedule() = withContext(Dispatchers.IO + NonCancellable) {
+        loadMutex.withLock { clearScheduleLocked() }
+    }
+
+    private suspend fun clearScheduleLocked() {
+        scheduleSnapshotRepository.clear()
+        memoryCache.clear()
+        snapshotWritePending = false
+        _routes.value = emptyList()
+        _dataSourceStatus.value = ScheduleDataSourceStatus(
+            isOnline = isOnline(),
+            updateEventId = _dataSourceStatus.value.updateEventId + 1
+        )
+    }
+
     private suspend fun loadRoutesFromRemote(
         reportStatus: Boolean,
         notifyUser: Boolean
     ): RoutesLoadState = withContext(Dispatchers.IO) {
         loadMutex.withLock {
-            ensureRoutesLoadedFromPersistentCache()
-
-            if (!isOnline()) {
-                return@withLock reportUnavailableData(
-                    hasCachedData = memoryCache.hasCachedData,
-                    reportStatus = reportStatus,
-                    isNetworkError = false
-                )
-            }
-
-            val remoteJson = remoteScheduleFetcher.fetchWithRetry()
-            if (remoteJson.isNullOrBlank()) {
-                return@withLock reportUnavailableData(
-                    hasCachedData = memoryCache.hasCachedData,
-                    reportStatus = reportStatus,
-                    isNetworkError = true
-                )
-            }
-
-            if (remoteJson == memoryCache.latestJson) {
-                if (snapshotWritePending) saveSnapshot(remoteJson, _routes.value.size)
-                return@withLock reportNoChanges(reportStatus)
-            }
-
-            val snapshot = scheduleJsonParser.parseSnapshot(remoteJson)
-            if (snapshot == null) {
-                Timber.w("JSON удалённого расписания пуст или некорректен; обновление пропущено")
-                return@withLock reportInvalidJson(memoryCache.hasCachedData, reportStatus)
-            }
-
-            persistRemoteRoutes(remoteJson, snapshot.routes, snapshot.schedules, notifyUser)
+            loadRoutesFromRemoteLocked(reportStatus, notifyUser)
         }
+    }
+
+    private suspend fun loadRoutesFromRemoteLocked(
+        reportStatus: Boolean,
+        notifyUser: Boolean
+    ): RoutesLoadState {
+        ensureRoutesLoadedFromPersistentCache()
+
+        if (!isOnline()) {
+            return reportUnavailableData(
+                hasCachedData = memoryCache.hasCachedData,
+                reportStatus = reportStatus,
+                isNetworkError = false
+            )
+        }
+
+        val remoteJson = remoteScheduleFetcher.fetchWithRetry()
+        if (remoteJson.isNullOrBlank()) {
+            return reportUnavailableData(
+                hasCachedData = memoryCache.hasCachedData,
+                reportStatus = reportStatus,
+                isNetworkError = true
+            )
+        }
+
+        if (remoteJson == memoryCache.latestJson) {
+            if (snapshotWritePending) saveSnapshot(remoteJson, _routes.value.size)
+            val checkedAt = currentTimeMillis()
+            reportLoadState(
+                loadState = RoutesLoadState.NO_CHANGES,
+                source = ScheduleDataSource.REMOTE_CACHE,
+                reportStatus = reportStatus,
+                lastCheckedAtMillis = checkedAt
+            )
+            if (!reportStatus) _dataSourceStatus.value = _dataSourceStatus.value.copy(lastCheckedAtMillis = checkedAt)
+            return RoutesLoadState.NO_CHANGES
+        }
+
+        val snapshot = scheduleJsonParser.parseSnapshot(remoteJson)
+        if (snapshot == null) {
+            Timber.w("JSON удалённого расписания пуст или некорректен; обновление пропущено")
+            reportLoadState(
+                loadState = RoutesLoadState.EMPTY_OR_INVALID_JSON,
+                source = memoryCache.hasCachedData.cachedDataSource(),
+                reportStatus = reportStatus
+            )
+            return RoutesLoadState.EMPTY_OR_INVALID_JSON
+        }
+
+        return persistRemoteRoutes(remoteJson, snapshot.routes, snapshot.schedules, notifyUser)
     }
 
     private fun reportUnavailableData(
@@ -190,30 +233,6 @@ class RoutesTableDataSource(
             reportStatus = reportStatus
         )
         return loadState
-    }
-
-    private fun reportInvalidJson(
-        hasCachedData: Boolean,
-        reportStatus: Boolean
-    ): RoutesLoadState {
-        reportLoadState(
-            loadState = RoutesLoadState.EMPTY_OR_INVALID_JSON,
-            source = hasCachedData.cachedDataSource(),
-            reportStatus = reportStatus
-        )
-        return RoutesLoadState.EMPTY_OR_INVALID_JSON
-    }
-
-    private fun reportNoChanges(reportStatus: Boolean): RoutesLoadState {
-        val checkedAt = currentTimeMillis()
-        reportLoadState(
-            loadState = RoutesLoadState.NO_CHANGES,
-            source = ScheduleDataSource.REMOTE_CACHE,
-            reportStatus = reportStatus,
-            lastCheckedAtMillis = checkedAt
-        )
-        if (!reportStatus) _dataSourceStatus.value = _dataSourceStatus.value.copy(lastCheckedAtMillis = checkedAt)
-        return RoutesLoadState.NO_CHANGES
     }
 
     private suspend fun persistRemoteRoutes(
@@ -297,10 +316,6 @@ class RoutesTableDataSource(
 
     private suspend fun ensureRoutesLoadedFromPersistentCache(): Boolean {
         if (memoryCache.hasCachedData) return true
-        return loadRoutesFromPersistentCache()
-    }
-
-    private suspend fun loadRoutesFromPersistentCache(): Boolean {
         val snapshot = scheduleSnapshotRepository.readSnapshot() ?: return false
         val parsed = scheduleJsonParser.parseSnapshot(snapshot.json)
         if (parsed == null) {

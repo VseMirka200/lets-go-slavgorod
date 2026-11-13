@@ -454,22 +454,29 @@ function buildDayPicker(selectedDay) {
 function buildUpcomingCard(schedules) {
     const todaySchedules = schedules.filter((schedule) => scheduleRunsOnDay(schedule, getTodayScheduleDay()));
     const groups = groupSchedulesByDeparturePoint(todaySchedules);
+    let savedOrder = [];
+    try { savedOrder = JSON.parse(window.localStorage.getItem("schedule-upcoming-order") || "[]"); } catch { /* storage unavailable */ }
+    if (!Array.isArray(savedOrder)) savedOrder = [];
+    groups.sort((a, b) => {
+        const rank = (group) => { const index = savedOrder.indexOf(group.label); return index < 0 ? savedOrder.length : index; };
+        return rank(a) - rank(b);
+    });
     const entries = groups.map((group) => {
         const { inTransit, next } = getDepartureStatus(group.schedules);
         if (!inTransit && !next) return "";
         const transitColumn = inTransit
-            ? `<div class="schedule-upcoming-time"><strong>${escapeHtml(inTransit.schedule.departureTime || "—")}</strong><span>${formatTimerDuration(inTransit.elapsedMilliseconds)}</span></div>`
+            ? `<div class="schedule-upcoming-time"><small>В пути</small><strong>${escapeHtml(inTransit.schedule.departureTime || "—")}</strong><span>${formatTimerDuration(inTransit.elapsedMilliseconds)}</span></div>`
             : `<div class="schedule-upcoming-time schedule-upcoming-time--empty"><span>Нет автобуса в пути</span></div>`;
         const nextColumn = next
-            ? `<div class="schedule-upcoming-time"><strong>${escapeHtml(next.schedule.departureTime || "—")}</strong><span>${formatTimerDuration(next.countdownMilliseconds)}</span></div>`
+            ? `<div class="schedule-upcoming-time"><small>Отправление</small><strong>${escapeHtml(next.schedule.departureTime || "—")}</strong><span>${formatTimerDuration(next.countdownMilliseconds)}</span></div>`
             : `<div class="schedule-upcoming-time schedule-upcoming-time--empty"><span>Сегодня отправлений нет</span></div>`;
-        return `<li><span class="schedule-upcoming-point">${escapeHtml(group.label)}</span><div class="schedule-upcoming-times">${transitColumn}${nextColumn}</div></li>`;
+        return `<li data-upcoming-point="${escapeHtml(group.label)}"><span class="schedule-upcoming-point">${escapeHtml(group.label)}</span><div class="schedule-upcoming-times">${transitColumn}${nextColumn}</div></li>`;
     }).filter(Boolean).join("");
 
     if (!entries) return "";
     return `
         <section class="schedule-upcoming-card" aria-label="Ближайшее отправление">
-            <div><span>Ближайшее отправление</span><small>${getDayLabel(getTodayScheduleDay())}</small></div>
+            <div class="schedule-upcoming-heading"><span>Ближайшие отправления</span><small>${getDayLabel(getTodayScheduleDay())}</small></div>
             <ul>${entries}</ul>
         </section>
     `;
@@ -498,8 +505,10 @@ function setupUpcomingStickyState() {
     const updateState = () => {
         frameId = 0;
         const isMobile = window.matchMedia("(max-width: 780px)").matches;
-        const stickyTop = isMobile
-            ? document.querySelector(".portal-sidebar")?.getBoundingClientRect().bottom || 0
+        const sidebar = isMobile ? document.querySelector(".portal-sidebar") : null;
+        const sidebarPosition = sidebar ? window.getComputedStyle(sidebar).position : "static";
+        const stickyTop = sidebar && (sidebarPosition === "sticky" || sidebarPosition === "fixed")
+            ? Math.max(0, sidebar.getBoundingClientRect().bottom)
             : 0;
         const routeBottom = routeCard?.getBoundingClientRect().bottom || 0;
         const shouldStick = sentinel.getBoundingClientRect().top <= stickyTop
@@ -853,8 +862,54 @@ function setupSchedulePage() {
         selectedScheduleDay = dayButton.dataset.scheduleDay || getTodayScheduleDay();
         applyFilter();
     });
+    let draggedCard = null;
+    let dragTimer = null;
+    let dragPointer = null;
+    results.addEventListener("pointerdown", (event) => {
+        const card = event.target.closest(".schedule-upcoming-card li[data-upcoming-point]");
+        if (!card || event.button !== 0) return;
+        dragPointer = event.pointerId;
+        dragTimer = window.setTimeout(() => {
+            draggedCard = card;
+            card.classList.add("is-dragging");
+            card.setPointerCapture(event.pointerId);
+        }, 350);
+    });
+    results.addEventListener("pointermove", (event) => {
+        if (!draggedCard || event.pointerId !== dragPointer) return;
+        event.preventDefault();
+        const list = draggedCard.parentElement;
+        const target = document.elementFromPoint(event.clientX, event.clientY)?.closest("li[data-upcoming-point]");
+        if (!target || target === draggedCard || target.parentElement !== list) return;
+        const cards = [...list.children];
+        const before = new Map(cards.map((item) => [item, item.getBoundingClientRect()]));
+        for (const item of cards) item.getAnimations().forEach((animation) => animation.cancel());
+        const movingForward = cards.indexOf(draggedCard) < cards.indexOf(target);
+        list.insertBefore(draggedCard, movingForward ? target.nextSibling : target);
+        for (const item of cards) {
+            const old = before.get(item), next = item.getBoundingClientRect();
+            item.animate([{ transform: `translate(${old.left - next.left}px, ${old.top - next.top}px)` }, { transform: "translate(0, 0)" }], { duration: 220, easing: "ease-out" });
+        }
+    });
+    const finishUpcomingDrag = (event) => {
+        if (event.pointerId !== dragPointer) return;
+        window.clearTimeout(dragTimer);
+        dragTimer = null;
+        dragPointer = null;
+        if (!draggedCard) return;
+        const order = [...draggedCard.parentElement.children].map((item) => item.dataset.upcomingPoint);
+        try {
+            const saved = JSON.parse(window.localStorage.getItem("schedule-upcoming-order") || "[]");
+            window.localStorage.setItem("schedule-upcoming-order", JSON.stringify([...order, ...(Array.isArray(saved) ? saved.filter((name) => !order.includes(name)) : [])]));
+        } catch { /* storage unavailable */ }
+        draggedCard.classList.remove("is-dragging");
+        draggedCard = null;
+    };
+    window.addEventListener("pointerup", finishUpcomingDrag);
+    window.addEventListener("pointercancel", finishUpcomingDrag);
     let lastRefreshMinute = Math.floor(Date.now() / 60_000);
     window.setInterval(() => {
+        if (draggedCard || dragTimer) return;
         const minute = Math.floor(Date.now() / 60_000);
         if (!currentRouteQuery || !allRoutes.length) return;
         if (minute !== lastRefreshMinute) {

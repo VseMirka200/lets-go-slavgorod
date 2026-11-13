@@ -25,9 +25,9 @@ jobs:
         with:
           node-version: '22'
       - name: Test published schedule validator
-        run: node --test tools/validate-published-schedule.test.mjs
+        run: node --test scripts/validate-published-schedule.test.mjs
       - name: Validate published source on demand
         if: github.event_name == 'workflow_dispatch'
         run: >-
-          node tools/validate-published-schedule.mjs
+          node scripts/validate-published-schedule.mjs
           'https://script.google.com/macros/s/AKfycbzus49Rc3LBZPDNcwqGteLHFViRCV9nItnX5PgvSkqSiId3mVxg1tp--7o4Cre2Mv40GA/exec'

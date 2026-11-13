@@ -7,12 +7,15 @@
         ['Начало', 'index.html'],
         ['Расписание', 'schedule.html'],
         ['Как пользоваться', 'index.html#how'],
+        ['Скачать приложение', 'index.html#download'],
         ['Скачать из RuStore', 'https://www.rustore.ru/catalog/app/ru.slavgorod.transport'],
         ['Скачать из Google Play', 'https://play.google.com/store/apps/details?id=ru.slavgorod.transport'],
         ['Скачать APK (GitHub)', 'https://github.com/VseMirka200/lets-go-slavgorod/releases'],
         ['Обратная связь', 'feedback.html'],
         ['Как обновляется расписание', 'index.html#schedule-data'],
         ['Документация', 'index.html#project'],
+        ['Связаться с проектом', 'index.html#contact'],
+        ['Поддержать проект', 'support.html'],
         ['GitHub', 'https://github.com/VseMirka200/lets-go-slavgorod']
     ];
     const dialog = document.createElement('dialog');
@@ -23,6 +26,7 @@
     const input = dialog.querySelector('#search-input');
     const results = dialog.querySelector('#results');
 
+    /** Обновляет ссылки по подстроке названия без учёта регистра и пробелов по краям. */
     const render = () => {
         const query = input.value.trim().toLocaleLowerCase('ru');
         const matches = pages.filter(([title]) => title.toLocaleLowerCase('ru').includes(query));
@@ -38,6 +42,7 @@
             results.appendChild(link);
         }
     };
+    /** Открывает поиск с пустым запросом и переносит фокус в поле ввода. */
     const open = () => {
         if (dialog.open) return;
         input.value = '';

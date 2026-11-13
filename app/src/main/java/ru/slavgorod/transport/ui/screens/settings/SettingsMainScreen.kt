@@ -34,6 +34,7 @@ import ru.slavgorod.transport.ui.viewmodel.ThemeViewModel
 fun SettingsMainScreen(
     themeViewModel: ThemeViewModel,
     onBackClick: () -> Unit,
+    onOpenPage: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -49,6 +50,7 @@ fun SettingsMainScreen(
     val resetDialogText = stringResource(R.string.settings_reset_dialog_text)
     val resetConfirmText = stringResource(R.string.settings_reset_confirm)
     val resetCancelText = stringResource(R.string.settings_reset_cancel)
+    val linkFailedText = stringResource(R.string.welcome_link_failed)
 
     var activeSheet by rememberSaveable { mutableStateOf<SettingsModalSheet?>(null) }
     var isMenuOpen by rememberSaveable { mutableStateOf(false) }
@@ -97,7 +99,7 @@ fun SettingsMainScreen(
                     is SettingsDestination.Website -> {
                         if (!context.openExternalUrl(
                                 destination.url,
-                                "Не удалось открыть страницу сайта"
+                                linkFailedText
                             )
                         ) {
                             Toast.makeText(
@@ -111,6 +113,10 @@ fun SettingsMainScreen(
                     is SettingsDestination.Sheet -> {
                         UserActionLogger.action(R.string.settings_open_section_format, entry.title)
                         activeSheet = destination.sheet
+                    }
+                    is SettingsDestination.Page -> {
+                        UserActionLogger.action(R.string.settings_open_section_format, entry.title)
+                        onOpenPage(destination.screen.route)
                     }
                 }
             },

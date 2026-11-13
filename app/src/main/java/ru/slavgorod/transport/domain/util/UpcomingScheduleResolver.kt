@@ -11,12 +11,19 @@ import java.time.format.DateTimeParseException
 import java.util.Calendar
 import java.util.Locale
 
+/** Определяет ближайший рейс с учётом календаря обслуживания. */
 object UpcomingScheduleResolver {
 
     private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm", Locale.ROOT)
     private const val MINIMUM_VISIBLE_COUNTDOWN_MILLIS = 60_000L
 
-    /** Возвращает идентификатор ближайшего доступного рейса или null, если рейсов нет. */
+    /**
+     * Возвращает идентификатор ближайшего рейса, до которого осталось больше минуты.
+     * Рейсы с некорректным временем и без подходящей даты в пределах 732 дней
+     * пропускаются; если подходящих рейсов нет, возвращается `null`.
+     *
+     * @param currentTime Момент, относительно которого ищется отправление.
+     */
     fun findNextScheduleId(
         schedules: List<BusSchedule>,
         currentTime: Calendar = Calendar.getInstance()

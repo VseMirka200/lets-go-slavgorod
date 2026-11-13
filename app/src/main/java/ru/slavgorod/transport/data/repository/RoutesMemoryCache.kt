@@ -43,4 +43,10 @@ internal class RoutesMemoryCache {
     fun updateSchedules(schedulesByRoute: Map<String, List<BusSchedule>>) {
         this.schedulesByRoute = schedulesByRoute
     }
+
+    fun clear() {
+        routesById = emptyMap()
+        latestJson = null
+        schedulesByRoute = emptyMap()
+    }
 }

@@ -105,7 +105,7 @@ fun ResetSettingsScreen(
                     resetAppDataUseCase.restartApplication()
                 }
             },
-            onCancel = { }
+            onCancel = { showResetDialog = false }
         )
     }
 }

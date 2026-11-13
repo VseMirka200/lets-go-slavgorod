@@ -7,6 +7,7 @@ import ru.slavgorod.transport.R
 import ru.slavgorod.transport.logging.UserActionLogger
 import timber.log.Timber
 
+/** Запускает обработчик адреса и возвращает `false`, если открытие завершилось ошибкой. */
 internal fun Context.openExternalUrl(
     url: String,
     failureLogMessage: String

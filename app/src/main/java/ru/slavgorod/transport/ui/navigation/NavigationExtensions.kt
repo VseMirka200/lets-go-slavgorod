@@ -2,6 +2,10 @@ package ru.slavgorod.transport.ui.navigation
 
 import androidx.navigation.NavController
 
+/**
+ * Открывает главный экран настроек или возвращается к нему из вложенного раздела.
+ * При переходе из других разделов сохраняет состояние стека до главного экрана.
+ */
 fun NavController.navigateToSettingsTopLevel() {
     val currentRoute = currentDestination?.route
     if (currentRoute == Screen.Settings.route) return

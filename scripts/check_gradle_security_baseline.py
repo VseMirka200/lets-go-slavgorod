@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Guard against reintroducing known-vulnerable Gradle build-tool dependencies.
+"""Проверяет зависимости инструментов Gradle на известные уязвимые версии.
 
-Input: the output of :app:dependencies --configuration releaseRuntimeClasspath
-and :buildEnvironment :app:buildEnvironment. Only resolved versions count:
-for "requested -> selected", check the selected version, not the old request.
+На вход подаются отчёты :app:dependencies --configuration releaseRuntimeClasspath
+и :buildEnvironment :app:buildEnvironment, а также необязательный отчёт компилятора.
+Для записи «запрошенная -> выбранная» проверяется выбранная версия.
 """
 
 from __future__ import annotations
@@ -28,15 +28,16 @@ FLOORS = {
 }
 
 def numeric_version(value: str) -> tuple[int, ...]:
-    """Compare published numeric release versions, ignoring -jre qualifiers."""
+    """Возвращает числовые компоненты версии до суффикса через дефис."""
     prefix = value.split("-", 1)[0]
     return tuple(int(part) for part in prefix.split(".") if part.isdigit())
 
 def extract_modules(report: str) -> set[tuple[str, str, str]]:
+    """Извлекает выбранные версии модулей, пропуская ограничения BOM."""
     resolved = set()
     for line in report.splitlines():
         if line.strip().endswith("(c)"):
-            continue  # a Gradle BOM constraint is not a resolved artifact
+            continue  # Ограничение Gradle BOM не является разрешённым артефактом.
         for match in MODULE.finditer(line):
             resolved.add((
                 match.group("group"),
@@ -46,11 +47,13 @@ def extract_modules(report: str) -> set[tuple[str, str, str]]:
     return resolved
 
 def is_watched(group: str, name: str) -> bool:
+    """Проверяет, относится ли модуль к отслеживаемым зависимостям."""
     return (group, name) in FLOORS or (
         group == "org.bouncycastle" and name.endswith("-jdk18on")
     )
 
 def audit(release: str, build: str, compiler: str = "") -> list[str]:
+    """Возвращает нарушения для runtime, плагинов сборки и отчёта компилятора."""
     release_modules = extract_modules(release)
     build_modules = extract_modules(build)
     compiler_modules = extract_modules(compiler)
@@ -78,7 +81,7 @@ def audit(release: str, build: str, compiler: str = "") -> list[str]:
             problems.append(
                 f"Vulnerable Kotlin compiler plugin dependency: {group}:{name}:{version}"
             )
-    # A Gradle plugin audit that cannot see the Kotlin plugin is incomplete.
+    # Без Kotlin Gradle plugin отчёт о зависимостях плагинов неполон.
     if not any(
         group == "org.jetbrains.kotlin" and name == "kotlin-gradle-plugin"
         for group, name, _ in build_modules
@@ -87,6 +90,7 @@ def audit(release: str, build: str, compiler: str = "") -> list[str]:
     return problems
 
 def main() -> int:
+    """Читает отчёты из аргументов и возвращает код результата для CI."""
     if len(sys.argv) not in (3, 4):
         print("Usage: check_gradle_security_baseline.py RELEASE_REPORT BUILD_REPORT [COMPILER_REPORT]", file=sys.stderr)
         return 2

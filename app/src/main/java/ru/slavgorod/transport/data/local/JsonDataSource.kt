@@ -17,6 +17,11 @@ import timber.log.Timber
  */
 class JsonDataSource {
 
+    /**
+     * Разбирает маршруты и отбрасывает записи без обязательных полей.
+     * При ошибке разбора или отсутствии корректных маршрутов возвращает пустой список;
+     * отмена корутины передаётся вызывающему коду.
+     */
     suspend fun parseRoutesFromJson(jsonString: String): List<BusRoute> =
         withContext(Dispatchers.IO) {
             try {

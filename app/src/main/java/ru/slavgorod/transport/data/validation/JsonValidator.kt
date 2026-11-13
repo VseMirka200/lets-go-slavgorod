@@ -10,6 +10,11 @@ import ru.slavgorod.transport.data.model.BusRoute
  */
 object JsonValidator {
 
+    /**
+     * Оставляет маршруты с непустыми обязательными текстовыми полями.
+     *
+     * @throws IllegalArgumentException если после фильтрации не осталось маршрутов.
+     */
     fun validateRoutes(routes: List<BusRoute>): List<BusRoute> {
         val validRoutes = routes.filter(::isValidRoute)
         require(validRoutes.isNotEmpty()) { "В JSON-данных не найдено корректных маршрутов" }

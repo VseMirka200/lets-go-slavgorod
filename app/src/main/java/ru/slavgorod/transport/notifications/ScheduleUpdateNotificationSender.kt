@@ -31,11 +31,12 @@ class ScheduleUpdateNotificationSender(
         }
 
         ensureChannel()
-        val noticeText = context.formatString(notice.textResId, notice.textArgs)
+        val localizedContext = context
+        val noticeText = localizedContext.formatString(notice.textResId, notice.textArgs)
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_directions_bus)
-            .setContentTitle(context.getString(R.string.notification_schedule_update_title))
+            .setContentTitle(localizedContext.getString(R.string.notification_schedule_update_title))
             .setContentText(noticeText)
             .setStyle(NotificationCompat.BigTextStyle().bigText(noticeText))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -51,9 +52,10 @@ class ScheduleUpdateNotificationSender(
 
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
             ?: return
-        val channelName = context.getString(R.string.notification_schedule_channel_name)
+        val localizedContext = context
+        val channelName = localizedContext.getString(R.string.notification_schedule_channel_name)
         val channelDescription =
-            context.getString(R.string.notification_schedule_channel_description)
+            localizedContext.getString(R.string.notification_schedule_channel_description)
         val channel = NotificationChannel(
             CHANNEL_ID,
             channelName,

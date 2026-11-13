@@ -4,6 +4,7 @@ const isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
 const isAndroid = /android/i.test(window.navigator.userAgent);
 const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
 
+/** Показывает установку на мобильных устройствах или при наличии браузерного приглашения. */
 const updateInstallButtons = () => {
     const shouldShow = !isStandalone && (isIos || isAndroid || deferredInstallPrompt !== null);
 
@@ -12,11 +13,13 @@ const updateInstallButtons = () => {
     });
 };
 
+/** Показывает инструкцию, если браузерное приглашение недоступно или завершилось ошибкой. */
 const showInstallInstructions = () => {
     window.alert("Откройте меню браузера ⋮ и выберите «Установить приложение» или «Добавить на главный экран».");
 };
 
 window.addEventListener("beforeinstallprompt", (event) => {
+    // Сохраняем событие до нажатия кнопки: приглашение должно исходить от действия пользователя.
     event.preventDefault();
     deferredInstallPrompt = event;
     updateInstallButtons();

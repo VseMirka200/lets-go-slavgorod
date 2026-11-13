@@ -40,14 +40,14 @@ require(scheduleSourceUrl.startsWith("https://") && !scheduleSourceUrl.contains(
 
 android {
     namespace = "ru.slavgorod.transport"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "ru.slavgorod.transport"
         minSdk = 24
         targetSdk = 36
-        versionCode = 30102
-        versionName = "3.1.2"
+        versionCode = 30105
+        versionName = "3.1.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -131,6 +131,14 @@ android {
         buildConfig = true
     }
 
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            // Robolectric's Android file-descriptor interceptor accesses this JDK API.
+            it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED")
+        }
+    }
+
     lint {
         checkReleaseBuilds = true
         abortOnError = true
@@ -147,6 +155,7 @@ android {
         }
     }
 }
+
 
 kotlin {
     compilerOptions {

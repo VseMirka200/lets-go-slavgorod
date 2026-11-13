@@ -17,6 +17,7 @@
         <link rel="stylesheet" href="assets/styles/core/branding.css">
         <link rel="stylesheet" href="assets/styles/features/pwa-install.css">
         <link rel="stylesheet" href="assets/styles/features/mobile.css">
+    <link rel="stylesheet" href="assets/styles/core/multifora.css">
     </head>
     <body data-schedule-source="https://script.google.com/macros/s/AKfycbzus49Rc3LBZPDNcwqGteLHFViRCV9nItnX5PgvSkqSiId3mVxg1tp--7o4Cre2Mv40GA/exec">
         <div class="portal-shell">
@@ -27,9 +28,6 @@
                         Поехали! Славгород
                     </span>
                 </a>
-                <a class="portal-back" href="index.html">
-                    ← На главную
-                </a>
                 <button class="portal-search" type="button" data-open-search aria-label="Поиск по сайту">
                     Поиск
                     <kbd>
@@ -39,40 +37,16 @@
                 <details class="portal-menu" open>
                     <summary>Меню</summary>
                     <nav class="portal-nav" aria-label="Навигация">
-                    <a href="index.html">
-                        Начало
-                    </a>
-                    <a class="active" href="schedule.html" aria-current="page">
-                        Расписание
-                    </a>
-                    <p>
-                        Пользователям
-                    </p>
-                    <a href="index.html#how">
-                        Как пользоваться
-                    </a>
-                    <a href="https://www.rustore.ru/catalog/app/ru.slavgorod.transport" target="_blank" rel="noreferrer">
-                        Скачать из RuStore
-                    </a>
-                    <a href="https://play.google.com/store/apps/details?id=ru.slavgorod.transport" target="_blank" rel="noreferrer">
-                        Скачать из Google Play
-                    </a>
-                    <a href="https://github.com/VseMirka200/lets-go-slavgorod/releases" target="_blank" rel="noreferrer">
-                        Скачать APK (GitHub)
-                    </a>
-                    <a href="feedback.html">
-                        Обратная связь
-                    </a>
-                    <p>
-                        Проект
-                    </p>
-                    <a href="index.html#project">
-                        Документация
-                    </a>
-                    <a href="https://github.com/VseMirka200/lets-go-slavgorod" target="_blank" rel="noreferrer">
-                        GitHub
-                    </a>
-                    </nav>
+                    <a href="index.html">Начало</a>
+                    <a href="schedule.html" class="active" aria-current="page">Расписание</a>
+                    <p>Пользователям</p>
+                    <a href="index.html#how">Как пользоваться</a>
+                    <a href="index.html#download">Скачать приложение</a>
+                    <a href="feedback.html">Обратная связь</a>
+                    <p>Проект</p>
+                    <a href="index.html#project">Документация</a>
+                    <a href="support.html">Поддержать проект</a>
+                </nav>
                 </details>
             </aside>
             <main id="top" class="portal-main schedule-portal-main">
@@ -83,8 +57,8 @@
                     <a href="https://max.ru/channel_letsgoslavgorod" target="_blank" rel="noreferrer">
                         Канал в МАКС
                     </a>
-                    <a href="https://github.com/VseMirka200/lets-go-slavgorod/releases" target="_blank" rel="noreferrer">
-                        Релизы GitHub
+                    <a href="https://github.com/VseMirka200/lets-go-slavgorod" target="_blank" rel="noreferrer">
+                        GitHub
                     </a>
                     <a data-schedule-source-link href="https://script.google.com/macros/s/AKfycbzus49Rc3LBZPDNcwqGteLHFViRCV9nItnX5PgvSkqSiId3mVxg1tp--7o4Cre2Mv40GA/exec" target="_blank" rel="noreferrer">
                         Источник данных ↗
@@ -98,7 +72,7 @@
                         Расписание маршрутов
                     </h1>
                     <p>
-                        Найдите автобус по номеру, остановке, названию или времени отправления. Перед поездкой сверяйте важное время с объявлениями перевозчика.
+                        Найдите автобус по номеру, остановке, названию или времени отправления.
                     </p>
                     <p>При проблемах с загрузкой может отображаться ранее сохранённая в браузере копия расписания. Дата ниже показывает время её загрузки, а не изменения перевозчиком. Перед поездкой уточняйте важные отправления.</p>
                     <div class="schedule-meta" aria-live="polite">

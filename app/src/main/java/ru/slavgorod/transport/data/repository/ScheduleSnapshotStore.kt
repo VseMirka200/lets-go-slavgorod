@@ -15,6 +15,8 @@ interface ScheduleSnapshotStore {
     /** Сохраняет непустой JSON; ошибка записи передаётся вызывающему коду. */
     suspend fun writeSnapshot(json: String)
 
+    suspend fun clear()
+
     /** Сообщает, удалось ли прочитать сохранённую копию. */
     suspend fun hasSnapshot(): Boolean
 

@@ -1,6 +1,6 @@
 # История изменений
 
-Версия сборки, указанная в проекте, — 3.1.2. Сведения о фактически опубликованных версиях и APK доступны в [GitHub Releases](https://github.com/VseMirka200/lets-go-slavgorod/releases).
+Версия сборки, указанная в проекте, — 3.1.5. Сведения о фактически опубликованных версиях и APK доступны в [GitHub Releases](https://github.com/VseMirka200/lets-go-slavgorod/releases).
 
 ## Не выпущено
 

@@ -84,6 +84,7 @@ fun ScheduleScreen(
     val weekdayLabel = stringResource(R.string.schedule_day_weekday)
     val weekendLabel = stringResource(R.string.schedule_day_weekend)
     val dailyLabel = stringResource(R.string.schedule_day_daily)
+    val shareTitle = stringResource(R.string.route_share)
 
     val loadState by produceState<ScheduleLoadState>(
         initialValue = ScheduleLoadState.Loading,
@@ -145,7 +146,7 @@ fun ScheduleScreen(
                     context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
                         type = "text/plain"
                         putExtra(Intent.EXTRA_TEXT, link)
-                    }, "Поделиться маршрутом"))
+                    }, shareTitle))
                 },
                 scheduleExtraLabelProvider = { schedule ->
                     buildScheduleExtraLabel(

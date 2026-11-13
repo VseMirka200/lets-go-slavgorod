@@ -31,6 +31,7 @@ fun DisplaySettingsScreen(
     modifier: Modifier = Modifier,
     showThemeSection: Boolean = true,
     showDisplayModeSection: Boolean = true,
+    showScheduleDaySection: Boolean = showDisplayModeSection,
     showTopBar: Boolean = true,
     scrollEnabled: Boolean = true
 ) {
@@ -45,8 +46,9 @@ fun DisplaySettingsScreen(
         .collectAsStateWithLifecycle(initialValue = ScheduleDaySelectionMode.Default)
     val currentTheme by themeViewModel.currentTheme.collectAsStateWithLifecycle(initialValue = AppTheme.SYSTEM)
     val isInlineEmbedded = !showTopBar && !scrollEnabled
-    val contentSpacing = if (showTopBar) Constants.SETTINGS_ITEM_SPACING.dp else 8.dp
-    val optionVerticalPadding = if (showTopBar) 8.dp else 0.dp
+    val contentSpacing =
+        if (showDisplayModeSection) 2.dp else if (showTopBar) Constants.SETTINGS_ITEM_SPACING.dp else 8.dp
+    val optionVerticalPadding = if (showDisplayModeSection) 4.dp else if (showTopBar) 8.dp else 0.dp
     val contentHorizontalPadding = when {
         isInlineEmbedded -> 0.dp
         showTopBar -> 0.dp
@@ -129,13 +131,16 @@ fun DisplaySettingsScreen(
                             horizontalPadding = rowHorizontalPadding
                         )
                     }
-
+                }
+                if (showScheduleDaySection) {
                     SettingsSectionHeader(
                         title = scheduleDayModeTitle,
-                        visible = true
+                        visible = showTopBar,
+                        modifier = Modifier.padding(top = 16.dp)
                     )
                     SettingsRadioRow(
                         selected = scheduleDaySelectionMode == ScheduleDaySelectionMode.DAY_FIRST,
+                        modifier = Modifier.padding(top = 8.dp),
                         title = stringResource(R.string.settings_schedule_day_mode_day_first),
                         subtitle = stringResource(R.string.settings_schedule_day_mode_day_first_subtitle),
                         onClick = {
@@ -182,12 +187,14 @@ fun DisplaySettingsScreen(
 @Composable
 private fun SettingsSectionHeader(
     title: String,
-    visible: Boolean
+    visible: Boolean,
+    modifier: Modifier = Modifier
 ) {
     if (!visible) return
 
     Text(
         text = title,
+        modifier = modifier,
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )

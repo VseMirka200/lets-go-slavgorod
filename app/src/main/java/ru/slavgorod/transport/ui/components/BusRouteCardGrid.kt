@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import ru.slavgorod.transport.R
 import ru.slavgorod.transport.data.model.BusRoute
 
@@ -128,7 +130,8 @@ private fun StandardGridRouteCardContent(
             1 -> MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
             2 -> MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
             else -> MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-        }
+        },
+        autoSize = gridColumns == 3
     )
 
     Spacer(modifier = Modifier.height(spacerHeight))
@@ -139,17 +142,23 @@ private fun StandardGridRouteCardContent(
         style = routeNumberStyle,
         textAlign = TextAlign.Center,
         maxLines = 1,
-        overflow = TextOverflow.Visible
+        overflow = if (gridColumns == 3) TextOverflow.Clip else TextOverflow.Visible,
+        autoSize = if (gridColumns == 3) {
+            TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = routeNumberStyle.fontSize)
+        } else null
     )
 }
 
 @Composable
-private fun RouteCardBusLabel(style: TextStyle) {
+private fun RouteCardBusLabel(style: TextStyle, autoSize: Boolean = false) {
     Text(
         text = stringResource(R.string.route_card_bus_label),
         style = style,
         color = Color.White.copy(alpha = 0.9f),
         textAlign = TextAlign.Center,
-        maxLines = 1
+        maxLines = 1,
+        autoSize = if (autoSize) {
+            TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = style.fontSize)
+        } else null
     )
 }

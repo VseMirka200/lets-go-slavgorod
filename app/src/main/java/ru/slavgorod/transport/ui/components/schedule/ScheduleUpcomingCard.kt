@@ -1,6 +1,10 @@
 package ru.slavgorod.transport.ui.components.schedule
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -10,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,10 +28,23 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -34,10 +52,14 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
+import org.json.JSONArray
 import ru.slavgorod.transport.R
+import kotlin.math.roundToInt
 
 @Composable
 internal fun UpcomingSchedulesCard(
@@ -76,6 +98,7 @@ internal fun UpcomingSchedulesCard(
     }
 }
 
+@Suppress("CyclomaticComplexMethod")
 @Composable
 internal fun UpcomingSchedulesContent(
     entries: List<UpcomingScheduleEntry>,
@@ -87,6 +110,28 @@ internal fun UpcomingSchedulesContent(
     modifier: Modifier = Modifier
 ) {
     if (entries.isEmpty()) return
+
+    val context = LocalContext.current
+    val hapticFeedback = LocalHapticFeedback.current
+    val preferences = remember(context) {
+        context.getSharedPreferences(
+            "upcoming_order",
+            android.content.Context.MODE_PRIVATE
+        )
+    }
+    val rowBounds = remember { mutableStateMapOf<String, Rect>() }
+    var draggedRow by remember { mutableStateOf<String?>(null) }
+    var hoveredRow by remember { mutableStateOf<String?>(null) }
+    var dragOffset by remember { mutableFloatStateOf(0f) }
+    val orderKey = remember(entries) { JSONArray(entries.map { it.title }.sorted()).toString() }
+    var order by remember(orderKey) {
+        val saved = runCatching {
+            val array = JSONArray(preferences.getString(orderKey, "[]"))
+            (0 until array.length()).map { array.getString(it) }
+        }.getOrDefault(emptyList())
+        mutableStateOf(saved.filter { name -> entries.any { it.title == name } } + entries.map { it.title }
+            .filterNot { it in saved })
+    }
 
     BoxWithConstraints(modifier = modifier) {
         val colors = UpcomingScheduleBoardColors.default()
@@ -150,7 +195,11 @@ internal fun UpcomingSchedulesContent(
                     fullWidthMode = squareCorners,
                     compactMode = compactMode
                 )
-                entries.forEachIndexed { index, entry ->
+                run {
+                    val displayedOrder = order
+                    Column(verticalArrangement = Arrangement.spacedBy(contentSpacing)) {
+                        @Composable
+                        fun ScheduleEntry(index: Int, entry: UpcomingScheduleEntry) {
                     val nextCountdownLabel = resolveDepartureMillis(
                         departureTime = entry.nextSchedule.departureTime,
                         currentTimeMillis = currentTimeMillis
@@ -165,6 +214,91 @@ internal fun UpcomingSchedulesContent(
                         buildScheduleTimerLabel(elapsedMillis)
                     }
 
+                                val sourceIndex = displayedOrder.indexOf(draggedRow)
+                                val targetIndex = displayedOrder.indexOf(hoveredRow)
+                                val previewIndex = reorderPreviewIndex(sourceIndex, targetIndex, index)
+                                val ownBounds = rowBounds[entry.title]
+                                val previewBounds =
+                                    displayedOrder.getOrNull(previewIndex)?.let { rowBounds[it] }
+                                val previewOffset by animateFloatAsState(
+                                    targetValue = if (entry.title != draggedRow && ownBounds != null && previewBounds != null) {
+                                        previewBounds.top - ownBounds.top
+                                    } else 0f,
+                                    animationSpec = if (draggedRow == null) snap() else spring(),
+                                    label = "upcoming departure preview"
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .onGloballyPositioned {
+                                            rowBounds[entry.title] = it.boundsInRoot()
+                                        }
+                                        .pointerInput(entry.title, displayedOrder) {
+                                            detectDragGesturesAfterLongPress(
+                                                onDragStart = {
+                                                    hapticFeedback.performHapticFeedback(
+                                                        HapticFeedbackType.LongPress
+                                                    )
+                                                    draggedRow = entry.title
+                                                    hoveredRow = entry.title
+                                                    dragOffset = 0f
+                                                },
+                                                onDragEnd = {
+                                                    val destination =
+                                                        displayedOrder.indexOf(hoveredRow)
+                                                            .takeIf { it >= 0 } ?: index
+                                                    draggedRow = null
+                                                    hoveredRow = null
+                                                    dragOffset = 0f
+                                                    if (destination != index) {
+                                                        order =
+                                                            displayedOrder.toMutableList().apply {
+                                                                add(
+                                                                    destination,
+                                                                    removeAt(index)
+                                                                )
+                                                            }
+                                                        preferences.edit().putString(
+                                                            orderKey,
+                                                            JSONArray(order).toString()
+                                                        ).apply()
+                                                    }
+                                                },
+                                                onDragCancel = {
+                                                    dragOffset = 0f; draggedRow = null; hoveredRow =
+                                                    null
+                                                },
+                                                onDrag = { change, amount ->
+                                                    change.consume()
+                                                    dragOffset += amount.y
+                                                    val startY = rowBounds[entry.title]?.center?.y
+                                                    if (startY != null) {
+                                                        hoveredRow = displayedOrder.filter {
+                                                            rowBounds.containsKey(it)
+                                                        }
+                                                            .minByOrNull {
+                                                                kotlin.math.abs(
+                                                                    rowBounds.getValue(
+                                                                        it
+                                                                    ).center.y - (startY + dragOffset)
+                                                                )
+                                                            }
+                                                            ?: entry.title
+                                                    }
+                                                }
+                                            )
+                                        }
+                                        .zIndex(if (draggedRow == entry.title) 1f else 0f)
+                                        .offset {
+                                            IntOffset(
+                                                0, when {
+                                                    draggedRow == null -> 0
+                                                    draggedRow == entry.title -> dragOffset.roundToInt()
+                                                    else -> previewOffset.roundToInt()
+                                                }
+                                            )
+                                        }
+                                        .background(colors.board)) {
                     UpcomingScheduleBoardRow(
                         title = entry.title,
                         inTransitTime = entry.inTransitSchedule.departureTime,
@@ -179,13 +313,18 @@ internal fun UpcomingSchedulesContent(
                         fullWidthMode = squareCorners,
                         compactMode = compactMode
                     )
+                                }
 
-                    if (index != entries.lastIndex) {
+                                if (index != displayedOrder.lastIndex) {
                         HorizontalDivider(
                             thickness = 1.dp,
                             color = colors.divider,
                             modifier = Modifier.fillMaxWidth()
                         )
+                    }
+                        }
+                        displayedOrder.mapNotNull { name -> entries.find { it.title == name } }
+                            .forEachIndexed { index, entry -> ScheduleEntry(index, entry) }
                     }
                 }
             }
@@ -426,7 +565,8 @@ private fun UpcomingScheduleBoardRow(
                 Box(
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .width(1.dp).height(40.dp)
+                        .width(1.dp)
+                        .height(40.dp)
                         .background(colors.divider)
                 )
             }
@@ -489,7 +629,9 @@ private fun UpcomingTimeColumn(
                 text = heading,
                 color = bodyColor,
                 textSize = labelTextSize.value.coerceAtLeast(11f).sp,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 4.dp)
             )
         }
         Text(
@@ -532,4 +674,12 @@ private fun UpcomingTimeColumn(
             modifier = Modifier.fillMaxWidth()
         )
     }
+}
+
+private fun reorderPreviewIndex(sourceIndex: Int, targetIndex: Int, index: Int): Int = when {
+    sourceIndex < 0 || targetIndex < 0 -> index
+    index == sourceIndex -> targetIndex
+    sourceIndex < targetIndex && index in (sourceIndex + 1)..targetIndex -> index - 1
+    sourceIndex > targetIndex && index in targetIndex until sourceIndex -> index + 1
+    else -> index
 }

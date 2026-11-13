@@ -9,6 +9,10 @@ import ru.slavgorod.transport.R
 import ru.slavgorod.transport.data.local.AppLogStore
 import timber.log.Timber
 
+/**
+ * Подготавливает файл журнала и открывает системное меню отправки с правом чтения.
+ * Возвращает `true` при запуске меню, не подтверждая выбор получателя или отправку.
+ */
 internal fun Context.exportApplicationLogs(logStore: AppLogStore): Boolean {
     return runCatching {
         val logFile = logStore.getLogFile()

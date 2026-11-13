@@ -143,6 +143,54 @@ class RoutesAutoRefreshManagerTest {
         manager.stop()
     }
 
+    @Test
+    fun `failed periodic refresh does not prevent later refresh`() = runTest {
+        var calls = 0
+        val manager = RoutesAutoRefreshManager(
+            routeRepository = createRepository(),
+            connectionStateFlow = MutableStateFlow(true),
+            initialConnectionState = true,
+            dispatcher = StandardTestDispatcher(testScheduler),
+            refreshAction = {
+                calls++
+                if (calls == 1) error("temporary failure")
+                RoutesLoadState.NO_CHANGES
+            }
+        )
+        manager.start()
+        advanceTimeBy(Constants.SCHEDULE_AUTO_REFRESH_INTERVAL_MS * 2 + 1)
+        runCurrent()
+        assertEquals(2, calls)
+        manager.stop()
+    }
+
+    @Test
+    fun `network observer continues after a failed refresh`() = runTest {
+        val connection = MutableStateFlow(false)
+        var calls = 0
+        val manager = RoutesAutoRefreshManager(
+            routeRepository = createRepository(),
+            connectionStateFlow = connection,
+            initialConnectionState = false,
+            dispatcher = StandardTestDispatcher(testScheduler),
+            refreshAction = {
+                calls++
+                if (calls == 1) error("temporary failure")
+                RoutesLoadState.NO_CHANGES
+            }
+        )
+        manager.start()
+        runCurrent()
+        connection.value = true
+        runCurrent()
+        connection.value = false
+        runCurrent()
+        connection.value = true
+        runCurrent()
+        assertEquals(2, calls)
+        manager.stop()
+    }
+
     private fun createRepository(): RoutesTableDataSource {
         return RoutesTableDataSource(
             context = context,

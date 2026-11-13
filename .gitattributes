@@ -1,5 +1,4 @@
 * text=auto eol=lf
-
 *.kt text working-tree-encoding=UTF-8
 *.kts text working-tree-encoding=UTF-8
 *.java text working-tree-encoding=UTF-8

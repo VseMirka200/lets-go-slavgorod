@@ -67,4 +67,22 @@ class ScheduleSnapshotRepositoryTest {
 
         assertEquals("""{"routes":[{"id":"new"}]}""", repository.readSnapshot()?.json)
     }
+
+    @Test
+    fun `blank replacement leaves previous snapshot intact`() = runTest {
+        val original = """{"routes":[{"id":"old"}]}"""
+        repository.writeSnapshot(original)
+        assertTrue(runCatching { repository.writeSnapshot("  ") }.isFailure)
+        assertEquals(original, repository.readSnapshot()?.json)
+    }
+
+    @Test
+    fun `clear removes snapshot for a newly created repository`() = runTest {
+        repository.writeSnapshot("""{"routes":[]}""")
+        repository.clear()
+        val context: Context = ApplicationProvider.getApplicationContext()
+        val reopened = ScheduleSnapshotRepository(ScheduleCacheStore(context))
+        assertFalse(reopened.hasSnapshot())
+        assertNull(reopened.readSnapshot())
+    }
 }

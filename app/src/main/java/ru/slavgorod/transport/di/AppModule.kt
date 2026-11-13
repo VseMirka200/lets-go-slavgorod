@@ -4,13 +4,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.koin.android.ext.koin.androidContext
-import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import ru.slavgorod.transport.core.ApplicationCoroutineScope
 import ru.slavgorod.transport.data.local.AppLogStore
 import ru.slavgorod.transport.data.local.JsonDataSource
 import ru.slavgorod.transport.data.local.ScheduleCacheStore
 import ru.slavgorod.transport.data.local.ScheduleNotificationSettings
+import ru.slavgorod.transport.data.local.ScheduleSourceSettings
 import ru.slavgorod.transport.data.local.dataStore
 import ru.slavgorod.transport.data.local.displayDataStore
 import ru.slavgorod.transport.data.local.themeDataStore
@@ -34,6 +35,7 @@ val appModule = module {
     single { AppLogStore(androidContext()) }
     single { JsonDataSource() }
     single { ScheduleCacheStore(androidContext()) }
+    single { ScheduleSourceSettings(androidContext().dataStore) }
     single {
         ScheduleNotificationSettings(
             androidContext().dataStore,
@@ -44,7 +46,9 @@ val appModule = module {
     single<ScheduleSnapshotStore> { ScheduleSnapshotRepository(get()) }
     single<ScheduleFetcher> {
         val context = androidContext()
+        val sourceSettings: ScheduleSourceSettings = get()
         RemoteScheduleFetcher(
+            remoteJsonUrlProvider = { sourceSettings.currentUrl() },
             onlineChecker = { NetworkMonitor.isConnected(context) }
         )
     }
