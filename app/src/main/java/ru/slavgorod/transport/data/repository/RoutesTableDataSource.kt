@@ -191,13 +191,26 @@ class RoutesTableDataSource(
 
         if (remoteJson == memoryCache.latestJson) {
             if (snapshotWritePending) saveSnapshot(remoteJson, _routes.value.size)
-            return reportNoChanges(reportStatus)
+            val checkedAt = currentTimeMillis()
+            reportLoadState(
+                loadState = RoutesLoadState.NO_CHANGES,
+                source = ScheduleDataSource.REMOTE_CACHE,
+                reportStatus = reportStatus,
+                lastCheckedAtMillis = checkedAt
+            )
+            if (!reportStatus) _dataSourceStatus.value = _dataSourceStatus.value.copy(lastCheckedAtMillis = checkedAt)
+            return RoutesLoadState.NO_CHANGES
         }
 
         val snapshot = scheduleJsonParser.parseSnapshot(remoteJson)
         if (snapshot == null) {
             Timber.w("JSON удалённого расписания пуст или некорректен; обновление пропущено")
-            return reportInvalidJson(memoryCache.hasCachedData, reportStatus)
+            reportLoadState(
+                loadState = RoutesLoadState.EMPTY_OR_INVALID_JSON,
+                source = memoryCache.hasCachedData.cachedDataSource(),
+                reportStatus = reportStatus
+            )
+            return RoutesLoadState.EMPTY_OR_INVALID_JSON
         }
 
         return persistRemoteRoutes(remoteJson, snapshot.routes, snapshot.schedules, notifyUser)
@@ -220,30 +233,6 @@ class RoutesTableDataSource(
             reportStatus = reportStatus
         )
         return loadState
-    }
-
-    private fun reportInvalidJson(
-        hasCachedData: Boolean,
-        reportStatus: Boolean
-    ): RoutesLoadState {
-        reportLoadState(
-            loadState = RoutesLoadState.EMPTY_OR_INVALID_JSON,
-            source = hasCachedData.cachedDataSource(),
-            reportStatus = reportStatus
-        )
-        return RoutesLoadState.EMPTY_OR_INVALID_JSON
-    }
-
-    private fun reportNoChanges(reportStatus: Boolean): RoutesLoadState {
-        val checkedAt = currentTimeMillis()
-        reportLoadState(
-            loadState = RoutesLoadState.NO_CHANGES,
-            source = ScheduleDataSource.REMOTE_CACHE,
-            reportStatus = reportStatus,
-            lastCheckedAtMillis = checkedAt
-        )
-        if (!reportStatus) _dataSourceStatus.value = _dataSourceStatus.value.copy(lastCheckedAtMillis = checkedAt)
-        return RoutesLoadState.NO_CHANGES
     }
 
     private suspend fun persistRemoteRoutes(
@@ -327,10 +316,6 @@ class RoutesTableDataSource(
 
     private suspend fun ensureRoutesLoadedFromPersistentCache(): Boolean {
         if (memoryCache.hasCachedData) return true
-        return loadRoutesFromPersistentCache()
-    }
-
-    private suspend fun loadRoutesFromPersistentCache(): Boolean {
         val snapshot = scheduleSnapshotRepository.readSnapshot() ?: return false
         val parsed = scheduleJsonParser.parseSnapshot(snapshot.json)
         if (parsed == null) {

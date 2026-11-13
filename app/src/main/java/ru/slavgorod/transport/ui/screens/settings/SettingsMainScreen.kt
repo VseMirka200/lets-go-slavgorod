@@ -50,6 +50,7 @@ fun SettingsMainScreen(
     val resetDialogText = stringResource(R.string.settings_reset_dialog_text)
     val resetConfirmText = stringResource(R.string.settings_reset_confirm)
     val resetCancelText = stringResource(R.string.settings_reset_cancel)
+    val linkFailedText = stringResource(R.string.welcome_link_failed)
 
     var activeSheet by rememberSaveable { mutableStateOf<SettingsModalSheet?>(null) }
     var isMenuOpen by rememberSaveable { mutableStateOf(false) }
@@ -98,7 +99,7 @@ fun SettingsMainScreen(
                     is SettingsDestination.Website -> {
                         if (!context.openExternalUrl(
                                 destination.url,
-                                context.getString(R.string.welcome_link_failed)
+                                linkFailedText
                             )
                         ) {
                             Toast.makeText(
