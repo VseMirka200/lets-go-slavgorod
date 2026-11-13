@@ -64,5 +64,5 @@ jobs:
       - name: Verify patched versions and release scope
         shell: bash
         run: |
-          python -m unittest discover -s tools -p 'test_gradle_security_baseline.py'
+          python -m unittest discover -s scripts -p 'test_gradle_security_baseline.py'
           python scripts/check_gradle_security_baseline.py "$RUNNER_TEMP/release-dependencies.txt" "$RUNNER_TEMP/build-dependencies.txt" "$RUNNER_TEMP/compiler-dependencies.txt"
