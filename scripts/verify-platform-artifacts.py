@@ -38,3 +38,5 @@ for component in components:
         if actual not in expected:
             raise SystemExit(f"Checksum mismatch: {name}")
         print(f"Verified {name}")
+
+raise SystemExit("AAPT2 checksum diagnostic finished")
