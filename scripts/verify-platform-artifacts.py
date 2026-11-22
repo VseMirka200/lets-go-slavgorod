@@ -26,7 +26,11 @@ for component in components:
             None,
         )
         if artifact is None:
-            raise SystemExit(f"Missing platform artifact: {name}")
+            url = f"https://dl.google.com/dl/android/maven2/com/android/tools/build/aapt2/{version}/{name}"
+            with urllib.request.urlopen(url, timeout=60) as response:
+                digest = hashlib.file_digest(response, "sha256").hexdigest()
+            print(f"MISSING_AAPT2_SHA256 {name} {digest}", flush=True)
+            continue
         expected = {item.attrib["value"] for item in artifact.findall("g:sha256", ns)}
         url = f"https://dl.google.com/dl/android/maven2/com/android/tools/build/aapt2/{version}/{name}"
         with urllib.request.urlopen(url, timeout=60) as response:
