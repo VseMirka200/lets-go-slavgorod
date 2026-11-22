@@ -44,6 +44,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
+          problem-matcher: true
           cache: gradle
 
       - name: Grant execute permission to Gradle Wrapper
